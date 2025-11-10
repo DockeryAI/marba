@@ -1,0 +1,60 @@
+{
+  "project": "MARBA",
+  "version": "0.1.0",
+  "status": "in_progress",
+  "last_updated": "2025-11-10T00:00:00Z",
+  "description": "MARBA - AI-powered conversational brand strategy platform",
+  "features": [],
+  "planned_features": [],
+  "metrics": {
+    "totalLines": {
+      "typescript": 0,
+      "components": 0,
+      "typeDefinitions": 0,
+      "utilities": 0,
+      "database": 0,
+      "total": 0
+    },
+    "fileCount": {
+      "components": 0,
+      "utilities": 0,
+      "typeDefinitions": 0,
+      "migrations": 0,
+      "tests": 0,
+      "total": 0
+    },
+    "components": {
+      "feature_components": 0,
+      "ui_components": 0,
+      "admin_components": 0,
+      "utility_components": 0,
+      "total": 0
+    },
+    "database": {
+      "tables": 0,
+      "views": 0,
+      "functions": 0,
+      "indexes": 0,
+      "triggers": 0
+    },
+    "coverage": {
+      "typeScriptCoverage": "0%",
+      "apiCoverage": "0%",
+      "testCoverage": "0%",
+      "componentCoverage": "0%"
+    }
+  },
+  "tech_stack": {
+    "languages": ["TypeScript", "JavaScript"],
+    "frameworks": ["React", "Vite", "Tailwind CSS"],
+    "infrastructure": ["Supabase", "PostgreSQL"],
+    "tools": ["Git", "ESLint", "Build Runner 3.0"],
+    "ui_libraries": ["shadcn/ui", "Radix UI", "Lucide React"],
+    "ai_integrations": ["Claude via OpenRouter"]
+  },
+  "team_info": {
+    "project_lead": "Byron Hudson",
+    "build_status": "Active development",
+    "last_update": "2025-11-10"
+  }
+}
