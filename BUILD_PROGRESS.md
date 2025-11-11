@@ -83,7 +83,7 @@
 - [x] TASK-020: analytics_events table (15:04) ✅
 - [x] TASK-021: platform_metrics_snapshots table (15:05) ✅
 - [x] TASK-022: engagement_inbox table (15:06) ✅
-- [x] TASK-023: sostac_objectives table (15:07) ✅
+- [x] TASK-023: mirror_intend_objectives table (formerly sostac_objectives) (15:07) ✅
 - [x] TASK-024: enrichment_schedule table (15:08) ✅
 - [x] TASK-025: intelligence_opportunities table (15:09) ✅
 - [x] TASK-026: learning_patterns table (15:10) ✅
@@ -293,8 +293,9 @@ None currently.
 **Type System:**
 - 7 comprehensive type definition files
 - 100+ TypeScript interfaces and types
-- Full coverage of SOSTAC framework, MARBA scoring, intelligence features
+- Full coverage of MIRROR Framework (inspired by SOSTAC®), MARBA scoring, intelligence features
 - Content generation modes (MARBA vs Synapse) properly typed
+- Note: This platform uses a methodology inspired by SOSTAC® (PR Smith). SOSTAC® is a registered trademark of PR Smith.
 
 **Utilities & APIs:**
 - General utilities (30+ helper functions)

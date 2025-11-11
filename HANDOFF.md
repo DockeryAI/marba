@@ -26,6 +26,8 @@
    - Everything uses MARBA branding (not brandock)
    - Content generation has MARBA vs Synapse mode toggle
    - Customer logo integration in top-left with graceful fallback
+   - Framework: MIRROR (Measure, Intend, Reimagine, Reach, Optimize, Reflect)
+   - Note: Inspired by SOSTAC® (PR Smith). SOSTAC® is a registered trademark of PR Smith.
 
 ---
 
@@ -53,7 +55,7 @@
 
 ### Phase 2: Type System & Utilities (Complete)
 - **Type Definitions (7 files):**
-  - mirror.types.ts - SOSTAC framework
+  - mirror.types.ts - MIRROR Framework (inspired by SOSTAC®)
   - marbs.types.ts - AI assistant
   - content.types.ts - Calendar, generation modes
   - marba-score.types.ts - MARBA scoring
@@ -135,9 +137,10 @@
    - Display in top-left of main hub
    - Graceful fallback if no logo (app looks normal, not broken)
 
-3. **SOSTAC Framework:**
-   - 6 sections: Situation, Objectives, Strategy, Tactics, Action, Control
-   - Each section has subsections (see MIRROR_REDESIGN_PLAN.md)
+3. **MIRROR Framework:**
+   - 6 phases: Measure, Intend, Reimagine, Reach, Optimize, Reflect
+   - Inspired by SOSTAC® (PR Smith). SOSTAC® is a registered trademark of PR Smith.
+   - Each phase has subsections (see MIRROR_REDESIGN_PLAN.md)
 
 4. **Intelligence Showcase:**
    - Make intelligence assets the hero (not background)

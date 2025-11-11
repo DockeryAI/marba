@@ -1,9 +1,11 @@
--- Mirror sections data (SOSTAC structure)
+-- Mirror sections data (MIRROR Framework structure)
+-- This platform uses a methodology inspired by SOSTAC® (PR Smith). SOSTAC® is a registered trademark of PR Smith.
+-- MIRROR Framework phases: Measure, Intend, Reimagine, Reach, Optimize, Reflect
 CREATE TABLE IF NOT EXISTS mirror_sections (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   brand_id UUID NOT NULL REFERENCES brands(id) ON DELETE CASCADE,
 
-  section TEXT NOT NULL CHECK (section IN ('situation', 'objectives', 'strategy', 'tactics', 'action', 'control')),
+  section TEXT NOT NULL CHECK (section IN ('measure', 'intend', 'reimagine', 'reach', 'optimize', 'reflect')),
 
   data JSONB NOT NULL DEFAULT '{}'::jsonb,
 

@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS content_calendar_items (
 
   -- Metadata
   pillar_id UUID, -- Links to message pillar
-  goal_id UUID, -- Links to SOSTAC objective
+  goal_id UUID, -- Links to MIRROR Intend objective (mirror_intend_objectives table)
 
   -- Generation metadata
   generation_mode TEXT CHECK (generation_mode IN ('marba', 'synapse')), -- NEW: Track which mode was used

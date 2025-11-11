@@ -66,7 +66,7 @@
 - [ ] **TASK-020**: Create migration file: analytics_events table
 - [ ] **TASK-021**: Create migration file: platform_metrics_snapshots table
 - [ ] **TASK-022**: Create migration file: engagement_inbox table
-- [ ] **TASK-023**: Create migration file: sostac_objectives table
+- [ ] **TASK-023**: Create migration file: mirror_intend_objectives table (formerly sostac_objectives)
 - [ ] **TASK-024**: Create migration file: enrichment_schedule table
 - [ ] **TASK-025**: Create migration file: intelligence_opportunities table
 - [ ] **TASK-026**: Create migration file: learning_patterns table
@@ -251,15 +251,16 @@
 
 ---
 
-## PHASE 6: MIRROR - SITUATION SECTION (Tasks 139-165)
+## PHASE 6: MIRROR - MEASURE PHASE (Tasks 139-165)
+**Formerly "Situation Section" in SOSTAC®**
 
-### Situation Section Structure
+### Measure Phase Structure
 - [ ] **TASK-139**: Create src/components/mirror/MirrorLayout.tsx
-- [ ] **TASK-140**: Create src/components/mirror/MirrorNavigation.tsx (SOSTAC tabs)
+- [ ] **TASK-140**: Create src/components/mirror/MirrorNavigation.tsx (MIRROR phase tabs)
 - [ ] **TASK-141**: Create src/pages/Mirror.tsx (main mirror page)
-- [ ] **TASK-142**: Set up React Router for mirror sections
+- [ ] **TASK-142**: Set up React Router for mirror phases
 
-### Situation - Brand Health
+### Measure - Brand Health
 - [ ] **TASK-143**: Create src/components/mirror/situation/SituationSection.tsx
 - [ ] **TASK-144**: Create src/components/mirror/situation/BrandHealthCard.tsx
 - [ ] **TASK-145**: Create src/services/mirror/situation-analyzer.ts
@@ -299,11 +300,12 @@
 
 ---
 
-## PHASE 7: MIRROR - OBJECTIVES SECTION (Tasks 171-190)
+## PHASE 7: MIRROR - INTEND PHASE (Tasks 171-190)
+**Formerly "Objectives Section" in SOSTAC®**
 
-### Objectives Section Structure
-- [ ] **TASK-171**: Create src/components/mirror/objectives/ObjectivesSection.tsx
-- [ ] **TASK-172**: Create src/services/mirror/objectives-generator.ts
+### Intend Phase Structure
+- [ ] **TASK-171**: Create src/components/mirror/intend/IntendSection.tsx
+- [ ] **TASK-172**: Create src/services/mirror/intend-generator.ts
 
 ### Goal Builder
 - [ ] **TASK-173**: Create src/components/mirror/objectives/GoalBuilder.tsx
@@ -311,7 +313,7 @@
 - [ ] **TASK-175**: Create timeline selector (30/60/90 days, 6 months, 1 year)
 - [ ] **TASK-176**: Create metric input fields (current, target, unit)
 - [ ] **TASK-177**: Implement SMART goal validation
-- [ ] **TASK-178**: Save goals to sostac_objectives table
+- [ ] **TASK-178**: Save goals to mirror_intend_objectives table
 
 ### Recommended Objectives
 - [ ] **TASK-179**: Create src/components/mirror/objectives/RecommendedGoals.tsx
@@ -333,11 +335,12 @@
 
 ---
 
-## PHASE 8: MIRROR - STRATEGY SECTION (Tasks 191-225)
+## PHASE 8: MIRROR - REIMAGINE PHASE (Tasks 191-225)
+**Formerly "Strategy Section" in SOSTAC®**
 
-### Strategy Section Structure
-- [ ] **TASK-191**: Create src/components/mirror/strategy/StrategySection.tsx
-- [ ] **TASK-192**: Create src/services/mirror/strategy-builder.ts
+### Reimagine Phase Structure
+- [ ] **TASK-191**: Create src/components/mirror/reimagine/ReimaginSection.tsx
+- [ ] **TASK-192**: Create src/services/mirror/reimagine-builder.ts
 
 ### Brand Strategy
 - [ ] **TASK-193**: Create src/components/mirror/strategy/BrandStrategy.tsx
@@ -452,11 +455,12 @@
 
 ---
 
-## PHASE 10: MIRROR - TACTICS SECTION (Tasks 270-295)
+## PHASE 10: MIRROR - REACH PHASE (Tasks 270-295)
+**Formerly "Tactics Section" in SOSTAC®**
 
-### Tactics Section Structure
-- [ ] **TASK-270**: Create src/components/mirror/tactics/TacticsSection.tsx
-- [ ] **TASK-271**: Create src/services/mirror/tactics-planner.ts
+### Reach Phase Structure
+- [ ] **TASK-270**: Create src/components/mirror/reach/ReachSection.tsx
+- [ ] **TASK-271**: Create src/services/mirror/reach-planner.ts
 
 ### Platform Tactics
 - [ ] **TASK-272**: Create src/components/mirror/tactics/PlatformTactics.tsx
@@ -494,7 +498,8 @@
 
 ---
 
-## PHASE 11: CONTENT CALENDAR (ACTION SECTION) (Tasks 296-350)
+## PHASE 11: CONTENT CALENDAR (OPTIMIZE PHASE) (Tasks 296-350)
+**Formerly "Action Section" in SOSTAC®**
 
 ### Content Calendar Structure
 - [ ] **TASK-296**: Create src/components/content-calendar/CalendarView.tsx
@@ -576,7 +581,7 @@
 - [ ] **TASK-360**: Test publishing to Instagram (mock/sandbox)
 
 ### Opportunity Dashboard in Action Section
-- [ ] **TASK-361**: Place Opportunity Dashboard at top of Action section
+- [ ] **TASK-361**: Place Opportunity Dashboard at top of Optimize phase
 - [ ] **TASK-362**: Wire up to intelligence_opportunities table
 - [ ] **TASK-363**: Implement auto-refresh (every 5 minutes)
 - [ ] **TASK-364**: Implement countdown timers
@@ -656,15 +661,16 @@
 
 ---
 
-## PHASE 13: ANALYTICS & CONTROL SECTION (Tasks 418-465)
+## PHASE 13: ANALYTICS & REFLECT PHASE (Tasks 418-465)
+**Formerly "Control Section" in SOSTAC®**
 
-### Control Section Structure
-- [ ] **TASK-418**: Create src/components/mirror/control/ControlSection.tsx
+### Reflect Phase Structure
+- [ ] **TASK-418**: Create src/components/mirror/reflect/ReflectSection.tsx
 - [ ] **TASK-419**: Create src/components/analytics/AnalyticsDashboard.tsx
 
 ### Goal Progress Tracking
 - [ ] **TASK-420**: Create src/components/analytics/GoalProgressTracker.tsx
-- [ ] **TASK-421**: Display all active objectives (from sostac_objectives)
+- [ ] **TASK-421**: Display all active objectives (from mirror_intend_objectives)
 - [ ] **TASK-422**: Calculate current progress for each goal
 - [ ] **TASK-423**: Display progress bars
 - [ ] **TASK-424**: Show on-track indicator (green/yellow/red)
@@ -915,7 +921,7 @@
 - [ ] **TASK-593**: Aim for >70% code coverage
 
 ### Integration Testing
-- [ ] **TASK-594**: Test Mirror data flow (Situation → Objectives → Strategy → Tactics → Action → Control)
+- [ ] **TASK-594**: Test Mirror data flow (Measure → Intend → Reimagine → Reach → Optimize → Reflect)
 - [ ] **TASK-595**: Test Marbs conversation flow
 - [ ] **TASK-596**: Test content generation end-to-end
 - [ ] **TASK-597**: Test content scheduling end-to-end
@@ -924,7 +930,7 @@
 - [ ] **TASK-600**: Test analytics dashboard data display
 
 ### Manual QA Checklist
-- [ ] **TASK-601**: Test all SOSTAC sections load correctly
+- [ ] **TASK-601**: Test all MIRROR phases load correctly
 - [ ] **TASK-602**: Test all intelligence widgets display data
 - [ ] **TASK-603**: Test Marbs responds to queries
 - [ ] **TASK-604**: Test Marbs executes actions

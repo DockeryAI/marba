@@ -1,10 +1,12 @@
 -- Marbs AI Assistant conversation history
+-- This platform uses a methodology inspired by SOSTAC® (PR Smith). SOSTAC® is a registered trademark of PR Smith.
+-- MIRROR Framework phases: Measure, Intend, Reimagine, Reach, Optimize, Reflect
 CREATE TABLE IF NOT EXISTS marbs_conversations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   brand_id UUID NOT NULL REFERENCES brands(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
 
-  section TEXT, -- Which SOSTAC section user was in
+  section TEXT, -- Which MIRROR section user was in (measure, intend, reimagine, reach, optimize, reflect)
   subsection TEXT, -- Which subsection
 
   role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),

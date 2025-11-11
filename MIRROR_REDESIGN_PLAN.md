@@ -2,18 +2,30 @@
 ## Project Codename: "Operation Nuclear Rebuild"
 
 **Created:** 2025-11-11
-**Status:** Planning Phase
+**Status:** Planning Phase  
 **Estimated Completion:** When hell freezes over (optimistically: 8-10 weeks)
 **Difficulty:** 🔥🔥🔥🔥🔥 (5/5 dumpster fires)
+
+**LEGAL ATTRIBUTION:** This platform uses a methodology inspired by SOSTAC® (PR Smith). SOSTAC® is a registered trademark of PR Smith. The MIRROR Framework is MARBA's proprietary adaptation.
+
+**MIRROR Framework Mapping:**
+- **M**easure ← Situation Analysis
+- **I**ntend ← Objectives  
+- **R**reimagine ← Strategy
+- **R**each ← Tactics
+- **O**ptimize ← Action
+- **R**eflect ← Control
+
+---
 
 ---
 
 ## Executive Summary (For When Your PM Asks "How Long?")
 
-This is a complete ground-up rebuild of the Mirror application, restructured around the SOSTAC marketing framework, with full API enrichment, Synapse integration, persistent AI assistance, and a complete codebase migration from `/marba/Figma` to `~/Projects/MARBA`.
+This is a complete ground-up rebuild of the Mirror application, restructured around the MIRROR Framework (inspired by SOSTAC®), with full API enrichment, Synapse integration, persistent AI assistance, and a complete codebase migration from `/marba/Figma` to `~/Projects/MARBA`.
 
 **What We're Building:**
-- SOSTAC-based Mirror (6 main sections replacing current 7-tab structure)
+- MIRROR Framework-based Mirror (6 main phases replacing current 7-tab structure)
 - Persistent AI assistant "Marbs" with contextual awareness
 - Content calendar with automated creation
 - Visual design studio for posts
@@ -33,7 +45,7 @@ This is a complete ground-up rebuild of the Mirror application, restructured aro
 
 ## Table of Contents
 
-1. [SOSTAC Framework Understanding](#1-sostac-framework-understanding)
+1. [MIRROR Framework Understanding](#1-mirror-framework-understanding)
 2. [Current State Analysis](#2-current-state-analysis)
 3. [Architecture Overview](#3-architecture-overview)
 4. [Intelligence Showcase Strategy](#4-intelligence-showcase-strategy) ⭐ **NEW**
@@ -55,59 +67,59 @@ This is a complete ground-up rebuild of the Mirror application, restructured aro
 
 ---
 
-## 1. SOSTAC Framework Understanding
+## 1. MIRROR Framework Understanding
 
-### What is SOSTAC?
+### What is MIRROR?
 
-SOSTAC® is a marketing planning model created by PR Smith with 6 sequential stages:
+The MIRROR Framework is MARBA's proprietary marketing planning model, inspired by SOSTAC® (created by PR Smith). It adapts the proven SOSTAC® methodology into 6 memorable phases:
 
-**S - Situation Analysis** (Where are we now?)
+**M - Measure** (Where are we now?) - formerly "Situation Analysis"
 - Current market position
 - Competitive landscape
 - Internal capabilities
 - SWOT/TOWS analysis
 
-**O - Objectives** (Where do we want to be?)
+**I - Intend** (Where do we want to be?) - formerly "Objectives"
 - SMART goals
 - Measurable targets
 - Business outcomes
 
-**S - Strategy** (How do we get there?)
+**R - Reimagine** (How do we get there?) - formerly "Strategy"
 - Overall approach
 - Competitive positioning
 - Strategic direction
 
-**T - Tactics** (How exactly do we get there?)
+**R - Reach** (How exactly do we get there?) - formerly "Tactics"
 - Specific implementation methods
 - Channel-specific tactics
 - Content strategies
 
-**A - Action** (What is our plan?)
+**O - Optimize** (What is our plan?) - formerly "Action"
 - Executable steps
 - Timelines
 - Responsibilities
 - Resource allocation
 
-**C - Control** (Did we get there?)
+**R - Reflect** (Did we get there?) - formerly "Control"
 - KPIs and metrics
 - Performance monitoring
 - Adjustment mechanisms
 
-### Applying SOSTAC to SMB Owners
+### Applying MIRROR to SMB Owners
 
-For a small business owner, SOSTAC needs to be:
+For a small business owner, the MIRROR Framework needs to be:
 - **Visual** - Show, don't tell
 - **Actionable** - Every insight leads to a clear action
 - **Simple** - No marketing jargon
 - **Fast** - They can't spend hours analyzing
 - **Automated** - System does the heavy lifting
 
-### SOSTAC Content Balance (Industry Standard)
-- 20% - Situation Analysis
-- 5% - Objectives
-- 45% - Strategy
-- 30% - Tactics
-- Action & Control - Integrated throughout
+### MIRROR Phase Balance (Adapted from SOSTAC® Industry Standard)
+- 20% - Measure (formerly Situation Analysis)
+- 5% - Intend (formerly Objectives)
+- 45% - Reimagine (formerly Strategy)
+- 30% - Reach (formerly Tactics)
+- Optimize & Reflect (formerly Action & Control) - Integrated throughout
 
 ---
 
@@ -186,12 +198,12 @@ For a small business owner, SOSTAC needs to be:
 │   │   └── page.tsx
 │   ├── components/
 │   │   ├── mirror/             # Mirror-specific components
-│   │   │   ├── situation/      # SOSTAC: Situation
-│   │   │   ├── objectives/     # SOSTAC: Objectives
-│   │   │   ├── strategy/       # SOSTAC: Strategy
-│   │   │   ├── tactics/        # SOSTAC: Tactics
-│   │   │   ├── action/         # SOSTAC: Action (Content Calendar)
-│   │   │   └── control/        # SOSTAC: Control (Analytics)
+│   │   │   ├── situation/      # MIRROR: Situation
+│   │   │   ├── objectives/     # MIRROR: Objectives
+│   │   │   ├── strategy/       # MIRROR: Strategy
+│   │   │   ├── tactics/        # MIRROR: Tactics
+│   │   │   ├── action/         # MIRROR: Action (Content Calendar)
+│   │   │   └── control/        # MIRROR: Control (Analytics)
 │   │   ├── marbs/              # AI Assistant
 │   │   │   ├── MarbsAssistant.tsx
 │   │   │   ├── MarbsContextProvider.tsx
@@ -270,7 +282,7 @@ For a small business owner, SOSTAC needs to be:
 ### Data Flow Architecture
 
 ```
-User → Mirror Section (SOSTAC) → Marbs Assistant
+User → Mirror Section (MIRROR Framework, inspired by SOSTAC®) → Marbs Assistant
                 ↓                        ↓
           Analysis Engine ← → Synapse Enhancement
                 ↓                        ↓
@@ -1167,9 +1179,9 @@ When a user first logs in after onboarding, they should see:
 
 ## 5. Mirror Redesign Structure
 
-### Overview: SOSTAC Navigation
+### Overview: MIRROR Framework Navigation
 
-**New Structure (6 main sections):**
+**New Structure (6 main phases):**
 
 ```
 ╔════════════════════════════════════════════════════════════╗
@@ -1460,7 +1472,7 @@ When a user first logs in after onboarding, they should see:
 ```typescript
 // Core Types
 interface MarbsContext {
-  section: SOSTACSection;
+  section: MIRRORPhase;
   subsection?: string;
   data: Record<string, any>;
   availableActions: Action[];
@@ -1473,7 +1485,7 @@ interface MarbsCapability {
   name: string;
   description: string;
   contextRequired: string[];
-  availableIn: SOSTACSection[];
+  availableIn: MIRRORPhase[];
   execute: (params: any) => Promise<any>;
 }
 ```
@@ -1642,7 +1654,7 @@ Marbs uses Synapse to enhance responses:
 
 ### Overview
 
-Fully automated content creation, scheduling, and publishing system integrated into the Action (SOSTAC) section.
+Fully automated content creation, scheduling, and publishing system integrated into the Action (MIRROR Framework, inspired by SOSTAC®) section.
 
 ### Features
 
@@ -1911,7 +1923,7 @@ Visual post creation tool for designing stunning social media posts, graphics, a
 
 ### Overview
 
-Comprehensive analytics dashboard in the Control (SOSTAC) section, showing performance metrics, insights, and providing engagement tools.
+Comprehensive analytics dashboard in the Control (MIRROR Framework, inspired by SOSTAC®) section, showing performance metrics, insights, and providing engagement tools.
 
 ### Dashboard Sections
 
@@ -2487,7 +2499,7 @@ From `Figma/src/components/`:
 - `uvp/` → `MARBA/src/components/uvp/` (redesigned)
 - `valueForge/` → `MARBA/src/components/valueForge/`
 - `ui/` → `MARBA/src/components/ui/` (shadcn components)
-- `mirror/` → `MARBA/src/components/mirror/` (RESTRUCTURED for SOSTAC)
+- `mirror/` → `MARBA/src/components/mirror/` (RESTRUCTURED for MIRROR Framework)
 
 **✅ Services to Copy:**
 
@@ -2596,7 +2608,7 @@ OLD → NEW
 
 # Components
 Figma/src/components/AssetAnalysis/BrandMirrorTabs/BrandMirrorTabs.tsx
-  → src/components/mirror/MirrorTabs.tsx (redesigned for SOSTAC)
+  → src/components/mirror/MirrorTabs.tsx (redesigned for MIRROR Framework)
 
 Figma/src/components/synapse/
   → src/components/synapse/ (direct copy)
@@ -2955,7 +2967,7 @@ CREATE TABLE marbs_conversations (
   brand_id UUID REFERENCES brands(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
 
-  section TEXT, -- Which SOSTAC section
+  section TEXT, -- Which MIRROR phase
   subsection TEXT, -- Which subsection
 
   role TEXT NOT NULL, -- 'user' or 'assistant'
@@ -3108,8 +3120,8 @@ CREATE INDEX idx_engagement_inbox_brand ON engagement_inbox(brand_id);
 CREATE INDEX idx_engagement_inbox_status ON engagement_inbox(status);
 CREATE INDEX idx_engagement_inbox_created ON engagement_inbox(created_at);
 
--- SOSTAC objectives/goals (expanded from brand_goals)
-CREATE TABLE sostac_objectives (
+-- MIRROR Intend objectives/goals (expanded from brand_goals)
+CREATE TABLE mirror_intend_objectives (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   brand_id UUID REFERENCES brands(id) ON DELETE CASCADE,
 
@@ -3141,8 +3153,8 @@ CREATE TABLE sostac_objectives (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_objectives_brand ON sostac_objectives(brand_id);
-CREATE INDEX idx_objectives_status ON sostac_objectives(status);
+CREATE INDEX idx_objectives_brand ON mirror_intend_objectives(brand_id);
+CREATE INDEX idx_objectives_status ON mirror_intend_objectives(status);
 
 -- Auto-enrichment schedule
 CREATE TABLE enrichment_schedule (
@@ -3169,7 +3181,7 @@ CREATE INDEX idx_enrichment_schedule_next ON enrichment_schedule(next_run);
 -- Add MARBA-specific fields to existing brands table
 ALTER TABLE brands
   ADD COLUMN mirror_version TEXT DEFAULT '2.0',
-  ADD COLUMN sostac_enabled BOOLEAN DEFAULT true,
+  ADD COLUMN mirror_framework_enabled BOOLEAN DEFAULT true,
   ADD COLUMN auto_enrichment_enabled BOOLEAN DEFAULT true,
   ADD COLUMN marbs_enabled BOOLEAN DEFAULT true;
 
@@ -3218,7 +3230,7 @@ ALTER TABLE content_calendar_ideas
 - Working Marbs assistant (basic version)
 - Design system implemented
 
-### Sprint 2: SOSTAC Mirror Core (Weeks 3-4)
+### Sprint 2: MIRROR Framework Core (Weeks 3-4)
 
 **Goals:**
 - Build Situation section
@@ -3320,7 +3332,7 @@ ALTER TABLE content_calendar_ideas
 - Content Calendar fully functional
 - Design Studio working (MVP)
 - Analytics Dashboard complete
-- All 6 SOSTAC sections complete
+- All 6 MIRROR phases complete
 
 ### Post-Sprint: Polish & Launch (Weeks 9-10)
 
@@ -3352,7 +3364,7 @@ ALTER TABLE content_calendar_ideas
 - **Mitigation:** Start with 2 platforms (Facebook, Instagram), add others incrementally
 
 **4. Data Migration**
-- **Risk:** Existing brand data needs to map to new SOSTAC structure
+- **Risk:** Existing brand data needs to map to new MIRROR Framework structure
 - **Mitigation:** Build data adapter, test with sample brands, provide manual override
 
 ### Medium-Risk Items 🔥🔥
@@ -3385,7 +3397,7 @@ ALTER TABLE content_calendar_ideas
 
 ### Launch Metrics (Week 1)
 
-- [ ] All 6 SOSTAC sections load without errors
+- [ ] All 6 MIRROR phases load without errors
 - [ ] Marbs responds to queries in <2 seconds
 - [ ] Content generation works for all platforms
 - [ ] Design Studio can export images
@@ -3682,7 +3694,7 @@ This is a massive undertaking. You're essentially rebuilding the entire Mirror a
 
 **What Could Go Wrong:** Everything. Literally everything.
 
-**What Could Go Right:** You'll have the most advanced AI-powered marketing platform for SMBs, with a clear SOSTAC structure, persistent AI assistance, and full automation.
+**What Could Go Right:** You'll have the most advanced AI-powered marketing platform for SMBs, with a clear MIRROR Framework structure, persistent AI assistance, and full automation.
 
 Your move, boss.
 
