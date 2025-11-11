@@ -195,7 +195,7 @@ export const StrategySection: React.FC<StrategySectionProps> = ({
       <MirrorSectionHeader
         title="Strategy"
         description="Define your positioning, audience, content, and competitive approach"
-        badge={<span className="text-xs">SOSTAC Analysis</span>}
+        badge={<span className="text-xs">MIRROR Analysis</span>}
         actions={
           <Button size="sm" onClick={generateFullStrategy} disabled={isLoading}>
             <Sparkles className="h-4 w-4 mr-2" />

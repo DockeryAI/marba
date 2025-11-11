@@ -33,7 +33,7 @@ export const HomePage: React.FC = () => {
           <span className="text-primary">Powered by AI</span>
         </h2>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-          Transform your marketing with SOSTAC-based strategy, AI-powered insights,
+          Transform your marketing with MIRROR-based strategy, AI-powered insights,
           and actionable tactics that drive real results.
         </p>
         <div className="flex items-center justify-center gap-4">
@@ -56,16 +56,16 @@ export const HomePage: React.FC = () => {
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* SOSTAC Mirror */}
+          {/* MIRROR Framework */}
           <Card>
             <CardHeader>
               <Target className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>SOSTAC Mirror</CardTitle>
+              <CardTitle>MIRROR Framework</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Comprehensive strategic framework covering Situation, Objectives,
-                Strategy, Tactics, Action, and Control.
+                Comprehensive strategic framework covering Market analysis, Intent setting,
+                Reach strategy, Resonance tactics, Optimization actions, and Results tracking.
               </p>
               <ul className="mt-4 space-y-2 text-sm">
                 <li className="flex items-center gap-2">

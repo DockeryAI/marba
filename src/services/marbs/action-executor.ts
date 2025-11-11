@@ -230,7 +230,7 @@ export class ActionExecutor {
         action.data
 
       const { data, error } = await supabase
-        .from('sostac_objectives')
+        .from('mirror_objectives')
         .insert({
           brand_id: context.relevant_data?.brand_id,
           category,

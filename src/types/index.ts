@@ -2,7 +2,7 @@
 
 // Mirror types
 export type {
-  SOSTACSection,
+  MirrorSectionType,
   MirrorSection,
   BrandHealth,
   MarketPosition,

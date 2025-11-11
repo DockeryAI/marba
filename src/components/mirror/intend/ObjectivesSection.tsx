@@ -2,7 +2,7 @@ import * as React from 'react'
 import { GoalBuilder } from './GoalBuilder'
 import { RecommendedGoals } from './RecommendedGoals'
 import { CustomGoals } from './CustomGoals'
-import { SOSTACObjective } from '@/services/mirror/objectives-generator'
+import { IntentObjective } from '@/services/mirror/objectives-generator'
 import { MirrorSectionHeader } from '@/components/layouts/MirrorLayout'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
@@ -19,7 +19,7 @@ export const ObjectivesSection: React.FC<ObjectivesSectionProps> = ({
   situationData,
   className,
 }) => {
-  const [goals, setGoals] = React.useState<SOSTACObjective[]>([])
+  const [goals, setGoals] = React.useState<IntentObjective[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
 
   React.useEffect(() => {
@@ -30,13 +30,13 @@ export const ObjectivesSection: React.FC<ObjectivesSectionProps> = ({
     setIsLoading(true)
     try {
       const { data, error } = await supabase
-        .from('sostac_objectives')
+        .from('mirror_objectives')
         .select('*')
         .eq('brand_id', brandId)
         .eq('status', 'active')
 
       if (!error && data) {
-        setGoals(data as SOSTACObjective[])
+        setGoals(data as IntentObjective[])
       }
     } catch (error) {
       console.error('Failed to load goals:', error)
@@ -45,9 +45,9 @@ export const ObjectivesSection: React.FC<ObjectivesSectionProps> = ({
     }
   }
 
-  const handleSaveGoal = async (objective: SOSTACObjective) => {
+  const handleSaveGoal = async (objective: IntentObjective) => {
     try {
-      const { error } = await supabase.from('sostac_objectives').insert({
+      const { error } = await supabase.from('mirror_objectives').insert({
         ...objective,
         brand_id: brandId,
         created_at: new Date().toISOString(),
@@ -64,7 +64,7 @@ export const ObjectivesSection: React.FC<ObjectivesSectionProps> = ({
   const handleDeleteGoal = async (id: string) => {
     try {
       const { error } = await supabase
-        .from('sostac_objectives')
+        .from('mirror_objectives')
         .delete()
         .eq('id', id)
 
@@ -84,7 +84,7 @@ export const ObjectivesSection: React.FC<ObjectivesSectionProps> = ({
 
     try {
       const { error } = await supabase
-        .from('sostac_objectives')
+        .from('mirror_objectives')
         .update({ status: newStatus })
         .eq('id', id)
 
@@ -101,7 +101,7 @@ export const ObjectivesSection: React.FC<ObjectivesSectionProps> = ({
       <MirrorSectionHeader
         title="Objectives"
         description="Set SMART goals and track progress towards your targets"
-        badge={<span className="text-xs">SOSTAC Analysis</span>}
+        badge={<span className="text-xs">MIRROR Analysis</span>}
         actions={
           <Button size="sm">
             <Sparkles className="h-4 w-4 mr-2" />

@@ -6,16 +6,16 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { SOSTACObjective, ObjectivesGenerator } from '@/services/mirror/objectives-generator'
+import { IntentObjective, ObjectivesGenerator } from '@/services/mirror/objectives-generator'
 import { CheckCircle2, AlertCircle, Plus } from 'lucide-react'
 
 interface GoalBuilderProps {
-  onSave: (objective: SOSTACObjective) => void
+  onSave: (objective: IntentObjective) => void
   className?: string
 }
 
 export const GoalBuilder: React.FC<GoalBuilderProps> = ({ onSave, className }) => {
-  const [objective, setObjective] = React.useState<Partial<SOSTACObjective>>({
+  const [objective, setObjective] = React.useState<Partial<IntentObjective>>({
     category: 'awareness',
     timeline: '90_days',
     status: 'active',
@@ -33,7 +33,7 @@ export const GoalBuilder: React.FC<GoalBuilderProps> = ({ onSave, className }) =
 
   const handleSave = () => {
     if (validation.valid) {
-      onSave(objective as SOSTACObjective)
+      onSave(objective as IntentObjective)
       setObjective({ category: 'awareness', timeline: '90_days', status: 'active' })
     }
   }

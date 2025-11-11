@@ -2,14 +2,15 @@
 
 import type { ContentPlatform } from '@/types';
 
-// SOSTAC Section Names
-export const SOSTAC_SECTIONS = {
-  situation: 'Situation',
-  objectives: 'Objectives',
-  strategy: 'Strategy',
-  tactics: 'Tactics',
-  action: 'Action',
-  control: 'Control',
+// MIRROR Framework Phase Names
+// MIRROR: Measure, Intend, Reimagine, Reach, Optimize, Reflect
+export const MIRROR_PHASES = {
+  measure: 'Measure',
+  intend: 'Intend',
+  reimagine: 'Reimagine',
+  reach: 'Reach',
+  optimize: 'Optimize',
+  reflect: 'Reflect',
 } as const;
 
 // Content Platforms

@@ -1,6 +1,6 @@
 /**
  * Strategy Builder Service
- * Generates and validates marketing strategies aligned with SOSTAC framework
+ * Generates and validates marketing strategies aligned with MIRROR framework
  */
 
 export interface MessagePillar {

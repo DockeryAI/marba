@@ -1,9 +1,10 @@
 import * as React from 'react'
 import { MirrorLayout } from '@/components/layouts/MirrorLayout'
-import { SituationSection } from '@/components/mirror/situation'
-import { ObjectivesSection } from '@/components/mirror/objectives'
-import { StrategySection } from '@/components/mirror/strategy'
-import { TacticsSection } from '@/components/mirror/tactics'
+import { SituationSection } from '@/components/mirror/measure'
+import { ObjectivesSection } from '@/components/mirror/intend'
+import { StrategySection } from '@/components/mirror/reimagine'
+import { TacticsSection } from '@/components/mirror/reach'
+import { ActionSection } from '@/components/mirror/optimize'
 
 export const MirrorPage: React.FC = () => {
   // Mock brand data - in production this would come from auth/context
@@ -20,10 +21,11 @@ export const MirrorPage: React.FC = () => {
     ],
   }
 
-  const [activeSection, setActiveSection] = React.useState('situation')
+  const [activeSection, setActiveSection] = React.useState('measure')
   const [objectives, setObjectives] = React.useState<any[]>([])
   const [strategy, setStrategy] = React.useState<any>({})
-  const [situationData, setSituationData] = React.useState<any>({
+  const [tactics, setTactics] = React.useState<any[]>([])
+  const [measureData, setMeasureData] = React.useState<any>({
     brandHealth: 72,
     industry: 'Technology',
     currentMetrics: {
@@ -43,8 +45,8 @@ export const MirrorPage: React.FC = () => {
 
   const sections = [
     {
-      id: 'situation',
-      label: 'Situation',
+      id: 'measure',
+      label: 'Measure',
       subsections: [
         { id: 'brand-health', label: 'Brand Health' },
         { id: 'market-position', label: 'Market Position' },
@@ -53,16 +55,16 @@ export const MirrorPage: React.FC = () => {
       ],
     },
     {
-      id: 'objectives',
-      label: 'Objectives',
+      id: 'intend',
+      label: 'Intend',
       subsections: [
         { id: 'goals', label: 'Goals' },
         { id: 'targets', label: 'Targets' },
       ],
     },
     {
-      id: 'strategy',
-      label: 'Strategy',
+      id: 'reimagine',
+      label: 'Reimagine',
       subsections: [
         { id: 'brand', label: 'Brand' },
         { id: 'audience', label: 'Audience' },
@@ -71,11 +73,20 @@ export const MirrorPage: React.FC = () => {
       ],
     },
     {
-      id: 'tactics',
-      label: 'Tactics',
+      id: 'reach',
+      label: 'Reach',
       subsections: [
         { id: 'channels', label: 'Channels' },
         { id: 'campaigns', label: 'Campaigns' },
+      ],
+    },
+    {
+      id: 'optimize',
+      label: 'Optimize',
+      subsections: [
+        { id: 'board', label: 'Action Board' },
+        { id: 'timeline', label: 'Timeline' },
+        { id: 'priority', label: 'By Priority' },
       ],
     },
   ]
@@ -87,42 +98,49 @@ export const MirrorPage: React.FC = () => {
       onSectionChange={setActiveSection}
     >
       <div className="space-y-12">
-        {/* Situation Section */}
-        <div id="situation">
+        {/* Measure Phase (formerly Situation) */}
+        <div id="measure">
           <SituationSection
             brandId={brandId}
             brandData={brandData}
-            onDataUpdate={setSituationData}
+            onDataUpdate={setMeasureData}
           />
         </div>
 
-        {/* Objectives Section */}
-        <div id="objectives">
+        {/* Intend Phase (formerly Objectives) */}
+        <div id="intend">
           <ObjectivesSection
             brandId={brandId}
-            situationData={situationData}
+            situationData={measureData}
           />
         </div>
 
-        {/* Strategy Section */}
-        <div id="strategy">
+        {/* Reimagine Phase (formerly Strategy) */}
+        <div id="reimagine">
           <StrategySection
             brandId={brandId}
             brandData={brandData}
             objectives={objectives}
-            situationAnalysis={situationData}
+            situationAnalysis={measureData}
             competitors={brandData.competitors}
           />
         </div>
 
-        {/* Tactics Section */}
-        <div id="tactics">
+        {/* Reach Phase (formerly Tactics) */}
+        <div id="reach">
           <TacticsSection
             brandId={brandId}
             strategy={strategy}
             objectives={objectives}
             budget={25000}
             teamSize={5}
+          />
+        </div>
+
+        {/* Optimize Phase (formerly Action) */}
+        <div id="optimize">
+          <ActionSection
+            tactics={tactics}
           />
         </div>
       </div>

@@ -1,9 +1,10 @@
 /**
- * Objectives Generator Service
- * Generates SMART goals based on situation analysis and industry benchmarks
+ * Intent Objectives Generator Service
+ * Generates SMART goals based on measurement analysis and industry benchmarks
+ * Part of the MIRROR Framework - Intend Phase
  */
 
-export interface SOSTACObjective {
+export interface IntentObjective {
   id?: string
   brand_id: string
   category: 'awareness' | 'leads' | 'retention' | 'revenue' | 'engagement' | 'custom'
@@ -29,8 +30,8 @@ export class ObjectivesGenerator {
     brandHealth: number
     industry: string
     currentMetrics: Record<string, number>
-  }): SOSTACObjective[] {
-    const objectives: SOSTACObjective[] = []
+  }): IntentObjective[] {
+    const objectives: IntentObjective[] = []
     const { brandHealth, industry, currentMetrics } = situationData
 
     // If brand health is low, recommend awareness goal
@@ -106,7 +107,7 @@ export class ObjectivesGenerator {
   /**
    * Validate SMART goal criteria
    */
-  static validateSMARTGoal(objective: Partial<SOSTACObjective>): {
+  static validateSMARTGoal(objective: Partial<IntentObjective>): {
     valid: boolean
     errors: string[]
     suggestions: string[]
@@ -164,7 +165,7 @@ export class ObjectivesGenerator {
   /**
    * Calculate expected completion percentage based on current progress
    */
-  static calculateProgress(objective: SOSTACObjective): number {
+  static calculateProgress(objective: IntentObjective): number {
     if (objective.status === 'completed') return 100
     if (objective.status === 'paused') return 0
 

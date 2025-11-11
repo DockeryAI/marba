@@ -158,7 +158,7 @@ export const TacticsSection: React.FC<TacticsSectionProps> = ({
       <MirrorSectionHeader
         title="Tactics"
         description="Executable marketing tactics and campaign plans"
-        badge={<span className="text-xs">SOSTAC Analysis</span>}
+        badge={<span className="text-xs">MIRROR Analysis</span>}
         actions={
           <Button size="sm" onClick={generateTactics} disabled={isGenerating}>
             <Sparkles className="h-4 w-4 mr-2" />

@@ -71,7 +71,7 @@ export const SituationSection: React.FC<SituationSectionProps> = ({
       <MirrorSectionHeader
         title="Situation"
         description="Current brand health, market position, and competitive landscape"
-        badge={<span className="text-xs">SOSTAC Analysis</span>}
+        badge={<span className="text-xs">MIRROR Analysis</span>}
         actions={
           <>
             <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>

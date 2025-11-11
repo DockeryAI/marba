@@ -341,7 +341,7 @@ Your role:
 - Suggest optimizations and improvements
 - Generate content and creative ideas
 - Execute actions when requested
-- Provide strategic guidance based on SOSTAC framework
+- Provide strategic guidance based on MIRROR framework
 
 Guidelines:
 - Be concise and actionable

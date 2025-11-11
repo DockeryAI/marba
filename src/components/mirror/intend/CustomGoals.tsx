@@ -3,11 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { SOSTACObjective, ObjectivesGenerator } from '@/services/mirror/objectives-generator'
+import { IntentObjective, ObjectivesGenerator } from '@/services/mirror/objectives-generator'
 import { Target, Trash2, Edit, Pause, Play } from 'lucide-react'
 
 interface CustomGoalsProps {
-  goals: SOSTACObjective[]
+  goals: IntentObjective[]
   onEdit?: (id: string) => void
   onDelete?: (id: string) => void
   onToggleStatus?: (id: string) => void

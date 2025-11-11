@@ -2,12 +2,12 @@ import * as React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { SOSTACObjective, ObjectivesGenerator } from '@/services/mirror/objectives-generator'
+import { IntentObjective, ObjectivesGenerator } from '@/services/mirror/objectives-generator'
 import { Sparkles, TrendingUp, CheckCircle, ArrowRight } from 'lucide-react'
 
 interface RecommendedGoalsProps {
   situationData: { brandHealth: number; industry: string; currentMetrics: Record<string, number> }
-  onAccept: (objective: SOSTACObjective) => void
+  onAccept: (objective: IntentObjective) => void
   className?: string
 }
 

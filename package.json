@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "MARBA Mirror - SOSTAC-based marketing intelligence platform",
+  "description": "MARBA Mirror - MIRROR Framework marketing intelligence platform (Measure, Intend, Reimagine, Reach, Optimize, Reflect)",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

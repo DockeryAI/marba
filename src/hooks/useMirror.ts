@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { supabase, functions } from '@/lib/supabase';
-import type { MirrorSection, SOSTACSection } from '@/types';
+import type { MirrorSection, MirrorSectionType } from '@/types';
 
-export function useMirror(brandId: string, section?: SOSTACSection) {
+export function useMirror(brandId: string, section?: MirrorSectionType) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [sections, setSections] = useState<MirrorSection[]>([]);
@@ -43,7 +43,7 @@ export function useMirror(brandId: string, section?: SOSTACSection) {
   };
 
   // Update section data
-  const updateSection = async (sectionName: SOSTACSection, data: Record<string, any>) => {
+  const updateSection = async (sectionName: MirrorSectionType, data: Record<string, any>) => {
     try {
       setLoading(true);
       setError(null);
@@ -87,7 +87,7 @@ export function useMirror(brandId: string, section?: SOSTACSection) {
   };
 
   // Run AI analysis on a section
-  const analyzeSection = async (sectionName: SOSTACSection, forceRefresh = false) => {
+  const analyzeSection = async (sectionName: MirrorSectionType, forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
@@ -108,7 +108,7 @@ export function useMirror(brandId: string, section?: SOSTACSection) {
   };
 
   // Toggle auto-enrichment
-  const toggleAutoEnrich = async (sectionName: SOSTACSection, enabled: boolean) => {
+  const toggleAutoEnrich = async (sectionName: MirrorSectionType, enabled: boolean) => {
     try {
       setLoading(true);
       setError(null);

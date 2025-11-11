@@ -1,7 +1,7 @@
 // Type definitions for API requests and responses
 
 import type { ContentGenerationMode, ContentPlatform } from './content.types';
-import type { SOSTACSection } from './mirror.types';
+import type { MirrorSectionType } from './mirror.types';
 
 // Generic API Response
 export interface APIResponse<T = any> {
@@ -21,13 +21,13 @@ export interface APIError {
 // Mirror Analysis API
 export interface AnalyzeMirrorRequest {
   brand_id: string;
-  section: SOSTACSection;
+  section: MirrorSectionType;
   force_refresh?: boolean;
 }
 
 export interface AnalyzeMirrorResponse {
   brand_id: string;
-  section: SOSTACSection;
+  section: MirrorSectionType;
   analysis: Record<string, any>;
   insights: string[];
   recommendations: string[];

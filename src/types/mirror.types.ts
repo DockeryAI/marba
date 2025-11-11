@@ -1,17 +1,18 @@
-// Type definitions for SOSTAC Mirror sections and related data structures
+// Type definitions for MIRROR Framework sections and related data structures
+// MIRROR: Measure, Intend, Reimagine, Reach, Optimize, Reflect
 
-export type SOSTACSection =
-  | 'situation'
-  | 'objectives'
-  | 'strategy'
-  | 'tactics'
-  | 'action'
-  | 'control';
+export type MirrorPhase =
+  | 'measure'    // Formerly 'situation'
+  | 'intend'     // Formerly 'objectives'
+  | 'reimagine'  // Formerly 'strategy'
+  | 'reach'      // Formerly 'tactics'
+  | 'optimize'   // Formerly 'action'
+  | 'reflect';   // Formerly 'control'
 
 export interface MirrorSection {
   id: string;
   brand_id: string;
-  section: SOSTACSection;
+  section: MirrorPhase;
   data: Record<string, any>;
   last_enriched_at?: string;
   auto_enrich_enabled: boolean;
@@ -19,7 +20,7 @@ export interface MirrorSection {
   updated_at: string;
 }
 
-// Situation Section Types
+// Measure Phase Types (formerly Situation)
 export interface BrandHealth {
   overall_score: number;
   visibility_score: number;
@@ -92,7 +93,7 @@ export interface AudienceProfile {
   content_performance_by_segment: Record<string, any>;
 }
 
-// Objectives Section Types
+// Intend Phase Types (formerly Objectives)
 export interface Objective {
   id: string;
   title: string;
@@ -115,7 +116,7 @@ export interface ObjectiveMilestone {
   completed_at?: string;
 }
 
-// Strategy Section Types
+// Reimagine Phase Types (formerly Strategy)
 export interface ContentPillar {
   id: string;
   name: string;
@@ -148,7 +149,7 @@ export interface BrandStrategy {
   differentiation_points: string[];
 }
 
-// Tactics Section Types
+// Reach Phase Types (formerly Tactics)
 export interface TacticalCampaign {
   id: string;
   name: string;
@@ -163,7 +164,7 @@ export interface TacticalCampaign {
   content_pieces: string[];
 }
 
-// Action Section Types
+// Optimize Phase Types (formerly Action)
 export interface ActionTask {
   id: string;
   title: string;
@@ -178,7 +179,7 @@ export interface ActionTask {
   actual_hours?: number;
 }
 
-// Control Section Types
+// Reflect Phase Types (formerly Control)
 export interface KPIMetric {
   name: string;
   current_value: number;
@@ -213,7 +214,7 @@ export interface LearningInsight {
 export interface EnrichmentSchedule {
   id: string;
   brand_id: string;
-  section: SOSTACSection;
+  section: MirrorPhase;
   frequency: 'realtime' | 'hourly' | 'daily' | 'weekly' | 'monthly';
   last_run_at?: string;
   next_run_at: string;
