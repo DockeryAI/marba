@@ -6,18 +6,66 @@ import type { Database } from '@/types/database.types';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables. Please check your .env file.');
+// Demo mode flag
+export const isDemoMode = !supabaseUrl || !supabaseAnonKey;
+
+if (isDemoMode) {
+  console.warn('🔔 Running in DEMO MODE - Supabase not configured. Data will not persist.');
 }
 
-// Create Supabase client
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-});
+// Create Supabase client (or mock for demo mode)
+export const supabase = isDemoMode
+  ? createMockSupabaseClient()
+  : createClient<Database>(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    });
+
+// Mock Supabase client for demo mode
+function createMockSupabaseClient(): any {
+  const mockResponse = { data: null, error: null };
+  const mockQuery = {
+    select: () => mockQuery,
+    insert: () => mockQuery,
+    update: () => mockQuery,
+    delete: () => mockQuery,
+    eq: () => mockQuery,
+    single: () => Promise.resolve(mockResponse),
+    order: () => mockQuery,
+    limit: () => mockQuery,
+    then: (resolve: any) => resolve(mockResponse),
+  };
+
+  return {
+    from: () => mockQuery,
+    auth: {
+      getUser: () => Promise.resolve(mockResponse),
+      signInWithPassword: () => Promise.resolve(mockResponse),
+      signUp: () => Promise.resolve(mockResponse),
+      signOut: () => Promise.resolve(mockResponse),
+      resetPasswordForEmail: () => Promise.resolve(mockResponse),
+      updateUser: () => Promise.resolve(mockResponse),
+    },
+    storage: {
+      from: () => ({
+        upload: () => Promise.resolve(mockResponse),
+        getPublicUrl: () => ({ data: { publicUrl: '' } }),
+        remove: () => Promise.resolve(mockResponse),
+        list: () => Promise.resolve(mockResponse),
+      }),
+    },
+    functions: {
+      invoke: () => Promise.resolve(mockResponse),
+    },
+    channel: () => ({
+      on: () => ({ subscribe: () => ({}) }),
+    }),
+    removeChannel: () => {},
+  };
+}
 
 // Auth helpers
 export const auth = {
