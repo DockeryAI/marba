@@ -5,6 +5,7 @@ import { ObjectivesSection } from '@/components/mirror/intend'
 import { StrategySection } from '@/components/mirror/reimagine'
 import { TacticsSection } from '@/components/mirror/reach'
 import { ActionSection } from '@/components/mirror/optimize'
+import { ReflectSection } from '@/components/mirror/reflect'
 
 export const MirrorPage: React.FC = () => {
   // Mock brand data - in production this would come from auth/context
@@ -89,6 +90,15 @@ export const MirrorPage: React.FC = () => {
         { id: 'priority', label: 'By Priority' },
       ],
     },
+    {
+      id: 'reflect',
+      label: 'Reflect',
+      subsections: [
+        { id: 'kpis', label: 'KPI Dashboard' },
+        { id: 'insights', label: 'Performance Insights' },
+        { id: 'report', label: 'Reflection Report' },
+      ],
+    },
   ]
 
   return (
@@ -141,6 +151,13 @@ export const MirrorPage: React.FC = () => {
         <div id="optimize">
           <ActionSection
             tactics={tactics}
+          />
+        </div>
+
+        {/* Reflect Phase (formerly Control) */}
+        <div id="reflect">
+          <ReflectSection
+            objectives={objectives}
           />
         </div>
       </div>

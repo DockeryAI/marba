@@ -1,0 +1,299 @@
+import * as React from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
+import { KPIDashboard } from './KPIDashboard'
+import { PerformanceInsights } from './PerformanceInsights'
+import {
+  ReflectDashboard,
+  KPIMetric,
+  PerformanceInsight,
+  ReflectionReport,
+} from '@/services/mirror/reflect-dashboard'
+import {
+  BarChart3,
+  TrendingUp,
+  FileText,
+  Download,
+  RefreshCw,
+  Target,
+  Lightbulb,
+} from 'lucide-react'
+
+interface ReflectSectionProps {
+  objectives?: any[]
+  className?: string
+}
+
+export const ReflectSection: React.FC<ReflectSectionProps> = ({ objectives = [], className }) => {
+  const [kpis, setKPIs] = React.useState<KPIMetric[]>([])
+  const [insights, setInsights] = React.useState<PerformanceInsight[]>([])
+  const [report, setReport] = React.useState<ReflectionReport | null>(null)
+  const [isLoading, setIsLoading] = React.useState(false)
+
+  // Generate KPIs and insights from objectives
+  React.useEffect(() => {
+    if (objectives.length > 0) {
+      generateReflectionData()
+    }
+  }, [objectives])
+
+  const generateReflectionData = () => {
+    setIsLoading(true)
+    try {
+      // Generate KPIs from objectives
+      const generatedKPIs = ReflectDashboard.generateKPIMetrics(objectives)
+      setKPIs(generatedKPIs)
+
+      // Analyze performance and generate insights
+      const generatedInsights = ReflectDashboard.analyzePerformance(generatedKPIs)
+      setInsights(generatedInsights)
+
+      // Generate full reflection report
+      const generatedReport = ReflectDashboard.generateReflectionReport(generatedKPIs)
+      setReport(generatedReport)
+    } catch (error) {
+      console.error('Error generating reflection data:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleExportReport = () => {
+    if (!report) return
+
+    const dataStr = ReflectDashboard.exportReportData(report)
+    const dataBlob = new Blob([dataStr], { type: 'application/json' })
+    const url = URL.createObjectURL(dataBlob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `mirror-reflection-report-${new Date().toISOString().split('T')[0]}.json`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleExportSummary = () => {
+    if (!report) return
+
+    const summary = ReflectDashboard.generateExecutiveSummary(report)
+    const dataBlob = new Blob([summary], { type: 'text/markdown' })
+    const url = URL.createObjectURL(dataBlob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `mirror-executive-summary-${new Date().toISOString().split('T')[0]}.md`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <div className={className}>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold">Reflect & Review</h2>
+            <p className="text-muted-foreground">
+              Review outcomes, analyze results, and feed insights back into the MIRROR cycle
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={generateReflectionData}
+              disabled={isLoading || objectives.length === 0}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh Data
+            </Button>
+          </div>
+        </div>
+
+        {/* Overall Score Card */}
+        {report && (
+          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-2">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Overall Performance Score</span>
+                <Badge className="text-lg px-4 py-2">
+                  {report.overall_score}/100
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                {report.period} Performance Summary
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {report.kpi_summary.exceeding}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Exceeding</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {report.kpi_summary.on_track}
+                  </div>
+                  <div className="text-xs text-muted-foreground">On Track</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {report.kpi_summary.at_risk}
+                  </div>
+                  <div className="text-xs text-muted-foreground">At Risk</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-600">
+                    {report.kpi_summary.critical}
+                  </div>
+                  <div className="text-xs text-muted-foreground">Critical</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{report.kpi_summary.total_kpis}</div>
+                  <div className="text-xs text-muted-foreground">Total KPIs</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Main Content */}
+        {objectives.length === 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>No Performance Data Available</CardTitle>
+              <CardDescription>
+                Set objectives in the Intend phase to start tracking and reviewing performance
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="py-12 text-center">
+              <BarChart3 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <p className="text-sm text-muted-foreground">
+                Once you define your marketing objectives, this section will automatically generate:
+              </p>
+              <ul className="text-sm text-muted-foreground mt-4 space-y-2 inline-block text-left">
+                <li className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  KPI tracking dashboards
+                </li>
+                <li className="flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4" />
+                  Performance insights and recommendations
+                </li>
+                <li className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Comprehensive reflection reports
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+        ) : (
+          <Tabs defaultValue="kpis" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="kpis">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                KPI Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="insights">
+                <Lightbulb className="h-4 w-4 mr-2" />
+                Insights
+              </TabsTrigger>
+              <TabsTrigger value="report">
+                <FileText className="h-4 w-4 mr-2" />
+                Full Report
+              </TabsTrigger>
+            </TabsList>
+
+            {/* KPI Dashboard Tab */}
+            <TabsContent value="kpis" className="space-y-4">
+              <KPIDashboard kpis={kpis} />
+            </TabsContent>
+
+            {/* Insights Tab */}
+            <TabsContent value="insights" className="space-y-4">
+              <PerformanceInsights insights={insights} />
+            </TabsContent>
+
+            {/* Full Report Tab */}
+            <TabsContent value="report" className="space-y-4">
+              {report && (
+                <>
+                  {/* Strategic Recommendations */}
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle>Strategic Recommendations</CardTitle>
+                        <Button variant="outline" size="sm" onClick={handleExportSummary}>
+                          <Download className="h-4 w-4 mr-2" />
+                          Export Summary
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-2">
+                        {report.strategic_recommendations.map((rec, index) => (
+                          <li key={index} className="flex items-start gap-3">
+                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                              {index + 1}
+                            </span>
+                            <span className="text-sm">{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+
+                  {/* Next Cycle Priorities */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Next Cycle Priorities</CardTitle>
+                      <CardDescription>
+                        Focus areas for the next MIRROR cycle
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {report.next_cycle_priorities.map((priority, index) => (
+                          <div
+                            key={index}
+                            className="flex items-start gap-2 p-3 rounded-lg border bg-muted/50"
+                          >
+                            <TrendingUp className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                            <span className="text-sm">{priority}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Export Actions */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Export Options</CardTitle>
+                      <CardDescription>
+                        Download complete performance data and reports
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-3">
+                        <Button onClick={handleExportReport}>
+                          <Download className="h-4 w-4 mr-2" />
+                          Export Full Report (JSON)
+                        </Button>
+                        <Button variant="outline" onClick={handleExportSummary}>
+                          <FileText className="h-4 w-4 mr-2" />
+                          Export Executive Summary (MD)
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
+            </TabsContent>
+          </Tabs>
+        )}
+      </div>
+    </div>
+  )
+}
