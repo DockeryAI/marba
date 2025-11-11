@@ -70,7 +70,7 @@
     "@typescript-eslint/parser": "^8.46.2",
     "@vitejs/plugin-react-swc": "^3.10.2",
     "@vitest/ui": "^2.1.8",
-    "autoprefixer": "^10.4.21",
+    "autoprefixer": "^10.4.22",
     "dotenv": "^17.2.3",
     "eslint": "^9.38.0",
     "eslint-plugin-react": "^7.37.5",
