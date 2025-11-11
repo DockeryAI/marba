@@ -78,7 +78,7 @@ These files give Claude complete context about the project state:
 When starting a new Claude conversation, use this prompt:
 
 ```
-I'm working on the brandock project (AI-powered brand transformation platform).
+I'm working on the marba project (AI-powered brand transformation platform).
 
 Current state:
 - Version 2.4.0
@@ -100,20 +100,20 @@ For easy copying when sharing files:
 
 ```bash
 # Essential trio
-/Users/byronhudson/brandock/.buildrunner/STATUS.md
-/Users/byronhudson/brandock/.buildrunner/features.json
-/Users/byronhudson/brandock/Figma/package.json
+/Users/byronhudson/marba/.buildrunner/STATUS.md
+/Users/byronhudson/marba/.buildrunner/features.json
+/Users/byronhudson/marba/Figma/package.json
 
 # Handoff document
-/Users/byronhudson/brandock/.buildrunner/HANDOFF_2025-11-05.md
+/Users/byronhudson/marba/.buildrunner/HANDOFF_2025-11-05.md
 
 # Recent work - Gamification system
-/Users/byronhudson/brandock/Figma/src/components/onboarding-v3/gamification/
-/Users/byronhudson/brandock/Figma/src/hooks/useGamification.ts
+/Users/byronhudson/marba/Figma/src/components/onboarding-v3/gamification/
+/Users/byronhudson/marba/Figma/src/hooks/useGamification.ts
 
 # Modified files - Onboarding integration
-/Users/byronhudson/brandock/Figma/src/components/onboarding-v3/InstantRevealOrchestrator.tsx
-/Users/byronhudson/brandock/Figma/src/components/onboarding-v3/UnifiedOnboardingV3.tsx
+/Users/byronhudson/marba/Figma/src/components/onboarding-v3/InstantRevealOrchestrator.tsx
+/Users/byronhudson/marba/Figma/src/components/onboarding-v3/UnifiedOnboardingV3.tsx
 ```
 
 ---

@@ -1,4 +1,4 @@
-# brandock - Project Status
+# marba - Project Status
 
 **Version:** 2.4.0
 **Status:** In Progress
@@ -288,7 +288,7 @@ Marketplace for pre-designed templates, frameworks, and professional content.
 
 ## Getting Started
 
-1. **Read the spec:** `docs/brandock-spec.md` (if exists)
+1. **Read the spec:** `docs/marba-spec.md` (if exists)
 2. **Check features:** `.buildrunner/features.json`
 3. **Recent activity:** `git log -10 --oneline`
 4. **Coding standards:** `.buildrunner/standards/CODING_STANDARDS.md`

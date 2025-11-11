@@ -10,7 +10,7 @@
 
 ## Executive Summary (For When Your PM Asks "How Long?")
 
-This is a complete ground-up rebuild of the Mirror application, restructured around the SOSTAC marketing framework, with full API enrichment, Synapse integration, persistent AI assistance, and a complete codebase migration from `/brandock/Figma` to `~/Projects/MARBA`.
+This is a complete ground-up rebuild of the Mirror application, restructured around the SOSTAC marketing framework, with full API enrichment, Synapse integration, persistent AI assistance, and a complete codebase migration from `/marba/Figma` to `~/Projects/MARBA`.
 
 **What We're Building:**
 - SOSTAC-based Mirror (6 main sections replacing current 7-tab structure)
@@ -19,7 +19,7 @@ This is a complete ground-up rebuild of the Mirror application, restructured aro
 - Visual design studio for posts
 - Analytics dashboard with engagement
 - Enriched UVP onboarding
-- All references to "brandock" → "marba"
+- All references to "marba" → "marba"
 - Clean, $100k SaaS aesthetic
 
 **Tech Stack:**
@@ -46,7 +46,7 @@ This is a complete ground-up rebuild of the Mirror application, restructured aro
 11. [API Enrichment Strategy](#11-api-enrichment-strategy)
 12. [Synapse Integration Points](#12-synapse-integration-points)
 13. [Migration Plan](#13-migration-plan)
-14. [Brandock → MARBA Renaming](#14-brandock--marba-renaming)
+14. [Marba → MARBA Renaming](#14-marba--marba-renaming)
 15. [Design System](#15-design-system)
 16. [Database Schema Changes](#16-database-schema-changes)
 17. [Implementation Phases](#17-implementation-phases)
@@ -115,7 +115,7 @@ For a small business owner, SOSTAC needs to be:
 
 ### What Exists Now
 
-**Location:** `/Users/byronhudson/brandock/Figma/`
+**Location:** `/Users/byronhudson/marba/Figma/`
 
 **Current Mirror Structure (7 tabs):**
 1. Overview - Brand health, golden circle summary
@@ -2467,15 +2467,15 @@ Marbs can invoke Synapse on user request:
 
 ### Overview
 
-Move from `/Users/byronhudson/brandock/Figma/` to `~/Projects/MARBA/` with clean organization.
+Move from `/Users/byronhudson/marba/Figma/` to `~/Projects/MARBA/` with clean organization.
 
 ### Migration Strategy
 
 **Rules:**
-1. **COPY, don't move** - Original stays intact in brandock
+1. **COPY, don't move** - Original stays intact in marba
 2. **Only copy what's needed** - No legacy code, no cruft
 3. **Reorganize cleanly** - Follow new architecture
-4. **Rename references** - brandock → marba
+4. **Rename references** - marba → marba
 5. **Update imports** - Fix all import paths
 
 ### What to Migrate
@@ -2545,32 +2545,32 @@ mkdir -p public/assets
 
 ```bash
 # Copy services (will need path updates)
-cp -r /Users/byronhudson/brandock/Figma/src/services/synapse src/services/
-cp -r /Users/byronhudson/brandock/Figma/src/services/uvp src/services/
-cp -r /Users/byronhudson/brandock/Figma/src/services/valueForge src/services/
-cp -r /Users/byronhudson/brandock/Figma/src/services/contentIntelligence src/services/content-intelligence
+cp -r /Users/byronhudson/marba/Figma/src/services/synapse src/services/
+cp -r /Users/byronhudson/marba/Figma/src/services/uvp src/services/
+cp -r /Users/byronhudson/marba/Figma/src/services/valueForge src/services/
+cp -r /Users/byronhudson/marba/Figma/src/services/contentIntelligence src/services/content-intelligence
 ```
 
 **Phase 3: Copy Types**
 
 ```bash
-cp /Users/byronhudson/brandock/Figma/src/types/*.ts src/types/
+cp /Users/byronhudson/marba/Figma/src/types/*.ts src/types/
 ```
 
 **Phase 4: Copy UI Components**
 
 ```bash
-cp -r /Users/byronhudson/brandock/Figma/src/components/ui src/components/
-cp -r /Users/byronhudson/brandock/Figma/src/components/synapse src/components/
+cp -r /Users/byronhudson/marba/Figma/src/components/ui src/components/
+cp -r /Users/byronhudson/marba/Figma/src/components/synapse src/components/
 ```
 
 **Phase 5: Copy Config**
 
 ```bash
-cp /Users/byronhudson/brandock/Figma/package.json .
-cp /Users/byronhudson/brandock/Figma/tsconfig.json .
-cp /Users/byronhudson/brandock/Figma/tailwind.config.js .
-cp /Users/byronhudson/brandock/Figma/vite.config.ts .
+cp /Users/byronhudson/marba/Figma/package.json .
+cp /Users/byronhudson/marba/Figma/tsconfig.json .
+cp /Users/byronhudson/marba/Figma/tailwind.config.js .
+cp /Users/byronhudson/marba/Figma/vite.config.ts .
 ```
 
 **Phase 6: Update All Imports**
@@ -2621,19 +2621,19 @@ Figma/src/types/MARBAScore.ts
 
 ---
 
-## 13. Brandock → MARBA Renaming
+## 13. Marba → MARBA Renaming
 
 ### Overview
 
-Systematically replace all references to "brandock", "BranDock", "Brandock" with "marba", "MARBA", "Marba".
+Systematically replace all references to "marba", "MARBA", "Marba" with "marba", "MARBA", "Marba".
 
 ### Renaming Strategy
 
 **Case Variations:**
-- `brandock` → `marba`
-- `Brandock` → `Marba`
-- `BranDock` → `MARBA`
-- `BRANDOCK` → `MARBA`
+- `marba` → `marba`
+- `Marba` → `Marba`
+- `MARBA` → `MARBA`
+- `MARBA` → `MARBA`
 
 **Where to Rename:**
 
@@ -2659,7 +2659,7 @@ Systematically replace all references to "brandock", "BranDock", "Brandock" with
    - Meta tags
 
 4. **Database**
-   - Table names (if any contain "brandock")
+   - Table names (if any contain "marba")
    - Column names
    - Function names
 
@@ -2684,10 +2684,10 @@ find ~/Projects/MARBA \
   | while read file; do
 
   # Replace in file contents
-  sed -i '' 's/brandock/marba/g' "$file"
-  sed -i '' 's/Brandock/Marba/g' "$file"
-  sed -i '' 's/BranDock/MARBA/g' "$file"
-  sed -i '' 's/BRANDOCK/MARBA/g' "$file"
+  sed -i '' 's/marba/marba/g' "$file"
+  sed -i '' 's/Marba/Marba/g' "$file"
+  sed -i '' 's/MARBA/MARBA/g' "$file"
+  sed -i '' 's/MARBA/MARBA/g' "$file"
 
   echo "Processed: $file"
 done
@@ -2697,10 +2697,10 @@ find ~/Projects/MARBA \
   -type f \
   -not -path "*/node_modules/*" \
   -not -path "*/.git/*" \
-  | grep -i brandock \
+  | grep -i marba \
   | while read file; do
 
-  newfile=$(echo "$file" | sed 's/brandock/marba/g' | sed 's/Brandock/Marba/g')
+  newfile=$(echo "$file" | sed 's/marba/marba/g' | sed 's/Marba/Marba/g')
   mv "$file" "$newfile"
   echo "Renamed file: $file → $newfile"
 done
@@ -2728,8 +2728,8 @@ After automated renaming, manually check:
 ### Testing After Rename
 
 ```bash
-# 1. Check for any remaining "brandock" references
-grep -r "brandock" ~/Projects/MARBA/src --exclude-dir=node_modules
+# 1. Check for any remaining "marba" references
+grep -r "marba" ~/Projects/MARBA/src --exclude-dir=node_modules
 
 # 2. Check build succeeds
 npm run build
@@ -2830,7 +2830,7 @@ $100k SaaS aesthetic - clean, modern, professional, trustworthy.
 
 ### Component Library
 
-Using **shadcn/ui** as base (already in brandock), with customizations:
+Using **shadcn/ui** as base (already in marba), with customizations:
 
 **Key Components:**
 - Button (primary, secondary, outline, ghost, danger)
@@ -3325,7 +3325,7 @@ ALTER TABLE content_calendar_ideas
 ### Post-Sprint: Polish & Launch (Weeks 9-10)
 
 **Tasks:**
-- [ ] Complete brandock → marba renaming
+- [ ] Complete marba → marba renaming
 - [ ] End-to-end testing
 - [ ] Performance optimization
 - [ ] Documentation

@@ -2,8 +2,32 @@
 ## Master Task List - Atomic, Ordered, Trackable
 
 **Created:** 2025-11-11
+**Updated:** 2025-11-11 14:45
 **Status:** In Progress
 **Approach:** Build systematically, mark complete, test at checkpoints
+
+## 🎯 NEW REQUIREMENTS (Added 2025-11-11)
+
+**1. Content Generation Toggle:**
+- Every content generation button MUST have toggle: "MARBA" (Sonnet 3.5 via OpenRouter) OR "Synapse" (enhanced generation)
+- Default to MARBA for speed, Synapse for quality
+- Show which mode is being used in real-time
+
+**2. Customer Logo Integration:**
+- Pull customer logo from website analysis
+- Display in top-left of main hub (after first analyze screen)
+- Must look designed to fit, not like placeholder
+- Graceful fallback if no logo available (app looks normal, not broken)
+
+**3. Git Commits:**
+- Commit to git after EVERY phase completion
+- Use semantic commit messages
+- Tag major checkpoints
+
+**4. Directory Organization:**
+- Everything in ~/Projects/MARBA
+- No brandock references anywhere
+- Follow best practices for file organization
 
 ---
 
@@ -21,12 +45,14 @@
 - [ ] **TASK-009**: Create environment variables template (.env.example)
 - [ ] **TASK-010**: Set up Supabase project connection
 - [ ] **TASK-011**: Create basic project structure (src/components, src/services, etc.)
-- [ ] **TASK-012**: Copy shadcn/ui components from brandock
+- [ ] **TASK-012**: Copy shadcn/ui components from marba
 - [ ] **TASK-013**: Set up Supabase client configuration
 - [ ] **TASK-014**: Create basic routing structure (React Router)
 - [ ] **TASK-015**: Create main App.tsx and entry point
 
 **TEST CHECKPOINT 1**: Basic app loads without errors at localhost:3000
+
+**GIT COMMIT**: After Phase 0 complete
 
 ---
 
@@ -61,14 +87,16 @@
 - [ ] **TASK-039**: Set up edge function secrets (API keys)
 
 ### Service Layer - Core
-- [ ] **TASK-040**: Copy synapse services from brandock to MARBA
-- [ ] **TASK-041**: Copy uvp services from brandock to MARBA
-- [ ] **TASK-042**: Copy valueForge services from brandock to MARBA
-- [ ] **TASK-043**: Copy contentIntelligence services from brandock to MARBA
+- [ ] **TASK-040**: Copy synapse services from marba to MARBA
+- [ ] **TASK-041**: Copy uvp services from marba to MARBA
+- [ ] **TASK-042**: Copy valueForge services from marba to MARBA
+- [ ] **TASK-043**: Copy contentIntelligence services from marba to MARBA
 - [ ] **TASK-044**: Update all service imports to use new paths
 - [ ] **TASK-045**: Fix any TypeScript errors in copied services
 
 **TEST CHECKPOINT 2**: All services compile without errors, edge functions respond
+
+**GIT COMMIT**: After Phase 1 complete
 
 ---
 
@@ -95,6 +123,8 @@
 
 **TEST CHECKPOINT 3**: TypeScript compilation clean, no type errors
 
+**GIT COMMIT**: After Phase 2 complete
+
 ---
 
 ## PHASE 3: DESIGN SYSTEM (Tasks 61-75)
@@ -116,7 +146,19 @@
 - [ ] **TASK-074**: Create Intelligence Badge component (🧠, 📊, 🎯, etc.)
 - [ ] **TASK-075**: Create Storybook/test page for all components
 
-**TEST CHECKPOINT 4**: Design system components render correctly, all variants work
+### Customer Logo Integration
+- [ ] **TASK-076**: Create src/components/ui/CustomerLogo.tsx component
+- [ ] **TASK-077**: Implement logo extraction from brand analysis data
+- [ ] **TASK-078**: Create logo display in top-left of main layout
+- [ ] **TASK-079**: Implement responsive logo sizing (scales properly)
+- [ ] **TASK-080**: Add graceful fallback (no logo = normal MARBA branding, not broken)
+- [ ] **TASK-081**: Style logo to look integrated, not like placeholder
+- [ ] **TASK-082**: Test logo display with various image formats/sizes
+- [ ] **TASK-083**: Test fallback behavior (no logo looks clean)
+
+**TEST CHECKPOINT 4**: Design system components render correctly, all variants work, logo integration looks designed
+
+**GIT COMMIT**: After Phase 3 complete
 
 ---
 
@@ -483,8 +525,10 @@
 - [ ] **TASK-317**: Create modal interface
 - [ ] **TASK-318**: Create platform selector
 - [ ] **TASK-319**: Create topic/pillar selector
-- [ ] **TASK-320**: Create Synapse enhancement toggle (default: ON)
-- [ ] **TASK-321**: Implement content generation API call
+- [ ] **TASK-320**: Create generation mode toggle: "MARBA" (Sonnet 3.5) vs "Synapse" (Enhanced)
+- [ ] **TASK-320a**: Default to MARBA mode, show mode indicator in UI
+- [ ] **TASK-320b**: Add tooltip explaining difference (MARBA=fast, Synapse=quality+psychology)
+- [ ] **TASK-321**: Implement content generation API call (mode-aware)
 - [ ] **TASK-322**: Display 3 content variations
 - [ ] **TASK-323**: Show Synapse analysis on each variation
 - [ ] **TASK-324**: Show psychology score on each variation
