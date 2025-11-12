@@ -4,7 +4,7 @@
  * NOTE: This is ADDITIVE to existing nested scoring breakdown in cards.
  * Content pieces appear alongside the data drill-down, not replacing it.
  *
- * BRANDOCK PHILOSOPHY:
+ * MARBA PHILOSOPHY:
  * All content uses opportunity-focused language. Never says "you're behind" -
  * always "opportunity to grow". Validated by ContentValidator before returning.
  *
@@ -242,7 +242,7 @@ OUTPUT FORMAT (JSON):
         'Content-Type': 'application/json',
         Authorization: `Bearer ${API_KEY}`,
         'HTTP-Referer': window.location.origin,
-        'X-Title': 'BranDock Content Intelligence',
+        'X-Title': 'MARBA Content Intelligence',
       },
       body: JSON.stringify({
         model: 'anthropic/claude-opus-4',

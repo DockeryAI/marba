@@ -9,7 +9,7 @@ import { TacticalChannel, TacticsPlanner, Tactic, ResourceAllocation } from '@/s
 import { supabase } from '@/lib/supabase'
 import { Sparkles, Target, DollarSign, Users, BarChart3 } from 'lucide-react'
 
-interface TacticsSectionProps {
+interface ReachSectionProps {
   brandId: string
   strategy: any
   objectives: any[]
@@ -18,7 +18,7 @@ interface TacticsSectionProps {
   className?: string
 }
 
-export const TacticsSection: React.FC<TacticsSectionProps> = ({
+export const ReachSection: React.FC<ReachSectionProps> = ({
   brandId,
   strategy,
   objectives,
@@ -56,7 +56,8 @@ export const TacticsSection: React.FC<TacticsSectionProps> = ({
         }
       }
     } catch (error) {
-      console.error('Failed to load tactics:', error)
+      // Table may not exist yet - silently handle
+      console.log('Tactical plans table not found - will generate from strategy')
     }
   }
 

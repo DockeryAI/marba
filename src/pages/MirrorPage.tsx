@@ -1,10 +1,10 @@
 import * as React from 'react'
 import { MirrorLayout } from '@/components/layouts/MirrorLayout'
-import { SituationSection } from '@/components/mirror/measure'
-import { ObjectivesSection } from '@/components/mirror/intend'
-import { StrategySection } from '@/components/mirror/reimagine'
-import { TacticsSection } from '@/components/mirror/reach'
-import { ActionSection } from '@/components/mirror/optimize'
+import { MeasureSection } from '@/components/mirror/measure'
+import { IntendSection } from '@/components/mirror/intend'
+import { ReimagineSection } from '@/components/mirror/reimagine'
+import { ReachSection } from '@/components/mirror/reach'
+import { OptimizeSection } from '@/components/mirror/optimize'
 import { ReflectSection } from '@/components/mirror/reflect'
 import { useMirror } from '@/contexts/MirrorContext'
 import { useBrand } from '@/contexts/BrandContext'
@@ -16,34 +16,42 @@ export const MirrorPage: React.FC = () => {
   const { currentBrand } = useBrand()
   const { state, updateMeasure, updateIntend, updateReimagine, updateReach, updateOptimize, updateReflect, loading, error } = useMirror()
 
-  const brandId = currentBrand?.id || 'demo-brand-001'
-  const brandData = {
-    name: currentBrand?.name || 'Demo Brand',
-    industry: currentBrand?.industry || 'Technology',
-    founded: currentBrand?.founded || '2020',
-    size: currentBrand?.size || 'Small (1-50 employees)',
-    competitors: [
-      { name: 'Competitor A', score: 75 },
-      { name: 'Competitor B', score: 68 },
-      { name: 'Competitor C', score: 72 },
-    ],
-  }
+  const brandId = currentBrand?.id
+  const brandData = currentBrand ? {
+    name: currentBrand.name,
+    industry: currentBrand.industry,
+    founded: currentBrand.founded,
+    size: currentBrand.size,
+    competitors: currentBrand.competitors || [],
+  } : null
 
   const [activeSection, setActiveSection] = React.useState('measure')
+
+  // Redirect to onboarding if no brand
+  React.useEffect(() => {
+    if (!brandId || !brandData) {
+      window.location.href = '/onboarding'
+    }
+  }, [brandId, brandData])
 
   // Extract data from context state
   const objectives = state.intend.objectives || []
   const strategy = state.reimagine || {}
   const tactics = state.reach.tactics || []
-  const measureData = {
-    brandHealth: state.measure.brandHealth || 72,
-    industry: state.measure.industry || brandData.industry,
-    currentMetrics: state.measure.currentMetrics || {
-      website_traffic: 10000,
-      social_followers: 5000,
-      email_subscribers: 2000,
-    },
-    ...state.measure
+  const measureData = state.measure
+
+  // Show error if no brand data
+  if (!brandId || !brandData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2">No Brand Selected</h2>
+          <p className="text-muted-foreground mb-4">Please complete onboarding to continue</p>
+          <a href="/onboarding" className="text-primary underline">Go to Onboarding</a>
+        </div>
+      </div>
+    )
   }
 
   // Scroll to section when activeSection changes
@@ -176,47 +184,51 @@ export const MirrorPage: React.FC = () => {
       <div className="space-y-12">
         {/* Measure Phase */}
         <div id="measure">
-          <SituationSection
+          <MeasureSection
             brandId={brandId}
-            brandData={brandData}
+            brandData={state.measure}
             onDataUpdate={updateMeasure}
           />
         </div>
 
         {/* Intend Phase */}
         <div id="intend">
-          <ObjectivesSection
+          <IntendSection
             brandId={brandId}
             situationData={measureData}
+            brandData={state.measure}
           />
         </div>
 
         {/* Reimagine Phase */}
         <div id="reimagine">
-          <StrategySection
+          <ReimagineSection
             brandId={brandId}
-            brandData={brandData}
+            brandData={state.reimagine}
             objectives={objectives}
             situationAnalysis={measureData}
-            competitors={brandData.competitors}
+            competitors={brandData?.competitors || []}
           />
         </div>
 
         {/* Reach Phase */}
         <div id="reach">
-          <TacticsSection
+          <ReachSection
             brandId={brandId}
             strategy={strategy}
             objectives={objectives}
-            budget={25000}
-            teamSize={5}
+            budget={0}
+            teamSize={0}
           />
         </div>
 
         {/* Optimize Phase */}
         <div id="optimize">
-          <ActionSection
+          <OptimizeSection
+            brandId={brandId}
+            userId={brandId}
             tactics={tactics}
+            pillars={[]}
           />
         </div>
 

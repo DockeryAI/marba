@@ -1,7 +1,7 @@
 /**
  * ContentOrchestrator - Coordinates the entire Content Intelligence Engine
  *
- * BRANDOCK'S CONTENT INTELLIGENCE ENGINE:
+ * MARBA'S CONTENT INTELLIGENCE ENGINE:
  * This is the main entry point that coordinates:
  * 1. OpportunityScorer - Ranks 50+ opportunities from BusinessIntelligence
  * 2. SearchSocialGenerator - Creates 3 Search + 3 Social pieces

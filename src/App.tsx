@@ -3,6 +3,7 @@ import { ErrorBoundary } from './components/common/ErrorBoundary'
 import { BrandProvider } from './contexts/BrandContext'
 import { MirrorProvider } from './contexts/MirrorContext'
 import { HomePage } from './pages/HomePage'
+import { OnboardingPage } from './pages/OnboardingPage'
 import { MirrorPage } from './pages/MirrorPage'
 import { AdminPage } from './pages/AdminPage'
 import { ContentCalendarPage } from './pages/ContentCalendarPage'
@@ -14,10 +15,11 @@ function App() {
   return (
     <ErrorBoundary>
       <BrandProvider>
-        <MirrorProvider brandId="demo-brand-123">
+        <MirrorProvider>
           <div className="min-h-screen bg-background">
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/onboarding" element={<OnboardingPage />} />
               <Route path="/mirror" element={<MirrorPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/content-calendar" element={<ContentCalendarPage />} />

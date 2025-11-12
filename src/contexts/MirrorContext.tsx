@@ -4,6 +4,7 @@
  */
 
 import * as React from 'react'
+import { useBrand } from './BrandContext'
 
 // Section data types
 export interface MeasureData {
@@ -92,11 +93,15 @@ interface MirrorProviderProps {
 
 export const MirrorProvider: React.FC<MirrorProviderProps> = ({
   children,
-  brandId
+  brandId: brandIdProp
 }) => {
   const [state, setState] = React.useState<MirrorState>(initialState)
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<Error | null>(null)
+
+  // Get brandId from BrandContext if not provided as prop
+  const { currentBrand } = useBrand()
+  const brandId = brandIdProp || currentBrand?.id
 
   // Auto-save debounced
   const saveTimeoutRef = React.useRef<NodeJS.Timeout>()
@@ -174,14 +179,40 @@ export const MirrorProvider: React.FC<MirrorProviderProps> = ({
       setLoading(true)
       setError(null)
 
-      // TODO: Load from Supabase
-      // const data = await MirrorPersistenceService.load(loadBrandId)
+      // Load MIRROR sections from Supabase
+      const { supabase } = await import('@/lib/supabase')
+      const { data: sections, error: fetchError } = await supabase
+        .from('mirror_sections')
+        .select('section, data')
+        .eq('brand_id', loadBrandId)
 
-      // Mock load for now
-      console.log('Loading MIRROR state for brand:', loadBrandId)
+      if (fetchError) {
+        console.error('Error loading MIRROR sections:', fetchError)
+        throw fetchError
+      }
 
-      // setState(data)
+      if (sections && sections.length > 0) {
+        // Transform sections array into state object
+        const loadedState: Partial<MirrorState> = {}
+        sections.forEach(s => {
+          if (s.section && s.data) {
+            loadedState[s.section as keyof MirrorState] = s.data
+          }
+        })
+
+        console.log('Loaded MIRROR state for brand:', loadBrandId, loadedState)
+
+        setState(prev => ({
+          ...initialState,
+          ...loadedState,
+          lastSaved: new Date().toISOString(),
+          isDirty: false
+        }))
+      } else {
+        console.log('No MIRROR sections found for brand:', loadBrandId)
+      }
     } catch (err) {
+      console.error('Failed to load MIRROR data:', err)
       setError(err instanceof Error ? err : new Error('Failed to load'))
     } finally {
       setLoading(false)
@@ -195,7 +226,10 @@ export const MirrorProvider: React.FC<MirrorProviderProps> = ({
   // Load data on mount if brandId provided
   React.useEffect(() => {
     if (brandId) {
+      console.log('[MirrorProvider] Loading MIRROR data for brand:', brandId)
       loadFromServer(brandId)
+    } else {
+      console.log('[MirrorProvider] No brandId available yet')
     }
   }, [brandId, loadFromServer])
 

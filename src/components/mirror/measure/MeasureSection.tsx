@@ -6,6 +6,7 @@ import { CurrentAssetsCard } from './CurrentAssetsCard'
 import { SEOHealthCard } from './SEOHealthCard'
 import { KeywordOpportunities } from './KeywordOpportunities'
 import { CustomerTriggerGallery } from './CustomerTriggerGallery'
+import { CompetitiveDashboard } from './CompetitiveDashboard'
 import { SituationAnalyzer } from '@/services/mirror/situation-analyzer'
 import { MirrorSectionHeader } from '@/components/layouts/MirrorLayout'
 import { Button } from '@/components/ui/button'
@@ -149,6 +150,15 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
             triggers={brandData?.emotional_triggers || []}
             psychologicalHooks={brandData?.psychological_hooks || []}
             customerAvatars={brandData?.customer_avatars || []}
+          />
+        </section>
+
+        {/* Competitive Intelligence - NEW */}
+        <section id="competitive-intelligence">
+          <CompetitiveDashboard
+            analysis={brandData?.competitorAnalysis || null}
+            brandAuthority={brandData?.seoMetrics?.overview?.authority_score || health.overall}
+            industryData={brandData}
           />
         </section>
       </div>

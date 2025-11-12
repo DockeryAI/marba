@@ -10,7 +10,7 @@ import { StrategyBuilder, MarketingStrategy } from '@/services/mirror/strategy-b
 import { supabase } from '@/lib/supabase'
 import { Sparkles, Target, Users, FileText, Swords } from 'lucide-react'
 
-interface StrategySectionProps {
+interface ReimagineSectionProps {
   brandId: string
   brandData: any
   objectives: any[]
@@ -19,7 +19,7 @@ interface StrategySectionProps {
   className?: string
 }
 
-export const StrategySection: React.FC<StrategySectionProps> = ({
+export const ReimagineSection: React.FC<ReimagineSectionProps> = ({
   brandId,
   brandData,
   objectives,
@@ -59,7 +59,8 @@ export const StrategySection: React.FC<StrategySectionProps> = ({
         }
       }
     } catch (error) {
-      console.error('Failed to load strategy:', error)
+      // Table may not exist yet - silently handle
+      console.log('Marketing strategies table not found - will generate from industry data')
     } finally {
       setIsLoading(false)
     }

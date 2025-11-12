@@ -1,7 +1,7 @@
 /**
  * Content Intelligence Engine - Main Export
  *
- * BRANDOCK'S CONTENT INTELLIGENCE:
+ * MARBA'S CONTENT INTELLIGENCE:
  * Generates 12 ready-to-post content pieces by combining:
  * - 140+ industry profiles (customer triggers, power words, CTAs)
  * - Competitive intelligence (gaps = opportunities)

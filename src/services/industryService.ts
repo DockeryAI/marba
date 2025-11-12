@@ -60,7 +60,8 @@ export async function generateMirrorSectionsFromIndustry(
   industryProfile: IndustryProfile,
   websiteData?: any,
   customization?: any,
-  seoMetrics?: any
+  seoMetrics?: any,
+  competitorAnalysis?: any
 ): Promise<MirrorSections> {
   const fullProfile = industryProfile.full_profile_data || {}
 
@@ -94,7 +95,7 @@ export async function generateMirrorSectionsFromIndustry(
   console.log('[generateMirrorSections] Brand health calculated:', brandHealthScore.overall)
 
   return {
-    measure: generateMeasureSection(brandName, industryProfile, enrichedProfile, websiteData, brandHealthScore, seoMetrics),
+    measure: generateMeasureSection(brandName, industryProfile, enrichedProfile, websiteData, brandHealthScore, seoMetrics, competitorAnalysis),
     intend: generateIntendSection(brandName, industryProfile, enrichedProfile),
     reimagine: generateReimagineSection(brandName, industryProfile, enrichedProfile, customization),
     reach: generateReachSection(brandName, industryProfile, enrichedProfile),
@@ -103,13 +104,14 @@ export async function generateMirrorSectionsFromIndustry(
   }
 }
 
-function generateMeasureSection(brandName: string, profile: IndustryProfile, fullProfile: any, websiteData?: any, brandHealthScore?: any, seoMetrics?: any) {
+function generateMeasureSection(brandName: string, profile: IndustryProfile, fullProfile: any, websiteData?: any, brandHealthScore?: any, seoMetrics?: any, competitorAnalysis?: any) {
   return {
     industry: profile.title,
     brandHealth: brandHealthScore?.overall || 50, // Use calculated score, fallback to 50 if unavailable
     brandHealthDetails: brandHealthScore || null, // Store complete health data
     seoMetrics: seoMetrics || null, // NEW: SEMrush SEO data
     keywordOpportunities: seoMetrics?.opportunities || [], // NEW: Keyword opportunities
+    competitorAnalysis: competitorAnalysis || null, // NEW: Competitor intelligence
     currentMetrics: {
       'Market Awareness': 0,
       'Customer Satisfaction': 0,
@@ -491,6 +493,27 @@ export async function createBrandWithIndustryData(
       seoMetrics = null
     }
 
+    // Step 4.6: Discover competitors
+    console.log('[createBrandWithIndustryData] Discovering competitors...')
+    let competitorAnalysis
+    try {
+      const { CompetitorDiscovery } = await import('@/services/intelligence/competitor-discovery')
+      competitorAnalysis = await CompetitorDiscovery.discoverCompetitors(
+        domain,
+        industryProfile.title,
+        brandName
+      )
+      console.log('[createBrandWithIndustryData] Competitors discovered:', {
+        total: competitorAnalysis.total_found,
+        marketLeaders: competitorAnalysis.market_leaders.length,
+        primary: competitorAnalysis.primary_competitors.length,
+        emerging: competitorAnalysis.emerging_competitors.length
+      })
+    } catch (competitorError) {
+      console.warn('[createBrandWithIndustryData] Competitor discovery failed:', competitorError)
+      competitorAnalysis = null
+    }
+
     // Step 5: Generate MIRROR sections with customized data
     onProgress?.('generating-mirror')
     console.log('[createBrandWithIndustryData] Generating MIRROR sections...')
@@ -500,7 +523,8 @@ export async function createBrandWithIndustryData(
       industryProfile,
       websiteData,
       customization,
-      seoMetrics
+      seoMetrics,
+      competitorAnalysis
     )
 
     // Step 6: Store MIRROR sections

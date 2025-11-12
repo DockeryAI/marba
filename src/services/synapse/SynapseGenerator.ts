@@ -436,7 +436,7 @@ async function callClaude(prompt: string): Promise<any> {
     headers: {
       'Authorization': `Bearer ${openRouterKey}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://brandock-agent.app',
+      'HTTP-Referer': 'https://marba-agent.app',
       'X-Title': 'MARBA.ai Synapse Generator'
     },
     body: JSON.stringify({

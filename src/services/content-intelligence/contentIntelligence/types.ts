@@ -23,7 +23,7 @@ export type Platform =
 
 /**
  * Badge labels for UI display
- * Must use opportunity-focused language (BranDock philosophy)
+ * Must use opportunity-focused language (MARBA philosophy)
  */
 export type ContentBadge =
   | 'Weather Alert'
@@ -915,7 +915,7 @@ export const URGENCY_SCORES: Record<OpportunityType, number> = {
 
 /**
  * Mapping from opportunity types to UI badge labels
- * All badges use opportunity-focused language (BranDock philosophy)
+ * All badges use opportunity-focused language (MARBA philosophy)
  */
 export const OPPORTUNITY_TO_BADGE: Record<OpportunityType, ContentBadge> = {
   weather_alert: 'Weather Alert',
@@ -938,7 +938,7 @@ export const OPPORTUNITY_TO_BADGE: Record<OpportunityType, ContentBadge> = {
 
 /**
  * Forbidden words for opportunity-focused tone
- * NEVER allow content containing these words (BranDock's brand voice)
+ * NEVER allow content containing these words (MARBA's brand voice)
  *
  * Categorized for clarity:
  * - Deficit language: implies business is lacking/failing
@@ -981,7 +981,7 @@ export const FORBIDDEN_WORDS = [
 
 /**
  * Opportunity-focused words to use instead
- * Creates positive, growth-oriented messaging (BranDock's brand voice)
+ * Creates positive, growth-oriented messaging (MARBA's brand voice)
  */
 export const OPPORTUNITY_WORDS = [
   'opportunity',

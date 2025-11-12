@@ -2,21 +2,24 @@ import * as React from 'react'
 import { GoalBuilder } from './GoalBuilder'
 import { RecommendedGoals } from './RecommendedGoals'
 import { CustomGoals } from './CustomGoals'
+import { GoldenCircle } from './GoldenCircle'
 import { IntentObjective } from '@/services/mirror/objectives-generator'
 import { MirrorSectionHeader } from '@/components/layouts/MirrorLayout'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Sparkles } from 'lucide-react'
 
-interface ObjectivesSectionProps {
+interface IntendSectionProps {
   brandId: string
   situationData: { brandHealth: number; industry: string; currentMetrics: Record<string, number> }
+  brandData?: any
   className?: string
 }
 
-export const ObjectivesSection: React.FC<ObjectivesSectionProps> = ({
+export const IntendSection: React.FC<IntendSectionProps> = ({
   brandId,
   situationData,
+  brandData,
   className,
 }) => {
   const [goals, setGoals] = React.useState<IntentObjective[]>([])
@@ -39,7 +42,8 @@ export const ObjectivesSection: React.FC<ObjectivesSectionProps> = ({
         setGoals(data as IntentObjective[])
       }
     } catch (error) {
-      console.error('Failed to load goals:', error)
+      // Table may not exist yet - silently handle
+      console.log('Mirror objectives table not found - using default goals')
     } finally {
       setIsLoading(false)
     }
@@ -111,6 +115,11 @@ export const ObjectivesSection: React.FC<ObjectivesSectionProps> = ({
       />
 
       <div className="container py-6 px-6 space-y-6">
+        {/* Golden Circle - NEW */}
+        <section id="golden-circle">
+          <GoldenCircle brandData={brandData} />
+        </section>
+
         {/* Recommended Goals */}
         <RecommendedGoals
           situationData={situationData}

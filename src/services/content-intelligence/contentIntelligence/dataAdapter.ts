@@ -1,7 +1,7 @@
 /**
  * CONTENT INTELLIGENCE DATA ADAPTER
  *
- * Transforms existing BranDock data → BusinessIntelligence format for V6 Content Engine
+ * Transforms existing MARBA data → BusinessIntelligence format for V6 Content Engine
  *
  * Flow:
  * 1. Collect BusinessData from APIs (SEMrush, Outscraper, Serper, Website, Social)

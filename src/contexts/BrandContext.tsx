@@ -38,16 +38,7 @@ export const BrandProvider: React.FC<BrandProviderProps> = ({
   children,
   initialBrand
 }) => {
-  const [currentBrand, setCurrentBrand] = React.useState<Brand | null>(
-    initialBrand || {
-      id: 'demo-brand-123',
-      name: 'Demo Brand',
-      industry: 'Technology',
-      description: 'A demonstration brand for the MARBA platform',
-      size: 'Small (1-50 employees)',
-      founded: '2020'
-    }
-  )
+  const [currentBrand, setCurrentBrand] = React.useState<Brand | null>(initialBrand || null)
   const [brands, setBrands] = React.useState<Brand[]>([])
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<Error | null>(null)
@@ -62,20 +53,13 @@ export const BrandProvider: React.FC<BrandProviderProps> = ({
       //   .from('brands')
       //   .select('*')
       //   .order('name')
+      // if (error) throw error
+      // setBrands(data || [])
 
-      // Mock data for now
-      const mockBrands: Brand[] = [
-        {
-          id: 'demo-brand-123',
-          name: 'Demo Brand',
-          industry: 'Technology',
-          description: 'A demonstration brand for the MARBA platform'
-        }
-      ]
-
-      setBrands(mockBrands)
+      throw new Error('Supabase connection not configured. Please set up Supabase to load brands.')
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to load brands'))
+      setBrands([])
     } finally {
       setLoading(false)
     }

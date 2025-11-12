@@ -61,7 +61,10 @@ export const MirrorLayout: React.FC<MirrorLayoutProps> = ({
                     <span className="shrink-0">{section.icon}</span>
                   )}
                   {!sidebarCollapsed && (
-                    <span className="truncate">{section.label}</span>
+                    <span className="truncate">
+                      <span className="text-blue-600 font-semibold">{section.label[0]}</span>
+                      {section.label.slice(1)}
+                    </span>
                   )}
                 </Button>
 

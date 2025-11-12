@@ -17,13 +17,53 @@ export const AnalyticsPage: React.FC = () => {
   // TODO: Get from BrandContext when implemented
   const brandId = 'demo-brand-123'
 
+  // Mock objectives for Goal Progress Tracker
+  const mockObjectives = [
+    {
+      id: 'obj-1',
+      name: 'Increase Social Media Engagement',
+      description: 'Boost overall engagement rate to 5%',
+      targetValue: 5,
+      currentValue: 4.2,
+      unit: '%',
+      startDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+      targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'obj-2',
+      name: 'Grow Follower Base',
+      description: 'Reach 20,000 total followers across all platforms',
+      targetValue: 20000,
+      currentValue: 15000,
+      unit: 'followers',
+      startDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+      targetDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'obj-3',
+      name: 'Improve Content Quality Score',
+      description: 'Achieve average content quality score of 85+',
+      targetValue: 85,
+      currentValue: 78,
+      unit: 'score',
+      startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+      targetDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+  ]
+
+  const dateRange = {
+    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    end: new Date().toISOString(),
+    preset: '30d' as const,
+  }
+
   return (
     <AppLayout showBreadcrumbs={true}>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold mb-2">Analytics</h1>
           <p className="text-muted-foreground">
-            Track performance, measure goals, and gain insights
+            Track performance, measure goals, and gain insights across all your content and platforms
           </p>
         </div>
 
@@ -37,16 +77,16 @@ export const AnalyticsPage: React.FC = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <KPIScorecard brandId={brandId} />
-            <PerformanceCharts brandId={brandId} />
+            <KPIScorecard brandId={brandId} dateRange={dateRange} />
+            <PerformanceCharts brandId={brandId} dateRange={dateRange} />
           </TabsContent>
 
           <TabsContent value="goals" className="space-y-6">
-            <GoalProgressTracker brandId={brandId} />
+            <GoalProgressTracker brandId={brandId} objectives={mockObjectives} />
           </TabsContent>
 
           <TabsContent value="content" className="space-y-6">
-            <ContentAnalytics brandId={brandId} />
+            <ContentAnalytics brandId={brandId} dateRange={dateRange} />
           </TabsContent>
 
           <TabsContent value="audience" className="space-y-6">

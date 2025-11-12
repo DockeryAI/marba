@@ -1,7 +1,7 @@
 /**
  * OpportunityScorer - Intelligence layer for ranking content opportunities
  *
- * BRANDOCK PHILOSOPHY:
+ * MARBA PHILOSOPHY:
  * This code enforces opportunity-focused language. Every output uses positive,
  * empowering framing. Never says "you're behind" - always "opportunity to grow".
  *

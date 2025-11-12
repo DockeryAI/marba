@@ -1,17 +1,21 @@
 /**
  * Admin Page - Platform Administration
- * Provides access to API Management and other admin functions
+ * Provides access to API Management, Background Jobs, and other admin functions
  */
 
 import * as React from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Settings } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ArrowLeft, Settings, Database, Cog } from 'lucide-react'
 import { ApiAdminSection } from '@/components/admin/api'
+import { BackgroundJobsMonitor } from '@/components/admin/BackgroundJobsMonitor'
 
 export const AdminPage: React.FC = () => {
   // Mock brand ID - in production this would come from auth/context
   const brandId = 'demo-brand-001'
+  const [activeTab, setActiveTab] = useState('apis')
 
   // TODO: Add proper authentication and role-based access control
   // - Check if user is authenticated
@@ -40,8 +44,27 @@ export const AdminPage: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main>
-        <ApiAdminSection brandId={brandId} />
+      <main className="container mx-auto px-6 py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+            <TabsTrigger value="apis" className="gap-2">
+              <Database className="h-4 w-4" />
+              API Management
+            </TabsTrigger>
+            <TabsTrigger value="jobs" className="gap-2">
+              <Cog className="h-4 w-4" />
+              Background Jobs
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="apis" className="mt-0">
+            <ApiAdminSection brandId={brandId} />
+          </TabsContent>
+
+          <TabsContent value="jobs" className="mt-0">
+            <BackgroundJobsMonitor />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   )

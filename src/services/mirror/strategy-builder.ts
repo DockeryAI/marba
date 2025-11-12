@@ -399,11 +399,23 @@ export class StrategyBuilder {
     situationAnalysis: any
     competitors: any[]
   }): MarketingStrategy {
+    // Extract real industry profile data
+    const brandStrategy = input.brandData?.brandStrategy || {}
+    const audienceStrategy = input.brandData?.audienceStrategy || {}
+    const contentStrategy = input.brandData?.contentStrategy || {}
+    const competitiveStrategy = input.brandData?.competitiveStrategy || {}
+    const uvps = input.brandData?.uvps || []
+
+    // Get real value propositions from industry profile
+    const valueDrivers = uvps.length > 0
+      ? uvps.slice(0, 5).map((vp: any) => vp.proposition || vp.differentiator || vp)
+      : (competitiveStrategy.advantages || []).slice(0, 3)
+
     const positioning = this.generatePositioningStatement({
       name: input.brandData.name || 'Your Brand',
-      industry: input.brandData.industry || 'Technology',
-      target_audience: 'marketing professionals who need strategic clarity',
-      unique_value: 'AI-powered marketing intelligence',
+      industry: input.brandData.industry || brandStrategy.positioning || 'Technology',
+      target_audience: (audienceStrategy.segments || [])[0] || 'professionals who need excellence',
+      unique_value: valueDrivers[0] || competitiveStrategy.differentiation || 'exceptional service',
       competitors: input.competitors.map((c) => c.name).slice(0, 2),
     })
 
@@ -428,15 +440,18 @@ export class StrategyBuilder {
     const whiteSpace = this.identifyWhiteSpace(input.brandData.industry, input.competitors)
     const messageSaturation = this.analyzeMessageSaturation(input.brandData.industry)
 
+    // Use real brand voice from industry profile
+    const brandVoice = brandStrategy.voice || contentStrategy.powerWords?.slice(0, 5).join(', ') || 'Professional yet approachable'
+
     return {
       brand_strategy: {
         positioning_statement: positioning,
         message_pillars: messagePillars,
-        brand_voice: 'Professional yet approachable, data-driven with creative flair',
-        unique_value_drivers: [
-          'AI-powered intelligence',
-          'Psychology-informed frameworks',
-          'Real-time market adaptation',
+        brand_voice: brandVoice,
+        unique_value_drivers: valueDrivers.length > 0 ? valueDrivers : [
+          'Industry expertise',
+          'Customer-focused approach',
+          'Proven results',
         ],
       },
       audience_strategy: {

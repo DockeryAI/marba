@@ -12,11 +12,9 @@ export const HomePage: React.FC = () => {
       <div className="space-y-16">{/* Hero */}
       <section className="text-center py-12">
         <Badge className="mb-4">Marketing Intelligence Platform</Badge>
-        <h2 className="text-5xl font-bold mb-6">
-          Strategic Marketing,
-          <br />
-          <span className="text-primary">Powered by AI</span>
-        </h2>
+        <h1 className="text-6xl font-bold mb-6">
+          Welcome to <span className="text-primary">MARBA.ai</span>
+        </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
           Transform your marketing with MIRROR-based strategy, AI-powered insights,
           and actionable tactics that drive real results.

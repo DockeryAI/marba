@@ -26,39 +26,48 @@ export const supabase = isDemoMode
 
 // Mock Supabase client for demo mode
 function createMockSupabaseClient(): any {
-  const mockResponse = { data: null, error: null };
+  const mockError = {
+    data: null,
+    error: {
+      message: 'Supabase not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.',
+      code: 'SUPABASE_NOT_CONFIGURED',
+      details: 'Running in demo mode without database connection.',
+      hint: 'Check NAICS_MIGRATION_GUIDE.md for setup instructions.'
+    }
+  };
+
   const mockQuery = {
     select: () => mockQuery,
     insert: () => mockQuery,
     update: () => mockQuery,
     delete: () => mockQuery,
     eq: () => mockQuery,
-    single: () => Promise.resolve(mockResponse),
+    single: () => Promise.resolve(mockError),
     order: () => mockQuery,
     limit: () => mockQuery,
-    then: (resolve: any) => resolve(mockResponse),
+    then: (resolve: any) => resolve(mockError),
   };
 
   return {
     from: () => mockQuery,
     auth: {
-      getUser: () => Promise.resolve(mockResponse),
-      signInWithPassword: () => Promise.resolve(mockResponse),
-      signUp: () => Promise.resolve(mockResponse),
-      signOut: () => Promise.resolve(mockResponse),
-      resetPasswordForEmail: () => Promise.resolve(mockResponse),
-      updateUser: () => Promise.resolve(mockResponse),
+      getUser: () => Promise.resolve(mockError),
+      signInWithPassword: () => Promise.resolve(mockError),
+      signUp: () => Promise.resolve(mockError),
+      signOut: () => Promise.resolve(mockError),
+      resetPasswordForEmail: () => Promise.resolve(mockError),
+      updateUser: () => Promise.resolve(mockError),
     },
     storage: {
       from: () => ({
-        upload: () => Promise.resolve(mockResponse),
-        getPublicUrl: () => ({ data: { publicUrl: '' } }),
-        remove: () => Promise.resolve(mockResponse),
-        list: () => Promise.resolve(mockResponse),
+        upload: () => Promise.resolve(mockError),
+        getPublicUrl: () => ({ data: { publicUrl: '' }, error: mockError.error }),
+        remove: () => Promise.resolve(mockError),
+        list: () => Promise.resolve(mockError),
       }),
     },
     functions: {
-      invoke: () => Promise.resolve(mockResponse),
+      invoke: () => Promise.resolve(mockError),
     },
     channel: () => ({
       on: () => ({ subscribe: () => ({}) }),

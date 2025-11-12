@@ -29,8 +29,14 @@ export const BrandStrategy: React.FC<BrandStrategyProps> = ({
   const [isEditingPositioning, setIsEditingPositioning] = React.useState(false)
   const [isGenerating, setIsGenerating] = React.useState(false)
 
+  // Load existing strategy from database first
   React.useEffect(() => {
-    if (brandData && objectives.length > 0) {
+    if (brandData?.brandStrategy) {
+      // Use loaded data from database
+      setPositioning(brandData.brandStrategy.positioning_statement || '')
+      setPillars(brandData.brandStrategy.message_pillars || [])
+    } else if (brandData && objectives.length > 0) {
+      // Only generate if no data exists
       generateRecommendedStrategy()
     }
   }, [brandData, objectives])

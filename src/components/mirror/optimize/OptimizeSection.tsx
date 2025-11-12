@@ -8,7 +8,7 @@ import { ActionItem, ActionPlanner, ActionTimeline } from '@/services/mirror/act
 import { TrendingUp, Users, Calendar, AlertTriangle, Target } from 'lucide-react'
 import { ContentCalendarHub } from '@/components/content-calendar'
 
-interface ActionSectionProps {
+interface OptimizeSectionProps {
   brandId: string
   userId: string
   tactics?: any[]
@@ -16,7 +16,7 @@ interface ActionSectionProps {
   className?: string
 }
 
-export const ActionSection: React.FC<ActionSectionProps> = ({
+export const OptimizeSection: React.FC<OptimizeSectionProps> = ({
   brandId,
   userId,
   tactics = [],

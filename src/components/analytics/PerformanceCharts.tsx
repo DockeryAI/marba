@@ -20,6 +20,9 @@ import {
   Bar,
   AreaChart,
   Area,
+  PieChart,
+  Pie,
+  ComposedChart,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -86,11 +89,13 @@ export const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ brandId, d
 
       {/* Charts Tabs */}
       <Tabs value={selectedChart} onValueChange={setSelectedChart} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="engagement">Engagement</TabsTrigger>
           <TabsTrigger value="growth">Growth</TabsTrigger>
           <TabsTrigger value="content-type">Content Type</TabsTrigger>
           <TabsTrigger value="platform">Platform</TabsTrigger>
+          <TabsTrigger value="distribution">Distribution</TabsTrigger>
+          <TabsTrigger value="multi-metric">Multi-Metric</TabsTrigger>
           <TabsTrigger value="timing">Timing</TabsTrigger>
         </TabsList>
 
@@ -256,6 +261,89 @@ export const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ brandId, d
                   <Bar dataKey="reach" fill="#10b981" radius={[8, 8, 0, 0]} />
                   <Bar dataKey="conversions" fill="#f59e0b" radius={[8, 8, 0, 0]} />
                 </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Platform Distribution Pie Chart */}
+        <TabsContent value="distribution" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Platform Content Distribution</CardTitle>
+              <CardDescription>Percentage of content published per platform</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <PieChart>
+                  <Pie
+                    data={generatePlatformDistribution()}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={renderCustomizedLabel}
+                    outerRadius={120}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {generatePlatformDistribution().map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '6px',
+                    }}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Multi-Metric Composed Chart */}
+        <TabsContent value="multi-metric" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Multi-Metric Performance</CardTitle>
+              <CardDescription>Combined view of impressions, engagement, and clicks over time</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <ComposedChart data={generateMultiMetricData()}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="date" stroke="#6b7280" fontSize={12} />
+                  <YAxis yAxisId="left" stroke="#6b7280" fontSize={12} />
+                  <YAxis yAxisId="right" orientation="right" stroke="#6b7280" fontSize={12} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '6px',
+                    }}
+                  />
+                  <Legend />
+                  <Bar yAxisId="left" dataKey="impressions" fill="#93c5fd" radius={[8, 8, 0, 0]} />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="engagement"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={{ fill: '#3b82f6', r: 4 }}
+                  />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="clicks"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    dot={{ fill: '#10b981', r: 4 }}
+                  />
+                </ComposedChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
@@ -451,4 +539,52 @@ function getHeatmapColor(intensity: number): string {
   if (intensity < 50) return '#93c5fd'
   if (intensity < 75) return '#3b82f6'
   return '#1e40af'
+}
+
+function generatePlatformDistribution() {
+  return [
+    { name: 'Instagram', value: 35, color: '#e1306c' },
+    { name: 'Twitter', value: 25, color: '#1da1f2' },
+    { name: 'LinkedIn', value: 20, color: '#0077b5' },
+    { name: 'Facebook', value: 15, color: '#1877f2' },
+    { name: 'TikTok', value: 5, color: '#000000' },
+  ]
+}
+
+function generateMultiMetricData() {
+  const data = []
+  const startDate = new Date()
+  startDate.setDate(startDate.getDate() - 30)
+
+  for (let i = 0; i < 30; i++) {
+    const date = new Date(startDate)
+    date.setDate(date.getDate() + i)
+    data.push({
+      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      impressions: Math.floor(15000 + Math.random() * 10000 + i * 300),
+      engagement: Math.floor(800 + Math.random() * 400 + i * 15),
+      clicks: Math.floor(200 + Math.random() * 150 + i * 5),
+    })
+  }
+  return data
+}
+
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
+  const RADIAN = Math.PI / 180
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5
+  const x = cx + radius * Math.cos(-midAngle * RADIAN)
+  const y = cy + radius * Math.sin(-midAngle * RADIAN)
+
+  return (
+    <text
+      x={x}
+      y={y}
+      fill="white"
+      textAnchor={x > cx ? 'start' : 'end'}
+      dominantBaseline="central"
+      className="font-semibold"
+    >
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  )
 }

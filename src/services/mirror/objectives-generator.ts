@@ -32,7 +32,7 @@ export class ObjectivesGenerator {
     currentMetrics: Record<string, number>
   }): IntentObjective[] {
     const objectives: IntentObjective[] = []
-    const { brandHealth, industry, currentMetrics } = situationData
+    const { brandHealth, industry, currentMetrics = {} } = situationData
 
     // If brand health is low, recommend awareness goal
     if (brandHealth < 70) {
@@ -79,7 +79,7 @@ export class ObjectivesGenerator {
     })
 
     // Recommend lead generation for B2B
-    if (industry.toLowerCase().includes('b2b') || industry.toLowerCase().includes('service')) {
+    if (industry && (industry.toLowerCase().includes('b2b') || industry.toLowerCase().includes('service'))) {
       objectives.push({
         brand_id: '',
         category: 'leads',

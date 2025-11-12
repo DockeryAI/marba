@@ -1,8 +1,8 @@
 /**
  * ContentValidator - Quality control for generated content
  *
- * BRANDOCK'S BRAND VOICE ENFORCEMENT:
- * This validator is the last line of defense for maintaining BranDock's
+ * MARBA'S BRAND VOICE ENFORCEMENT:
+ * This validator is the last line of defense for maintaining MARBA's
  * opportunity-focused philosophy. Check #7 (opportunity tone) is the most
  * critical - it ensures we NEVER say "you're behind" and ALWAYS say
  * "opportunity to grow".
@@ -383,8 +383,8 @@ export class ContentValidator {
    * No forbidden words + must include 2+ opportunity words
    *
    * WHY THIS IS MOST IMPORTANT:
-   * This is BranDock's competitive advantage. Other tools say "you're behind",
-   * BranDock says "opportunity to grow". This check enforces that philosophy.
+   * This is MARBA's competitive advantage. Other tools say "you're behind",
+   * MARBA says "opportunity to grow". This check enforces that philosophy.
    *
    * FORBIDDEN: missing, behind, weak, failed, must, need to, etc.
    * REQUIRED: opportunity, growth, discover, unlock, achieve, ready, etc.

@@ -15,7 +15,10 @@
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "format": "prettier --write src",
-    "format:check": "prettier --check src"
+    "format:check": "prettier --check src",
+    "db:setup": "chmod +x scripts/setup-database.sh && ./scripts/setup-database.sh",
+    "migrate:naics": "tsx scripts/migrate-naics.ts",
+    "seed:naics": "tsx scripts/seed-naics-from-local.ts"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.10",
@@ -50,6 +53,7 @@
     "date-fns": "^3.0.0",
     "fabric": "^5.3.0",
     "framer-motion": "^11.18.2",
+    "fuse.js": "^7.1.0",
     "lucide-react": "^0.487.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -79,6 +83,7 @@
     "postcss": "^8.5.6",
     "prettier": "^3.3.3",
     "tailwindcss": "^4.1.17",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "vite": "^6.3.5",
     "vitest": "^2.1.8"
