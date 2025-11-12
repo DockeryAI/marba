@@ -11,7 +11,8 @@ import { PerformanceCharts } from '@/components/analytics/PerformanceCharts'
 import { ContentAnalytics } from '@/components/analytics/ContentAnalytics'
 import { AudienceInsights } from '@/components/analytics/AudienceInsights'
 import { EngagementInbox } from '@/components/analytics/EngagementInbox'
-import { LearningEngineWidget } from '@/components/analytics/LearningEngineWidget'
+import { LearningEngineWidget } from './LearningEngineWidget'
+import { BenchmarkComparison } from './BenchmarkComparison'
 import { CompetitiveMonitoring } from '@/components/analytics/CompetitiveMonitoring'
 import {
   ReflectDashboard,
@@ -204,7 +205,7 @@ export const ReflectSection: React.FC<ReflectSectionProps> = ({ objectives = [],
           </Card>
         ) : (
           <Tabs defaultValue="goals" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-10">
               <TabsTrigger value="goals">
                 <Target className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">Goals</span>
@@ -212,6 +213,10 @@ export const ReflectSection: React.FC<ReflectSectionProps> = ({ objectives = [],
               <TabsTrigger value="kpis">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">KPIs</span>
+              </TabsTrigger>
+              <TabsTrigger value="benchmarks">
+                <TrendingUp className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Benchmarks</span>
               </TabsTrigger>
               <TabsTrigger value="performance">
                 <LineChart className="h-4 w-4 mr-2" />
@@ -254,6 +259,72 @@ export const ReflectSection: React.FC<ReflectSectionProps> = ({ objectives = [],
                 brandId="demo-brand"
                 dateRange={{ start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), end: new Date().toISOString(), preset: '30d' }}
               />
+            </TabsContent>
+
+            {/* Industry Benchmarks Tab */}
+            <TabsContent value="benchmarks" className="space-y-4">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Industry Benchmark Comparison</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    See how your metrics compare against industry averages and top performers
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <BenchmarkComparison
+                    metricName="Engagement Rate"
+                    yourValue={4.8}
+                    industryAvg={3.5}
+                    topTenPercent={6.2}
+                    format="percentage"
+                    improvement="+0.5%"
+                    goal={5.5}
+                  />
+                  <BenchmarkComparison
+                    metricName="Follower Growth Rate"
+                    yourValue={8.3}
+                    industryAvg={5.2}
+                    topTenPercent={12.0}
+                    format="percentage"
+                    improvement="+1.2%"
+                  />
+                  <BenchmarkComparison
+                    metricName="Content Performance Score"
+                    yourValue={82}
+                    industryAvg={75}
+                    topTenPercent={90}
+                    format="number"
+                    improvement="+3"
+                    goal={90}
+                  />
+                  <BenchmarkComparison
+                    metricName="Click-Through Rate"
+                    yourValue={2.4}
+                    industryAvg={1.8}
+                    topTenPercent={3.5}
+                    format="percentage"
+                    improvement="+0.3%"
+                  />
+                  <BenchmarkComparison
+                    metricName="Conversion Rate"
+                    yourValue={3.2}
+                    industryAvg={2.1}
+                    topTenPercent={5.8}
+                    format="percentage"
+                    goal={4.0}
+                  />
+                  <BenchmarkComparison
+                    metricName="Average Response Time"
+                    yourValue={45}
+                    industryAvg={120}
+                    topTenPercent={30}
+                    unit=" min"
+                    format="number"
+                    improvement="-15 min"
+                  />
+                </div>
+              </div>
             </TabsContent>
 
             {/* Performance Charts Tab */}
