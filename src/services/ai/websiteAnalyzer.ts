@@ -1,12 +1,11 @@
 /**
  * Website Analyzer Service
  * Uses Claude AI via OpenRouter to analyze website content and customize industry profiles
+ * Now proxied through Supabase Edge Function for proper API key handling
  */
 
 import type { WebsiteData } from '@/services/scraping/websiteScraper'
-
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
+import { supabase } from '@/lib/supabase'
 
 export interface CustomizedProfile {
   brandVoice: string
@@ -31,53 +30,31 @@ export async function customizeIndustryProfile(
   console.log('[websiteAnalyzer] Starting AI analysis for:', websiteData.url)
 
   try {
-    // Build the analysis prompt
-    const prompt = buildAnalysisPrompt(websiteData, genericProfile)
+    console.log('[websiteAnalyzer] Calling Edge Function...')
 
-    console.log('[websiteAnalyzer] Sending to OpenRouter API...')
-
-    const response = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'MARBA - Marketing Intelligence',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'anthropic/claude-3.5-sonnet',
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        max_tokens: 4096,
-        temperature: 0.7,
-      }),
+    const { data, error } = await supabase.functions.invoke('analyze-website-ai', {
+      body: {
+        websiteData,
+        genericProfile
+      }
     })
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      console.error('[websiteAnalyzer] OpenRouter error details:', errorData)
-      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`)
+    if (error) {
+      console.error('[websiteAnalyzer] Edge function error:', error)
+      throw new Error(`AI analysis failed: ${error.message}`)
     }
 
-    const data = await response.json()
-    const responseText = data.choices?.[0]?.message?.content || ''
-
-    console.log('[websiteAnalyzer] OpenRouter response received, length:', responseText.length)
-
-    // Parse the JSON response
-    const customized = parseAnalysisResponse(responseText)
+    if (!data.success || !data.analysis) {
+      throw new Error('No analysis data returned from AI')
+    }
 
     console.log('[websiteAnalyzer] Analysis complete:', {
-      brandVoice: customized.brandVoice?.substring(0, 50),
-      uvps: customized.realUVPs?.length,
-      themes: customized.messagingThemes?.length,
+      brandVoice: data.analysis.brandVoice?.substring(0, 50),
+      uvps: data.analysis.realUVPs?.length,
+      themes: data.analysis.messagingThemes?.length,
     })
 
-    return customized
+    return data.analysis
   } catch (error) {
     console.error('[websiteAnalyzer] Error:', error)
 

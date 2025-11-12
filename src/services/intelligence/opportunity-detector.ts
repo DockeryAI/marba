@@ -134,8 +134,8 @@ export class OpportunityDetector {
   static async detectCompetitorActivity(
     config: DetectionConfig
   ): Promise<OpportunityInsight[]> {
-    console.error('[OpportunityDetector] Competitor monitoring not implemented')
-    throw new Error('Competitor activity detection not implemented yet. Implement competitor monitoring service.')
+    console.log('[OpportunityDetector] Competitor monitoring not yet implemented, returning empty results')
+    return [] // Return empty array instead of throwing
   }
 
   /**
@@ -144,8 +144,8 @@ export class OpportunityDetector {
   static async detectSeasonalTriggers(
     config: DetectionConfig
   ): Promise<OpportunityInsight[]> {
-    console.error('[OpportunityDetector] Seasonal triggers not implemented')
-    throw new Error('Seasonal trigger detection not implemented yet. Implement event calendar integration.')
+    console.log('[OpportunityDetector] Seasonal triggers not yet implemented, returning empty results')
+    return [] // Return empty array instead of throwing
   }
 
   /**

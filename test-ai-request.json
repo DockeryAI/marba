@@ -1,0 +1,25 @@
+{
+  "websiteData": {
+    "url": "https://www.rhodesteamtexas.com",
+    "metadata": {
+      "title": "Dallas, Fort Worth Real Estate",
+      "description": "Real estate services"
+    },
+    "content": {
+      "headings": ["Buy Homes", "Sell Homes", "Expert Service"],
+      "paragraphs": ["We help you buy and sell homes in Dallas"],
+      "keywords": ["real estate", "dallas", "homes"]
+    },
+    "design": {
+      "colors": ["#003366"],
+      "fonts": ["Arial"]
+    }
+  },
+  "genericProfile": {
+    "title": "Residential Real Estate",
+    "full_profile_data": {
+      "uvps": [{"uvp": "Expert local knowledge"}],
+      "emotional_triggers": [{"trigger": "Trust"}]
+    }
+  }
+}

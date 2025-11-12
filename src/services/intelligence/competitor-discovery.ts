@@ -70,36 +70,40 @@ class CompetitorDiscoveryService {
   }
 
   /**
-   * Find competitors using SEMrush organic competitor API
+   * Find competitors using SEMrush organic competitor API via Edge Function
    */
   private async findSEMrushCompetitors(domain: string): Promise<Competitor[]> {
-    const SEMRUSH_API_KEY = import.meta.env.VITE_SEMRUSH_API_KEY
-
-    if (!SEMRUSH_API_KEY) {
-      console.error('[CompetitorDiscovery] SEMrush API key not configured')
-      throw new Error('CompetitorDiscovery not configured. Configure VITE_SEMRUSH_API_KEY or implement real service.')
-    }
-
     try {
-      const url = `https://api.semrush.com/?type=domain_organic_organic&key=${SEMRUSH_API_KEY}&domain=${domain}&database=us&display_limit=20&export_columns=Dn,Cr,Np,Or,Ot,Oc,Ad`
+      const { supabase } = await import('@/lib/supabase')
 
-      const response = await fetch(url)
-      if (!response.ok) {
-        throw new Error(`SEMrush API error: ${response.status}`)
+      const { data, error } = await supabase.functions.invoke('fetch-seo-metrics', {
+        body: {
+          domain,
+          type: 'competitors'
+        }
+      })
+
+      if (error) {
+        console.error('[CompetitorDiscovery] Edge function error:', error)
+        throw new Error(`Failed to fetch competitors: ${error.message}`)
       }
 
-      const text = await response.text()
-      const lines = text.split('\n').slice(1) // Skip header
+      if (!data.success || !data.data) {
+        throw new Error('No competitor data returned from SEMrush')
+      }
 
-      const competitors: Competitor[] = lines
-        .filter(line => line.trim())
-        .map(line => {
-          const [competitorDomain, commonKeywords, relevance, rank, traffic, keywords, ads] =
-            line.split(';')
+      const competitors: Competitor[] = data.data
+        .map((row: any) => {
+          const competitorDomain = row.Dn || row.Domain || ''
+          const commonKeywords = row.Cr || row['Common Keywords'] || '0'
+          const relevance = row.Np || row.Relevance || '50'
+          const rank = row.Or || row.Rank || '50'
+          const traffic = row.Ot || row.Traffic || '0'
+          const keywords = row.Oc || row.Keywords || '0'
 
           return {
-            domain: competitorDomain || '',
-            name: this.extractBrandName(competitorDomain || ''),
+            domain: competitorDomain,
+            name: this.extractBrandName(competitorDomain),
             authority_score: Math.min(100, parseInt(rank) || 50),
             organic_keywords: parseInt(keywords) || 0,
             organic_traffic: parseInt(traffic) || 0,
@@ -108,7 +112,7 @@ class CompetitorDiscoveryService {
             confidence: Math.min(100, parseInt(relevance) || 50),
           }
         })
-        .filter(c => c.domain && c.domain !== domain)
+        .filter((c: Competitor) => c.domain && c.domain !== domain)
 
       return competitors
     } catch (error) {

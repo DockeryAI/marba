@@ -1,9 +1,10 @@
 /**
  * Semrush API Integration
  * SEO and competitor analysis with keyword rankings and opportunities
+ * Now proxied through Supabase Edge Function to avoid CORS issues
  */
 
-const SEMRUSH_API_KEY = import.meta.env.VITE_SEMRUSH_API_KEY
+import { supabase } from '@/lib/supabase'
 
 export interface DomainOverview {
   domain: string
@@ -45,38 +46,42 @@ export interface SEOMetrics {
 
 class SemrushAPIService {
   /**
-   * Get comprehensive domain overview
+   * Get comprehensive domain overview via Edge Function
    */
   async getDomainOverview(domain: string): Promise<DomainOverview> {
     console.log('[Semrush] Fetching domain overview for:', domain)
 
-    if (!SEMRUSH_API_KEY) {
-      throw new Error('SEMrush API key not configured. Set VITE_SEMRUSH_API_KEY in your .env file.')
-    }
-
     try {
-      const url = `https://api.semrush.com/?type=domain_ranks&key=${SEMRUSH_API_KEY}&export_columns=Ot,Oc,Or,Ad,At&domain=${domain}&database=us`
-      const response = await fetch(url)
+      const { data, error } = await supabase.functions.invoke('fetch-seo-metrics', {
+        body: {
+          domain,
+          type: 'overview'
+        }
+      })
 
-      if (!response.ok) {
-        throw new Error(`SEMrush API error: ${response.status}`)
+      if (error) {
+        console.error('[Semrush] Edge function error:', error)
+        throw new Error(`Failed to fetch SEO metrics: ${error.message}`)
       }
 
-      const text = await response.text()
-      const [, data] = text.split('\n')
-      if (!data) {
+      if (!data.success || !data.data || data.data.length === 0) {
         throw new Error('No data returned from SEMrush')
       }
 
-      const [traffic, keywords, cost, ads, backlinks] = data.split(';')
+      // Parse the CSV data
+      const row = data.data[0]
+      const traffic = parseInt(row['Organic Traffic'] || row.Ot || '0')
+      const keywords = parseInt(row['Organic Keywords'] || row.Or || '0')
+      const ads = parseInt(row['Adwords Keywords'] || row.Ad || '0')
+      const backlinks = parseInt(row['Adwords Traffic'] || row.At || '0')
 
       return {
         domain,
-        organic_keywords: parseInt(keywords) || 0,
-        organic_traffic: parseInt(traffic) || 0,
-        paid_keywords: parseInt(ads) || 0,
-        backlinks: parseInt(backlinks) || 0,
-        authority_score: Math.min(100, Math.round((parseInt(backlinks) || 0) / 100))
+        organic_keywords: keywords,
+        organic_traffic: traffic,
+        paid_keywords: ads,
+        backlinks: backlinks,
+        authority_score: Math.min(100, Math.round(backlinks / 100))
       }
     } catch (error) {
       console.error('[Semrush API] Error:', error)
@@ -85,45 +90,47 @@ class SemrushAPIService {
   }
 
   /**
-   * Get keyword rankings (excluding brand name keywords)
+   * Get keyword rankings (excluding brand name keywords) via Edge Function
    */
   async getKeywordRankings(domain: string, brandName?: string): Promise<KeywordRanking[]> {
     console.log('[Semrush] Fetching keyword rankings for:', domain)
 
-    if (!SEMRUSH_API_KEY) {
-      throw new Error('SEMrush API key not configured. Set VITE_SEMRUSH_API_KEY in your .env file.')
-    }
-
     try {
-      const url = `https://api.semrush.com/?type=domain_organic&key=${SEMRUSH_API_KEY}&export_columns=Ph,Po,Nq,Cp,Ur,Tr&domain=${domain}&database=us&display_limit=100`
-      const response = await fetch(url)
+      const { data, error } = await supabase.functions.invoke('fetch-seo-metrics', {
+        body: {
+          domain,
+          type: 'keywords'
+        }
+      })
 
-      if (!response.ok) {
-        throw new Error(`SEMrush API error: ${response.status}`)
+      if (error) {
+        console.error('[Semrush] Edge function error:', error)
+        throw new Error(`Failed to fetch keyword rankings: ${error.message}`)
       }
 
-      const text = await response.text()
-      const lines = text.split('\n').slice(1) // Skip header
+      if (!data.success || !data.data) {
+        throw new Error('No data returned from SEMrush')
+      }
 
-      const rankings: KeywordRanking[] = lines
-        .filter(line => line.trim())
-        .map(line => {
-          const [keyword, position, volume, cpc, url, traffic] = line.split(';')
+      const rankings: KeywordRanking[] = data.data
+        .filter((row: any) => row.Ph || row.Keyword)
+        .map((row: any) => {
+          const keyword = row.Ph || row.Keyword || ''
           const isBranded = brandName
             ? keyword.toLowerCase().includes(brandName.toLowerCase())
             : false
 
           return {
-            keyword: keyword || '',
-            position: parseInt(position) || 0,
-            searchVolume: parseInt(volume) || 0,
-            difficulty: this.estimateDifficulty(parseInt(volume) || 0),
-            traffic: parseInt(traffic) || 0,
-            url: url || '',
+            keyword,
+            position: parseInt(row.Po || row.Position || '0'),
+            searchVolume: parseInt(row.Nq || row['Search Volume'] || '0'),
+            difficulty: this.estimateDifficulty(parseInt(row.Nq || '0')),
+            traffic: parseInt(row.Tr || row.Traffic || '0'),
+            url: row.Ur || row.URL || '',
             isBranded,
           }
         })
-        .filter(r => r.keyword && !r.isBranded) // Exclude brand name keywords
+        .filter((r: KeywordRanking) => r.keyword && !r.isBranded) // Exclude brand name keywords
 
       console.log('[Semrush] Found', rankings.length, 'non-branded keyword rankings')
       return rankings

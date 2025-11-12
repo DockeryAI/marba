@@ -238,6 +238,8 @@ export const MirrorPage: React.FC = () => {
         <div id="reflect">
           <ReflectSection
             objectives={objectives}
+            brandId={brandId}
+            brandHealth={state.measure.brandHealth}
           />
         </div>
       </div>

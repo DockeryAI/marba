@@ -376,9 +376,9 @@ export class BrandHealthCalculator {
 
     // 2. Emotional Trigger Usage (30 points)
     const emotionalTriggers = brandProfile.full_profile_data?.emotional_triggers || []
-    if (emotionalTriggers.length >= 5) {
+    if (emotionalTriggers.length >= 3) {
       score += 20
-      strengths.push('Rich emotional trigger library')
+      strengths.push('Strong emotional trigger library')
 
       // Check if positioning uses any triggers
       const positioning = (brandProfile.positioning_statement || '').toLowerCase()
@@ -392,30 +392,42 @@ export class BrandHealthCalculator {
       } else {
         improvements.push('Apply emotional triggers to core messaging')
       }
+    } else if (emotionalTriggers.length >= 2) {
+      score += 15
+      strengths.push('Good emotional trigger foundation')
+      improvements.push('Add 1-2 more emotional triggers for depth')
+    } else if (emotionalTriggers.length >= 1) {
+      score += 10
+      improvements.push('Define more emotional triggers (2-3 recommended)')
     } else {
-      improvements.push('Define more emotional triggers')
+      improvements.push('Define emotional triggers to drive engagement')
     }
 
     // 3. Power Word Density (20 points)
     const powerWords = [
       'proven', 'guaranteed', 'exclusive', 'limited', 'discover',
       'secret', 'breakthrough', 'results', 'transform', 'achieve',
+      'expert', 'expertise', 'specialist', 'specialized', 'trusted',
+      'professional', 'experienced', 'dedicated', 'comprehensive', 'quality',
+      'premium', 'leading', 'top', 'best', 'certified'
     ]
 
     const allContent = `${brandProfile.positioning_statement} ${
-      brandProfile.full_profile_data?.uvps?.map((u: any) => u.proposition).join(' ') || ''
+      brandProfile.full_profile_data?.uvps?.map((u: any) => u.proposition || u.uvp || u).join(' ') || ''
     }`.toLowerCase()
 
     const powerWordCount = powerWords.filter(word => allContent.includes(word)).length
 
-    if (powerWordCount >= 3) {
+    if (powerWordCount >= 2) {
       score += 20
       strengths.push('Strong power word usage')
     } else if (powerWordCount >= 1) {
-      score += 10
-      improvements.push('Increase power word usage')
+      score += 15
+      strengths.push('Good use of impactful language')
+      improvements.push('Consider adding 1-2 more power words')
     } else {
-      improvements.push('Add power words for impact')
+      score += 5
+      improvements.push('Add power words for stronger impact')
     }
 
     return {
@@ -460,21 +472,22 @@ export class BrandHealthCalculator {
     const uvps = brandProfile.full_profile_data?.uvps || []
     if (uvps.length > 0) {
       const primaryUVP = uvps[0]
+      const uvpText = primaryUVP.proposition || primaryUVP.uvp || primaryUVP || ''
 
       // Check for specific, measurable claims
-      const hasNumbers = /\d+/.test(primaryUVP.proposition || '')
-      const hasSpecifics = /(percent|years|customers|faster|better|more)/i.test(
-        primaryUVP.proposition || ''
-      )
+      const hasNumbers = /\d+/.test(uvpText)
+      const hasSpecifics = /(percent|years|customers|faster|better|more|expert|specialist|local|specific|focused)/i.test(uvpText)
 
       if (hasNumbers && hasSpecifics) {
         score += 25
         strengths.push('UVP includes specific, measurable claims')
       } else if (hasSpecifics) {
-        score += 15
-        improvements.push('Add quantifiable metrics to UVP')
+        score += 20
+        strengths.push('UVP has specific positioning')
+        improvements.push('Consider adding quantifiable metrics')
       } else {
-        score += 5
+        score += 15
+        strengths.push('UVP present')
         improvements.push('Make UVP more specific and measurable')
       }
 

@@ -103,26 +103,49 @@ export class WeatherAlertsService {
     if (cached) return cached
 
     try {
-      // Call WeatherAPI.com
-      const query = config.zipCode || config.location
-      const url = `https://api.weatherapi.com/v1/forecast.json?key=${this.WEATHER_API_KEY}&q=${query}&days=7`
+      // Call OpenWeatherMap API (5 day forecast)
+      let query = config.zipCode || config.location
+
+      // OpenWeather doesn't like "City, State" format - just use city name
+      if (query.includes(',')) {
+        query = query.split(',')[0].trim()
+      }
+
+      const url = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(query)}&appid=${this.WEATHER_API_KEY}&units=imperial&cnt=40`
+
+      console.log('[WeatherAlerts] Fetching from OpenWeather:', query)
 
       const response = await fetch(url)
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
+        console.error('[WeatherAlerts] OpenWeather error:', errorData)
         throw new Error(
-          `Weather API error (${response.status}): ${errorData.error?.message || response.statusText}. ` +
-          'Check your VITE_WEATHER_API_KEY configuration.'
+          `OpenWeather API error (${response.status}): ${errorData.message || response.statusText}`
         )
       }
 
       const data = await response.json()
 
-      // Cache the result
-      await this.cacheWeather(config.location, data)
+      // Transform OpenWeather response to our format
+      const transformedData = {
+        current: {
+          temp_f: data.list[0].main.temp,
+          condition: {
+            text: data.list[0].weather[0].description,
+            code: data.list[0].weather[0].id
+          },
+          precip_in: data.list[0].rain?.['3h'] ? data.list[0].rain['3h'] / 25.4 : 0
+        },
+        forecast: {
+          forecastday: this.groupByDay(data.list)
+        }
+      }
 
-      return data
+      // Cache the result
+      await this.cacheWeather(config.location, transformedData)
+
+      return transformedData
     } catch (error) {
       // Re-throw - NO SILENT FAILURES
       if (error instanceof Error) {
@@ -130,6 +153,38 @@ export class WeatherAlertsService {
       }
       throw new Error(`Weather API failed: ${String(error)}`)
     }
+  }
+
+  /**
+   * Group OpenWeather 3-hour intervals into daily forecasts
+   */
+  private static groupByDay(list: any[]): any[] {
+    const days = new Map()
+
+    list.forEach(item => {
+      const date = item.dt_txt.split(' ')[0]
+      if (!days.has(date)) {
+        days.set(date, {
+          date,
+          day: {
+            maxtemp_f: item.main.temp_max,
+            mintemp_f: item.main.temp_min,
+            condition: {
+              text: item.weather[0].description,
+              code: item.weather[0].id
+            },
+            totalprecip_in: item.rain?.['3h'] ? item.rain['3h'] / 25.4 : 0
+          }
+        })
+      } else {
+        const existing = days.get(date)
+        existing.day.maxtemp_f = Math.max(existing.day.maxtemp_f, item.main.temp_max)
+        existing.day.mintemp_f = Math.min(existing.day.mintemp_f, item.main.temp_min)
+        existing.day.totalprecip_in += item.rain?.['3h'] ? item.rain['3h'] / 25.4 : 0
+      }
+    })
+
+    return Array.from(days.values())
   }
 
   /**

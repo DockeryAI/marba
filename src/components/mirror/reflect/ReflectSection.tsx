@@ -41,9 +41,11 @@ import {
 interface ReflectSectionProps {
   objectives?: any[]
   className?: string
+  brandId?: string
+  brandHealth?: number  // Real brand health score from MIRROR Measure section
 }
 
-export const ReflectSection: React.FC<ReflectSectionProps> = ({ objectives = [], className }) => {
+export const ReflectSection: React.FC<ReflectSectionProps> = ({ objectives = [], className, brandId, brandHealth }) => {
   const [kpis, setKPIs] = React.useState<KPIMetric[]>([])
   const [insights, setInsights] = React.useState<PerformanceInsight[]>([])
   const [report, setReport] = React.useState<ReflectionReport | null>(null)
@@ -282,8 +284,9 @@ export const ReflectSection: React.FC<ReflectSectionProps> = ({ objectives = [],
             {/* KPI Dashboard Tab */}
             <TabsContent value="kpis" className="space-y-4">
               <KPIScorecard
-                brandId="demo-brand"
+                brandId={brandId || 'demo-brand'}
                 dateRange={{ start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), end: new Date().toISOString(), preset: '30d' }}
+                brandHealth={brandHealth}
               />
             </TabsContent>
 

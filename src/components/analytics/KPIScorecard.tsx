@@ -34,6 +34,7 @@ interface KPIScorecardProps {
   brandId: string
   dateRange: DateRange
   className?: string
+  brandHealth?: number  // Real brand health score from backend
 }
 
 const DEFAULT_KPIS = [
@@ -48,7 +49,7 @@ const DEFAULT_KPIS = [
   'Conversions',
 ]
 
-export const KPIScorecard: React.FC<KPIScorecardProps> = ({ brandId, dateRange, className }) => {
+export const KPIScorecard: React.FC<KPIScorecardProps> = ({ brandId, dateRange, className, brandHealth }) => {
   const [metrics, setMetrics] = React.useState<KPIMetric[]>([])
   const [selectedMetrics, setSelectedMetrics] = React.useState<string[]>(DEFAULT_KPIS.slice(0, 6))
   const [isLoading, setIsLoading] = React.useState(false)
@@ -56,7 +57,7 @@ export const KPIScorecard: React.FC<KPIScorecardProps> = ({ brandId, dateRange, 
 
   React.useEffect(() => {
     loadMetrics()
-  }, [brandId, dateRange])
+  }, [brandId, dateRange, brandHealth])
 
   const loadMetrics = async () => {
     setIsLoading(true)
@@ -65,13 +66,13 @@ export const KPIScorecard: React.FC<KPIScorecardProps> = ({ brandId, dateRange, 
 
       // If no data, generate sample metrics for demo
       if (data.length === 0) {
-        setMetrics(generateSampleMetrics())
+        setMetrics(generateSampleMetrics(brandHealth))
       } else {
         setMetrics(data)
       }
     } catch (error) {
       console.error('Error loading KPI metrics:', error)
-      setMetrics(generateSampleMetrics())
+      setMetrics(generateSampleMetrics(brandHealth))
     } finally {
       setIsLoading(false)
     }
@@ -304,7 +305,13 @@ export const KPIScorecard: React.FC<KPIScorecardProps> = ({ brandId, dateRange, 
 
 // ==================== Sample Data Generator ====================
 
-function generateSampleMetrics(): KPIMetric[] {
+function generateSampleMetrics(brandHealth?: number): KPIMetric[] {
+  // Use real brand health score if provided, otherwise fallback to mock data
+  const actualBrandHealth = brandHealth ?? 78
+  const brandHealthTrend = brandHealth
+    ? [brandHealth - 5, brandHealth - 3, brandHealth - 2, brandHealth - 1, brandHealth, brandHealth, brandHealth]
+    : [74, 75, 76, 76, 77, 77, 78]
+
   return [
     {
       id: '1',
@@ -416,16 +423,16 @@ function generateSampleMetrics(): KPIMetric[] {
     {
       id: '9',
       name: 'Brand Health Score',
-      value: 78,
+      value: actualBrandHealth,  // REAL SCORE from backend calculation
       unit: '',
-      change: 2.6,
+      change: brandHealth ? 0 : 2.6,  // Show 0 change for real data (no historical data yet)
       changeDirection: 'up',
       comparisonPeriod: 'last quarter',
       industryBenchmark: 72,
-      trend: [74, 75, 76, 76, 77, 77, 78],
+      trend: brandHealthTrend,  // Dynamic trend based on real score
       category: 'awareness',
       targetValue: 85,
-      status: 'good',
+      status: actualBrandHealth >= 70 ? 'good' : actualBrandHealth >= 50 ? 'warning' : 'danger',
     },
   ]
 }

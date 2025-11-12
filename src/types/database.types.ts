@@ -23,6 +23,7 @@ export interface Database {
           website: string | null
           uvp_completed: boolean
           onboarding_completed: boolean
+          last_enriched_at: string | null
           created_at: string
           updated_at: string
         }
@@ -35,6 +36,7 @@ export interface Database {
           website?: string | null
           uvp_completed?: boolean
           onboarding_completed?: boolean
+          last_enriched_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -47,6 +49,7 @@ export interface Database {
           website?: string | null
           uvp_completed?: boolean
           onboarding_completed?: boolean
+          last_enriched_at?: string | null
           created_at?: string
           updated_at?: string
         }

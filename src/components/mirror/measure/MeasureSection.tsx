@@ -189,6 +189,7 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
             hotSpots={hotSpots}
             attentionNeeded={attentionNeeded}
             industryAverage={65}
+            brandHealthDetails={brandData?.brandHealthDetails}
           />
         </section>
 

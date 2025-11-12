@@ -1,0 +1,48 @@
+{
+  "websiteData": {
+    "url": "https://www.rhodesteamtexas.com",
+    "metadata": {
+      "title": "Dallas, Fort Worth Real Estate | The Rhodes Team  serving your real estate needs in Dallas, Fort Worth",
+      "description": "Find real estate in Dallas, Fort Worth. Use The Rhodes Team   to help guide you through the home buying process."
+    },
+    "content": {
+      "headings": [
+        "Buy",
+        "Sell",
+        "Market Report",
+        "About",
+        "Contact",
+        "Featured Listings",
+        "Our Services",
+        "Client Testimonials"
+      ],
+      "paragraphs": [
+        "The Rhodes Team is your trusted real estate partner in the Dallas-Fort Worth metroplex.",
+        "We specialize in helping families find their dream homes.",
+        "Our experienced agents provide personalized service.",
+        "Contact us today to start your home search."
+      ],
+      "keywords": ["real estate", "dallas", "fort worth", "homes", "buy", "sell"]
+    },
+    "design": {
+      "colors": ["#003366"],
+      "fonts": ["Arial", "Helvetica", "Sans-serif"]
+    }
+  },
+  "genericProfile": {
+    "title": "Residential Real Estate",
+    "full_profile_data": {
+      "uvps": [
+        {
+          "uvp": "Expert local market knowledge",
+          "support": "Years of experience in Dallas-Fort Worth",
+          "differentiator": "Personalized service"
+        }
+      ],
+      "emotional_triggers": [
+        {"trigger": "Trust", "why": "Building relationships"},
+        {"trigger": "Security", "why": "Safe transactions"}
+      ]
+    }
+  }
+}

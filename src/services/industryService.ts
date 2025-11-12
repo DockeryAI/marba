@@ -77,7 +77,29 @@ export async function generateMirrorSectionsFromIndustry(
       : fullProfile.emotional_triggers,
     brand_voice: customization.brandVoice || fullProfile.brand_voice,
     messaging_themes: customization.messagingThemes || fullProfile.messaging_themes,
-  } : fullProfile
+    // Add positioning_statement and content_pillars for brand health calculator
+    positioning_statement: customization.realUVPs?.[0]
+      ? `${customization.realUVPs[0].uvp || customization.realUVPs[0].proposition}. ${customization.realUVPs[0].differentiator || ''}`
+      : (customization.brandVoice?.substring(0, 200) || ''),
+    content_pillars: (customization.messagingThemes || []).slice(0, 5).map((theme: string, i: number) => ({
+      id: `pillar-${i + 1}`,
+      title: theme,
+      description: `Content focused on ${theme.toLowerCase()}`,
+      priority: i < 2 ? 'high' : 'medium'
+    }))
+  } : {
+    ...fullProfile,
+    // Generate basic positioning from generic profile
+    positioning_statement: fullProfile.uvps?.[0]
+      ? (typeof fullProfile.uvps[0] === 'string' ? fullProfile.uvps[0] : (fullProfile.uvps[0].proposition || fullProfile.uvps[0].prop || ''))
+      : '',
+    content_pillars: (fullProfile.messaging_themes || []).slice(0, 5).map((theme: string, i: number) => ({
+      id: `pillar-${i + 1}`,
+      title: theme,
+      description: `Content focused on ${theme.toLowerCase()}`,
+      priority: i < 2 ? 'high' : 'medium'
+    }))
+  }
 
   // Calculate real brand health using BrandHealthCalculator
   console.log('[generateMirrorSections] Calculating brand health...')
@@ -171,7 +193,7 @@ function generateIntendSection(brandName: string, profile: IndustryProfile, full
     })),
     objectives: [
       {
-        id: 'obj-1',
+        id: crypto.randomUUID(),
         title: 'Establish Market Presence',
         description: `Build ${brandName}'s reputation in ${profile.title}`,
         kpis: successMetrics.slice(0, 3).map((m: any) => ({
@@ -182,7 +204,7 @@ function generateIntendSection(brandName: string, profile: IndustryProfile, full
       }
     ],
     targets: successMetrics.slice(0, 5).map((m: any, i: number) => ({
-      id: `target-${i}`,
+      id: crypto.randomUUID(),
       metric: m.metric || m,
       current: 0,
       target: 100,
@@ -476,9 +498,64 @@ export async function createBrandWithIndustryData(
 
     // Add extracted website data if available
     if (websiteData?.design) {
-      if (websiteData.design.logo) brandData.logo = websiteData.design.logo
+      if (websiteData.design.logo) brandData.logo_url = websiteData.design.logo
       if (websiteData.design.colors?.length) brandData.colors = websiteData.design.colors
       if (websiteData.design.fonts?.length) brandData.fonts = websiteData.design.fonts
+    }
+
+    // CRITICAL: Add AI customization to brand profile
+    if (customization) {
+      const profileData = {
+        ...industryProfile.full_profile_data,
+        // Override with customized data from AI
+        brand_voice: customization.brandVoice,
+        messaging_themes: customization.messagingThemes || [],
+        uvps: customization.realUVPs || [],
+        emotional_triggers: customization.customizedEmotionalTriggers || [],
+        brand_story: customization.actualBrandStory,
+        brand_values: customization.extractedValues || [],
+        target_audience: customization.targetAudience,
+      }
+      brandData.profile_data = profileData
+      brandData.full_profile_data = profileData // For brand health calculator compatibility
+
+      // Generate positioning_statement from first UVP and brand voice
+      const firstUVP = customization.realUVPs?.[0]
+      if (firstUVP) {
+        brandData.positioning_statement = `${firstUVP.uvp || firstUVP.proposition}. ${firstUVP.differentiator || ''}`
+      } else {
+        brandData.positioning_statement = customization.brandVoice?.substring(0, 200) || ''
+      }
+
+      // Generate content_pillars from messaging_themes
+      brandData.content_pillars = (customization.messagingThemes || []).slice(0, 5).map((theme: string, i: number) => ({
+        id: `pillar-${i + 1}`,
+        title: theme,
+        description: `Content focused on ${theme.toLowerCase()}`,
+        priority: i < 2 ? 'high' : 'medium'
+      }))
+    } else {
+      // Use generic profile if no customization
+      brandData.profile_data = industryProfile.full_profile_data
+      brandData.full_profile_data = industryProfile.full_profile_data
+
+      // Generate basic positioning from generic profile
+      const genericUVPs = industryProfile.full_profile_data?.uvps || []
+      if (genericUVPs.length > 0) {
+        const firstUVP = genericUVPs[0]
+        brandData.positioning_statement = typeof firstUVP === 'string'
+          ? firstUVP
+          : (firstUVP.proposition || firstUVP.prop || '')
+      }
+
+      // Generate basic content pillars
+      const themes = industryProfile.full_profile_data?.messaging_themes || []
+      brandData.content_pillars = themes.slice(0, 5).map((theme: string, i: number) => ({
+        id: `pillar-${i + 1}`,
+        title: theme,
+        description: `Content focused on ${theme.toLowerCase()}`,
+        priority: i < 2 ? 'high' : 'medium'
+      }))
     }
 
     const { data: brand, error: brandError } = await supabase
