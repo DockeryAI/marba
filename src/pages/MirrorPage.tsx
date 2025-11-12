@@ -10,6 +10,7 @@ import { useMirror } from '@/contexts/MirrorContext'
 import { useBrand } from '@/contexts/BrandContext'
 import { supabase } from '@/lib/supabase'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Save, Check, AlertCircle, Lock, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
