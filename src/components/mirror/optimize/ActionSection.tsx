@@ -6,16 +6,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ActionBoard } from './ActionBoard'
 import { ActionItem, ActionPlanner, ActionTimeline } from '@/services/mirror/action-planner'
 import { TrendingUp, Users, Calendar, AlertTriangle, Target } from 'lucide-react'
+import { ContentCalendarHub } from '@/components/content-calendar'
 
 interface ActionSectionProps {
+  brandId: string
+  userId: string
   tactics?: any[]
+  pillars?: any[]
   className?: string
 }
 
-export const ActionSection: React.FC<ActionSectionProps> = ({ tactics = [], className }) => {
+export const ActionSection: React.FC<ActionSectionProps> = ({
+  brandId,
+  userId,
+  tactics = [],
+  pillars = [],
+  className
+}) => {
   const [actions, setActions] = React.useState<ActionItem[]>([])
   const [timeline, setTimeline] = React.useState<ActionTimeline[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
+  const [activeView, setActiveView] = React.useState<'calendar' | 'actions'>('calendar')
 
   // Generate actions from tactics on mount or when tactics change
   React.useEffect(() => {
@@ -85,16 +96,43 @@ export const ActionSection: React.FC<ActionSectionProps> = ({ tactics = [], clas
   return (
     <div className={className}>
       <div className="space-y-6">
-        {/* Header with metrics */}
+        {/* Header with view toggle */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold">Action Plan</h2>
-            <p className="text-muted-foreground">Convert tactics into executable tasks with deadlines</p>
+            <h2 className="text-3xl font-bold">Optimize</h2>
+            <p className="text-muted-foreground">Content calendar and action planning</p>
           </div>
-          <Button onClick={handleGenerateActions} disabled={isLoading || tactics.length === 0}>
-            {isLoading ? 'Generating...' : actions.length > 0 ? 'Regenerate Actions' : 'Generate Actions'}
-          </Button>
+          <div className="flex gap-2">
+            <Tabs value={activeView} onValueChange={(v) => setActiveView(v as 'calendar' | 'actions')}>
+              <TabsList>
+                <TabsTrigger value="calendar">Content Calendar</TabsTrigger>
+                <TabsTrigger value="actions">Action Board</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </div>
+
+        {/* Content Calendar View */}
+        {activeView === 'calendar' && (
+          <ContentCalendarHub
+            brandId={brandId}
+            userId={userId}
+            pillars={pillars}
+          />
+        )}
+
+        {/* Action Board View */}
+        {activeView === 'actions' && (
+          <>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold">Action Plan</h3>
+                <p className="text-sm text-muted-foreground">Convert tactics into executable tasks with deadlines</p>
+              </div>
+              <Button onClick={handleGenerateActions} disabled={isLoading || tactics.length === 0}>
+                {isLoading ? 'Generating...' : actions.length > 0 ? 'Regenerate Actions' : 'Generate Actions'}
+              </Button>
+            </div>
 
         {/* Metrics Cards */}
         {actions.length > 0 && (
@@ -410,6 +448,8 @@ export const ActionSection: React.FC<ActionSectionProps> = ({ tactics = [], clas
               )}
             </TabsContent>
           </Tabs>
+        )}
+          </>
         )}
       </div>
     </div>

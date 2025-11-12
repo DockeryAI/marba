@@ -15,12 +15,19 @@ export const HomePage: React.FC = () => {
             <Sparkles className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold">MARBA.ai</h1>
           </div>
-          <Link to="/mirror">
-            <Button>
-              Launch Mirror
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link to="/admin">
+              <Button variant="outline">
+                Admin
+              </Button>
+            </Link>
+            <Link to="/mirror">
+              <Button>
+                Launch Mirror
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
