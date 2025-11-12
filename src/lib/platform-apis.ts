@@ -440,6 +440,131 @@ export async function fetchPlatformAnalytics(
   }
 }
 
+/**
+ * Mock publish function for development and testing
+ * Simulates success/failure (80% success rate) with realistic delays
+ */
+export async function publishToPlatformMock(
+  platform: ContentPlatform,
+  params: {
+    content: string;
+    imageUrl?: string;
+    scheduledTime?: string;
+  }
+): Promise<{ success: boolean; platformPostId?: string; error?: string }> {
+  // Simulate network delay (500-2000ms)
+  const delay = Math.floor(Math.random() * 1500) + 500;
+  await new Promise(resolve => setTimeout(resolve, delay));
+
+  // 80% success rate
+  const isSuccess = Math.random() < 0.8;
+
+  if (isSuccess) {
+    // Generate mock post ID
+    const platformPostId = `${platform}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+
+    // Generate mock analytics
+    const mockAnalytics = {
+      impressions: Math.floor(Math.random() * 5000) + 100,
+      engagement: Math.floor(Math.random() * 500) + 10,
+      clicks: Math.floor(Math.random() * 200) + 5,
+      shares: Math.floor(Math.random() * 50),
+      comments: Math.floor(Math.random() * 30),
+      likes: Math.floor(Math.random() * 300) + 20,
+    };
+
+    console.log(`[Mock] Published to ${platform}:`, {
+      postId: platformPostId,
+      analytics: mockAnalytics,
+      contentLength: params.content.length,
+      hasImage: !!params.imageUrl,
+    });
+
+    return {
+      success: true,
+      platformPostId,
+    };
+  } else {
+    // Simulate various error types
+    const errors = [
+      'Rate limit exceeded. Please try again in 15 minutes.',
+      'Authentication token expired. Please reconnect your account.',
+      'Content violates platform guidelines.',
+      'Network timeout. Please check your connection.',
+      'Platform API temporarily unavailable.',
+      'Invalid media format. Please use JPG or PNG.',
+    ];
+
+    const error = errors[Math.floor(Math.random() * errors.length)];
+
+    console.error(`[Mock] Failed to publish to ${platform}:`, error);
+
+    return {
+      success: false,
+      error,
+    };
+  }
+}
+
+/**
+ * Generate mock analytics data for a published post
+ */
+export function generateMockAnalytics(platform: ContentPlatform): {
+  impressions: number;
+  engagement: number;
+  clicks: number;
+  shares: number;
+  comments: number;
+  likes: number;
+  reach: number;
+} {
+  // Platform-specific engagement ranges
+  const platformMultipliers: Record<ContentPlatform, number> = {
+    instagram: 1.2,
+    facebook: 1.0,
+    linkedin: 0.8,
+    twitter: 1.5,
+    tiktok: 2.0,
+    google_business: 0.6,
+    email: 0.4,
+    blog: 0.5,
+  };
+
+  const multiplier = platformMultipliers[platform] || 1.0;
+
+  return {
+    impressions: Math.floor((Math.random() * 5000 + 500) * multiplier),
+    engagement: Math.floor((Math.random() * 500 + 50) * multiplier),
+    clicks: Math.floor((Math.random() * 200 + 20) * multiplier),
+    shares: Math.floor((Math.random() * 50 + 5) * multiplier),
+    comments: Math.floor((Math.random() * 30 + 3) * multiplier),
+    likes: Math.floor((Math.random() * 300 + 30) * multiplier),
+    reach: Math.floor((Math.random() * 3000 + 300) * multiplier),
+  };
+}
+
+/**
+ * Test platform connection (mock)
+ */
+export async function testPlatformConnection(
+  platform: ContentPlatform
+): Promise<{ connected: boolean; error?: string }> {
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // 90% success rate for testing
+  const isConnected = Math.random() < 0.9;
+
+  if (isConnected) {
+    return { connected: true };
+  } else {
+    return {
+      connected: false,
+      error: 'Unable to verify credentials. Please reconnect your account.',
+    };
+  }
+}
+
 export default {
   facebook: facebookAPI,
   linkedin: linkedinAPI,
@@ -447,5 +572,8 @@ export default {
   googleBusiness: googleBusinessAPI,
   tiktok: tiktokAPI,
   publishToPlatform,
+  publishToPlatformMock,
   fetchPlatformAnalytics,
+  generateMockAnalytics,
+  testPlatformConnection,
 };
