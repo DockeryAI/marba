@@ -8,8 +8,9 @@ import { OptimizeSection } from '@/components/mirror/optimize'
 import { ReflectSection } from '@/components/mirror/reflect'
 import { useMirror } from '@/contexts/MirrorContext'
 import { useBrand } from '@/contexts/BrandContext'
+import { supabase } from '@/lib/supabase'
 import { Badge } from '@/components/ui/badge'
-import { Save, Check, AlertCircle } from 'lucide-react'
+import { Save, Check, AlertCircle, Lock, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const MirrorPage: React.FC = () => {
@@ -26,6 +27,25 @@ export const MirrorPage: React.FC = () => {
   } : null
 
   const [activeSection, setActiveSection] = React.useState('measure')
+  const [hasCompletedUVP, setHasCompletedUVP] = React.useState(false)
+
+  // Check if UVP is completed
+  React.useEffect(() => {
+    const checkUVPCompletion = async () => {
+      if (!brandId) return
+
+      const { data, error } = await supabase
+        .from('value_statements')
+        .select('id, is_primary')
+        .eq('brand_id', brandId)
+        .eq('is_primary', true)
+        .single()
+
+      setHasCompletedUVP(!error && !!data)
+    }
+
+    checkUVPCompletion()
+  }, [brandId])
 
   // Redirect to onboarding if no brand
   React.useEffect(() => {
@@ -77,6 +97,8 @@ export const MirrorPage: React.FC = () => {
       id: 'intend',
       label: 'Intend',
       subsections: [
+        { id: 'uvp-flow', label: 'Value Proposition' },
+        { id: 'wwh-framework', label: 'Why, What, How' },
         { id: 'goals', label: 'Goals' },
         { id: 'targets', label: 'Targets' },
       ],
@@ -84,6 +106,7 @@ export const MirrorPage: React.FC = () => {
     {
       id: 'reimagine',
       label: 'Reimagine',
+      locked: !hasCompletedUVP,
       subsections: [
         { id: 'brand', label: 'Brand' },
         { id: 'audience', label: 'Audience' },
@@ -94,6 +117,7 @@ export const MirrorPage: React.FC = () => {
     {
       id: 'reach',
       label: 'Reach',
+      locked: !hasCompletedUVP,
       subsections: [
         { id: 'channels', label: 'Channels' },
         { id: 'campaigns', label: 'Campaigns' },
@@ -102,6 +126,7 @@ export const MirrorPage: React.FC = () => {
     {
       id: 'optimize',
       label: 'Optimize',
+      locked: !hasCompletedUVP,
       subsections: [
         { id: 'board', label: 'Action Board' },
         { id: 'timeline', label: 'Timeline' },
@@ -111,6 +136,7 @@ export const MirrorPage: React.FC = () => {
     {
       id: 'reflect',
       label: 'Reflect',
+      locked: !hasCompletedUVP,
       subsections: [
         { id: 'kpis', label: 'KPI Dashboard' },
         { id: 'insights', label: 'Performance Insights' },
@@ -122,12 +148,12 @@ export const MirrorPage: React.FC = () => {
   // Calculate section completion
   const sectionCompletion = React.useMemo(() => ({
     measure: Object.keys(state.measure).length > 0,
-    intend: Object.keys(state.intend).length > 0,
-    reimagine: Object.keys(state.reimagine).length > 0,
-    reach: Object.keys(state.reach).length > 0,
-    optimize: Object.keys(state.optimize).length > 0,
-    reflect: Object.keys(state.reflect).length > 0
-  }), [state])
+    intend: hasCompletedUVP, // Intend is complete when UVP is done
+    reimagine: Object.keys(state.reimagine).length > 0 && hasCompletedUVP,
+    reach: Object.keys(state.reach).length > 0 && hasCompletedUVP,
+    optimize: Object.keys(state.optimize).length > 0 && hasCompletedUVP,
+    reflect: Object.keys(state.reflect).length > 0 && hasCompletedUVP
+  }), [state, hasCompletedUVP])
 
   const completedCount = Object.values(sectionCompletion).filter(Boolean).length
 
@@ -136,6 +162,33 @@ export const MirrorPage: React.FC = () => {
       sections={sections}
       activeSection={activeSection}
       onSectionChange={setActiveSection}
+      sidebarCTA={
+        !hasCompletedUVP ? (
+          <button
+            onClick={() => {
+              setActiveSection('intend')
+              setTimeout(() => {
+                const uvpSection = document.getElementById('uvp-flow')
+                uvpSection?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              }, 100)
+            }}
+            className="w-full relative overflow-hidden rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 p-4 text-white shadow-lg transition-all hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+          >
+            {/* Glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 animate-pulse" />
+
+            <div className="relative z-10">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <Zap className="h-5 w-5 animate-pulse" />
+                <span className="font-bold text-sm">Complete Your UVP</span>
+              </div>
+              <p className="text-xs opacity-90 text-center">
+                Takes 5 minutes • Unlocks everything
+              </p>
+            </div>
+          </button>
+        ) : null
+      }
     >
       {/* Save Status Indicator */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b p-3 mb-6">
@@ -200,47 +253,102 @@ export const MirrorPage: React.FC = () => {
           />
         </div>
 
-        {/* Reimagine Phase */}
-        <div id="reimagine">
-          <ReimagineSection
-            brandId={brandId}
-            brandData={state.reimagine}
-            objectives={objectives}
-            situationAnalysis={measureData}
-            competitors={brandData?.competitors || []}
-          />
+        {/* Reimagine Phase - LOCKED UNTIL UVP COMPLETE */}
+        <div id="reimagine" className="relative">
+          {!hasCompletedUVP && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+              <div className="text-center p-8 max-w-md">
+                <div className="rounded-full bg-muted p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <Lock className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">Complete Your Value Proposition First</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Your UVP is the foundation for everything that follows. Scroll up to the Intend section to define it now.
+                </p>
+                <Button onClick={() => {
+                  const uvpSection = document.getElementById('uvp-flow')
+                  uvpSection?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                }}>
+                  <Zap className="h-4 w-4 mr-2" />
+                  Go to Value Proposition
+                </Button>
+              </div>
+            </div>
+          )}
+          <div className={cn(!hasCompletedUVP && "pointer-events-none opacity-50")}>
+            <ReimagineSection
+              brandId={brandId}
+              brandData={state.reimagine}
+              objectives={objectives}
+              situationAnalysis={measureData}
+              competitors={brandData?.competitors || []}
+            />
+          </div>
         </div>
 
-        {/* Reach Phase */}
-        <div id="reach">
-          <ReachSection
-            brandId={brandId}
-            strategy={strategy}
-            objectives={objectives}
-            budget={0}
-            teamSize={0}
-          />
+        {/* Reach Phase - LOCKED UNTIL UVP COMPLETE */}
+        <div id="reach" className="relative">
+          {!hasCompletedUVP && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+              <div className="text-center p-8 max-w-md">
+                <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">Locked</h3>
+                <p className="text-sm text-muted-foreground">Complete your Value Proposition to unlock</p>
+              </div>
+            </div>
+          )}
+          <div className={cn(!hasCompletedUVP && "pointer-events-none opacity-50")}>
+            <ReachSection
+              brandId={brandId}
+              strategy={strategy}
+              objectives={objectives}
+              budget={0}
+              teamSize={0}
+            />
+          </div>
         </div>
 
-        {/* Optimize Phase */}
-        <div id="optimize">
-          <OptimizeSection
-            brandId={brandId}
-            userId={brandId}
-            tactics={tactics}
-            pillars={[]}
-            industry={state.measure?.industry}
-            brandData={state.measure}
-          />
+        {/* Optimize Phase - LOCKED UNTIL UVP COMPLETE */}
+        <div id="optimize" className="relative">
+          {!hasCompletedUVP && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+              <div className="text-center p-8 max-w-md">
+                <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">Locked</h3>
+                <p className="text-sm text-muted-foreground">Complete your Value Proposition to unlock</p>
+              </div>
+            </div>
+          )}
+          <div className={cn(!hasCompletedUVP && "pointer-events-none opacity-50")}>
+            <OptimizeSection
+              brandId={brandId}
+              userId={brandId}
+              tactics={tactics}
+              pillars={[]}
+              industry={state.measure?.industry}
+              brandData={state.measure}
+            />
+          </div>
         </div>
 
-        {/* Reflect Phase */}
-        <div id="reflect">
-          <ReflectSection
-            objectives={objectives}
-            brandId={brandId}
-            brandHealth={state.measure.brandHealth}
-          />
+        {/* Reflect Phase - LOCKED UNTIL UVP COMPLETE */}
+        <div id="reflect" className="relative">
+          {!hasCompletedUVP && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+              <div className="text-center p-8 max-w-md">
+                <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">Locked</h3>
+                <p className="text-sm text-muted-foreground">Complete your Value Proposition to unlock</p>
+              </div>
+            </div>
+          )}
+          <div className={cn(!hasCompletedUVP && "pointer-events-none opacity-50")}>
+            <ReflectSection
+              objectives={objectives}
+              brandId={brandId}
+              brandHealth={state.measure.brandHealth}
+            />
+          </div>
         </div>
       </div>
     </MirrorLayout>

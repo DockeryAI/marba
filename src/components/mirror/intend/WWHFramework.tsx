@@ -1,23 +1,22 @@
 /**
- * Golden Circle Component
+ * WWH Framework Component (Why, What, How)
  * Visualizes the Why/What/How framework for brand purpose
- * User specifically requested this visualization
+ * Core strategic foundation visualization
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Target, Package, Lightbulb, Heart } from 'lucide-react'
 
-interface GoldenCircleProps {
+interface WWHFrameworkProps {
   brandData?: any
 }
 
-export function GoldenCircle({ brandData }: GoldenCircleProps) {
+export function WWHFramework({ brandData }: WWHFrameworkProps) {
   // Extract from multiple possible locations
   const fullProfile = brandData?.full_profile_data || {}
 
-  console.log('[GoldenCircle] brandData received:', brandData)
-  console.log('[GoldenCircle] full_profile_data:', fullProfile)
+  console.log('[WWH] brandData received:', brandData)
+  console.log('[WWH] full_profile_data:', fullProfile)
 
   // WHY - Purpose & Belief
   // Try: mission, vision, brand_purpose, positioning_statement
@@ -80,7 +79,7 @@ export function GoldenCircle({ brandData }: GoldenCircleProps) {
     bgColor: 'bg-green-50 dark:bg-green-950/20',
   }
 
-  console.log('[GoldenCircle] Extracted data:', { why: whyContent, how: howItems, what: whatItems })
+  console.log('[WWH] Extracted data:', { why: whyContent, how: howItems, what: whatItems })
 
   return (
     <Card>
@@ -89,15 +88,12 @@ export function GoldenCircle({ brandData }: GoldenCircleProps) {
           <div>
             <CardTitle className="flex items-center gap-2">
               <Target className="h-5 w-5" />
-              Golden Circle
+              Why, What, How
             </CardTitle>
             <CardDescription>
               Your brand's purpose, approach, and offerings
             </CardDescription>
           </div>
-          <Badge variant="outline" className="text-xs">
-            Simon Sinek Framework
-          </Badge>
         </div>
       </CardHeader>
       <CardContent>

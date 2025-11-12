@@ -20,6 +20,7 @@ interface MirrorLayoutProps {
   onSectionChange: (sectionId: string) => void
   className?: string
   sidebarCollapsible?: boolean
+  sidebarCTA?: React.ReactNode
 }
 
 export const MirrorLayout: React.FC<MirrorLayoutProps> = ({
@@ -29,6 +30,7 @@ export const MirrorLayout: React.FC<MirrorLayoutProps> = ({
   onSectionChange,
   className,
   sidebarCollapsible = true,
+  sidebarCTA,
 }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
 
@@ -95,6 +97,13 @@ export const MirrorLayout: React.FC<MirrorLayoutProps> = ({
             )
           })}
         </nav>
+
+        {/* Sidebar CTA (e.g., UVP prompt) */}
+        {!sidebarCollapsed && sidebarCTA && (
+          <div className="p-4 border-t">
+            {sidebarCTA}
+          </div>
+        )}
 
         {/* Collapse Toggle */}
         {sidebarCollapsible && (

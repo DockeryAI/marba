@@ -26,6 +26,36 @@ export type {
   IntelligenceOpportunity,
 } from './mirror.types';
 
+// UVP (Unique Value Proposition) types
+export type {
+  ValueStatementStatus,
+  UVPContext,
+  ValueStatement,
+  UVPPerformanceData,
+  UVPComponentType,
+  ComponentSource,
+  UVPComponent,
+  ABTestStatus,
+  ABTestWinner,
+  UVPABTest,
+  UVPABTestWithVariants,
+  ValueStatementFormData,
+  UVPFormula,
+  UVPTemplate,
+  UVPScoreBreakdown,
+  CompetitiveUVPAnalysis,
+  UVPBrandHealthImpact,
+  UVPFlowTab,
+  UVPBuilderMode,
+  UVPContextState,
+  UVPContextActions,
+  UVPExportFormat,
+  UVPExportConfig,
+  UVPValidationResult,
+  UVPGenerationRequest,
+  UVPGenerationResponse,
+} from './uvp.types';
+
 // Marbs AI Assistant types
 export type {
   MarbsMessage,
