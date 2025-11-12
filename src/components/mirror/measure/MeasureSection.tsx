@@ -73,10 +73,49 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
   }
 
   const handleRefresh = async () => {
+    if (!brandData?.name && !brandData?.industry) {
+      console.warn('[MeasureSection] No brand data to refresh')
+      return
+    }
+
     setIsLoading(true)
-    // Simulate refresh
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsLoading(false)
+    try {
+      console.log('[MeasureSection] Refreshing intelligence data...')
+
+      // Get domain from brandData
+      const domain = (brandData as any).website || window.location.hostname
+      const brandName = (brandData as any).name || 'Brand'
+
+      // Fetch fresh SEO metrics
+      const { SemrushAPI } = await import('@/services/intelligence/semrush-api')
+      const seoMetrics = await SemrushAPI.getComprehensiveSEOMetrics(domain, brandName)
+      console.log('[MeasureSection] SEO metrics fetched:', seoMetrics?.overview?.authority_score)
+
+      // Discover competitors
+      const { CompetitorDiscovery } = await import('@/services/intelligence/competitor-discovery')
+      const competitorAnalysis = await CompetitorDiscovery.discoverCompetitors(
+        domain,
+        (brandData as any).industry || 'Technology',
+        brandName
+      )
+      console.log('[MeasureSection] Competitors discovered:', competitorAnalysis?.total_found)
+
+      // Update the section with fresh data
+      if (onDataUpdate) {
+        onDataUpdate({
+          seoMetrics,
+          keywordOpportunities: seoMetrics.opportunities,
+          competitorAnalysis
+        })
+      }
+
+      console.log('[MeasureSection] Intelligence data refreshed successfully')
+    } catch (error) {
+      console.error('[MeasureSection] Refresh error:', error)
+      alert('Failed to refresh intelligence data. Check console for details.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
