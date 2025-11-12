@@ -90,20 +90,31 @@ export class WeatherAlertsService {
   private static async fetchWeatherData(
     config: WeatherConfig
   ): Promise<WeatherAPIResponse | null> {
+    // Check for API key
+    if (!this.WEATHER_API_KEY) {
+      throw new Error(
+        'Weather API key not configured. Add VITE_WEATHER_API_KEY to your .env file. ' +
+        'Get a free API key from https://www.weatherapi.com/'
+      )
+    }
+
     // Check cache first
     const cached = await this.getCachedWeather(config.location)
     if (cached) return cached
 
     try {
-      // In production, call actual weather API
-      // Example: WeatherAPI.com
+      // Call WeatherAPI.com
       const query = config.zipCode || config.location
       const url = `https://api.weatherapi.com/v1/forecast.json?key=${this.WEATHER_API_KEY}&q=${query}&days=7`
 
       const response = await fetch(url)
+
       if (!response.ok) {
-        console.warn('Weather API request failed, using mock data')
-        return this.getMockWeatherData()
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(
+          `Weather API error (${response.status}): ${errorData.error?.message || response.statusText}. ` +
+          'Check your VITE_WEATHER_API_KEY configuration.'
+        )
       }
 
       const data = await response.json()
@@ -113,9 +124,11 @@ export class WeatherAlertsService {
 
       return data
     } catch (error) {
-      console.error('Weather API error:', error)
-      // Return mock data for development
-      return this.getMockWeatherData()
+      // Re-throw - NO SILENT FAILURES
+      if (error instanceof Error) {
+        throw error
+      }
+      throw new Error(`Weather API failed: ${String(error)}`)
     }
   }
 
@@ -409,54 +422,9 @@ export class WeatherAlertsService {
   }
 
   /**
-   * Mock weather data for development
+   * NO MOCK DATA - removed to enforce real API usage
+   * If weather data is needed, configure VITE_WEATHER_API_KEY
    */
-  private static getMockWeatherData(): WeatherAPIResponse {
-    return {
-      current: {
-        temp_f: 95,
-        condition: {
-          text: 'Sunny',
-          code: 1000,
-        },
-        precip_in: 0,
-      },
-      forecast: {
-        forecastday: [
-          {
-            date: new Date().toISOString().split('T')[0],
-            day: {
-              maxtemp_f: 96,
-              mintemp_f: 78,
-              condition: { text: 'Sunny' },
-              daily_chance_of_rain: 10,
-              daily_chance_of_snow: 0,
-            },
-          },
-          {
-            date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-            day: {
-              maxtemp_f: 97,
-              mintemp_f: 79,
-              condition: { text: 'Sunny' },
-              daily_chance_of_rain: 5,
-              daily_chance_of_snow: 0,
-            },
-          },
-          {
-            date: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0],
-            day: {
-              maxtemp_f: 94,
-              mintemp_f: 77,
-              condition: { text: 'Partly Cloudy' },
-              daily_chance_of_rain: 15,
-              daily_chance_of_snow: 0,
-            },
-          },
-        ],
-      },
-    }
-  }
 
   /**
    * Cache management

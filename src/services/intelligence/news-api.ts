@@ -37,7 +37,10 @@ class NewsAPIService {
     if (cached) return cached
 
     if (!NEWS_API_KEY) {
-      return this.getMockIndustryNews(industry)
+      throw new Error(
+        'News API key not configured. Add VITE_NEWS_API_KEY to your .env file. ' +
+        'Get a free API key from https://newsapi.org/'
+      )
     }
 
     try {
@@ -45,7 +48,14 @@ class NewsAPIService {
       const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&language=en&pageSize=20&apiKey=${NEWS_API_KEY}`
 
       const response = await fetch(url)
-      if (!response.ok) throw new Error(`News API error: ${response.statusText}`)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(
+          `News API error (${response.status}): ${errorData.message || response.statusText}. ` +
+          'Check your VITE_NEWS_API_KEY configuration.'
+        )
+      }
 
       const data = await response.json()
       const articles: NewsArticle[] = data.articles.map((article: any) => ({
@@ -62,8 +72,11 @@ class NewsAPIService {
       this.setCache(cacheKey, articles)
       return articles
     } catch (error) {
-      console.error('[News API] Error:', error)
-      return this.getMockIndustryNews(industry)
+      // Re-throw - NO SILENT FAILURES
+      if (error instanceof Error) {
+        throw error
+      }
+      throw new Error(`News API failed: ${String(error)}`)
     }
   }
 
@@ -73,14 +86,24 @@ class NewsAPIService {
     if (cached) return cached
 
     if (!NEWS_API_KEY) {
-      return this.getMockLocalNews(location)
+      throw new Error(
+        'News API key not configured. Add VITE_NEWS_API_KEY to your .env file. ' +
+        'Get a free API key from https://newsapi.org/'
+      )
     }
 
     try {
       const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(location)}&sortBy=publishedAt&language=en&pageSize=15&apiKey=${NEWS_API_KEY}`
 
       const response = await fetch(url)
-      if (!response.ok) throw new Error(`News API error: ${response.statusText}`)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(
+          `News API error (${response.status}): ${errorData.message || response.statusText}. ` +
+          'Check your VITE_NEWS_API_KEY configuration.'
+        )
+      }
 
       const data = await response.json()
       const articles: NewsArticle[] = data.articles.map((article: any) => ({
@@ -97,8 +120,11 @@ class NewsAPIService {
       this.setCache(cacheKey, articles)
       return articles
     } catch (error) {
-      console.error('[News API] Error:', error)
-      return this.getMockLocalNews(location)
+      // Re-throw - NO SILENT FAILURES
+      if (error instanceof Error) {
+        throw error
+      }
+      throw new Error(`News API failed: ${String(error)}`)
     }
   }
 
@@ -113,31 +139,10 @@ class NewsAPIService {
     return Math.min(100, score)
   }
 
-  private getMockIndustryNews(industry: string): NewsArticle[] {
-    return [
-      {
-        title: `${industry} Industry Sees 25% Growth This Quarter`,
-        description: `Major developments in the ${industry} sector indicate strong market demand`,
-        url: 'https://example.com/news1',
-        publishedAt: new Date().toISOString(),
-        source: 'Industry Times',
-        relevanceScore: 85
-      }
-    ]
-  }
-
-  private getMockLocalNews(location: string): NewsArticle[] {
-    return [
-      {
-        title: `${location} Hosts Annual Business Expo`,
-        description: `Local businesses gather for networking and partnerships`,
-        url: 'https://example.com/local1',
-        publishedAt: new Date().toISOString(),
-        source: 'Local News',
-        relevanceScore: 75
-      }
-    ]
-  }
+  /**
+   * NO MOCK DATA - removed to enforce real API usage
+   * Configure VITE_NEWS_API_KEY to enable news features
+   */
 }
 
 export const NewsAPI = new NewsAPIService()

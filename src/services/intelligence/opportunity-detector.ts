@@ -5,6 +5,9 @@ import {
   SuggestedAction,
 } from '@/types/intelligence.types'
 import { supabase } from '@/lib/supabase'
+import { WeatherAlertsService } from './weather-alerts'
+import { TrendAnalyzerService } from './trend-analyzer'
+import { NewsAPI } from './news-api'
 
 /**
  * Opportunity Detector Service
@@ -70,8 +73,26 @@ export class OpportunityDetector {
   static async detectWeatherOpportunities(
     config: DetectionConfig
   ): Promise<OpportunityInsight[]> {
-    console.error('[OpportunityDetector] Weather API not implemented')
-    throw new Error('Weather-based opportunity detection not implemented yet. Integrate weather API service.')
+    try {
+      console.log('[OpportunityDetector] Detecting weather opportunities...')
+
+      const opportunities = await WeatherAlertsService.detectWeatherOpportunities({
+        brandId: config.brandId,
+        location: config.location || 'Dallas, TX',
+        industry: config.industry || '',
+        zipCode: undefined,
+        latitude: undefined,
+        longitude: undefined
+      })
+
+      console.log(`[OpportunityDetector] Found ${opportunities.length} weather opportunities`)
+      return opportunities
+    } catch (error) {
+      console.error('[OpportunityDetector] Weather detection failed:', error)
+      throw new Error(
+        `Weather-based opportunity detection failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      )
+    }
   }
 
   /**
@@ -80,8 +101,31 @@ export class OpportunityDetector {
   static async detectTrendingTopics(
     config: DetectionConfig
   ): Promise<OpportunityInsight[]> {
-    console.error('[OpportunityDetector] Google Trends API not implemented')
-    throw new Error('Trending topic detection not implemented yet. Integrate Google Trends API.')
+    try {
+      console.log('[OpportunityDetector] Detecting trending topics...')
+
+      // If no keywords provided, skip trending detection
+      if (!config.keywords || config.keywords.length === 0) {
+        console.log('[OpportunityDetector] No keywords provided for trend analysis')
+        return []
+      }
+
+      const opportunities = await TrendAnalyzerService.detectTrendingTopics({
+        brandId: config.brandId,
+        industry: config.industry || '',
+        keywords: config.keywords,
+        location: config.location,
+        language: 'en'
+      })
+
+      console.log(`[OpportunityDetector] Found ${opportunities.length} trending opportunities`)
+      return opportunities
+    } catch (error) {
+      console.error('[OpportunityDetector] Trend detection failed:', error)
+      throw new Error(
+        `Trending topic detection failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      )
+    }
   }
 
   /**
@@ -110,8 +154,99 @@ export class OpportunityDetector {
   static async detectLocalNews(
     config: DetectionConfig
   ): Promise<OpportunityInsight[]> {
-    console.error('[OpportunityDetector] Local news monitoring not implemented')
-    throw new Error('Local news detection not implemented yet. Implement news API integration.')
+    try {
+      console.log('[OpportunityDetector] Detecting local news opportunities...')
+
+      // Fetch industry news
+      const industryNews = await NewsAPI.getIndustryNews(
+        config.industry || '',
+        config.keywords || []
+      )
+
+      // Fetch local news if location provided
+      const localNews = config.location
+        ? await NewsAPI.getLocalNews(config.location)
+        : []
+
+      // Convert news articles to opportunities
+      const opportunities: OpportunityInsight[] = []
+
+      // Process top industry news
+      for (const article of industryNews.slice(0, 5)) {
+        if (article.relevanceScore >= 70) {
+          opportunities.push({
+            id: `news_industry_${Date.now()}_${Math.random()}`,
+            brand_id: config.brandId,
+            type: 'local_news',
+            title: `Industry News: ${article.title}`,
+            description: article.description,
+            source: 'news_api',
+            source_data: {
+              url: article.url,
+              published_at: article.publishedAt,
+              source: article.source,
+              relevance: article.relevanceScore
+            },
+            impact_score: article.relevanceScore,
+            urgency: 'medium',
+            confidence: 0.75,
+            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            status: 'new',
+            suggested_actions: [
+              {
+                action_type: 'create_content',
+                description: 'Create commentary or response content',
+                priority: 'medium',
+                estimated_effort: 'medium',
+                potential_impact: article.relevanceScore
+              }
+            ],
+            created_at: new Date().toISOString()
+          })
+        }
+      }
+
+      // Process local news
+      for (const article of localNews.slice(0, 3)) {
+        opportunities.push({
+          id: `news_local_${Date.now()}_${Math.random()}`,
+          brand_id: config.brandId,
+          type: 'local_news',
+          title: `Local News: ${article.title}`,
+          description: article.description,
+          source: 'news_api',
+          source_data: {
+            url: article.url,
+            published_at: article.publishedAt,
+            source: article.source,
+            location: config.location
+          },
+          impact_score: 65,
+          urgency: 'low',
+          confidence: 0.7,
+          expires_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          status: 'new',
+          suggested_actions: [
+            {
+              action_type: 'create_content',
+              description: 'Leverage local event for engagement',
+              priority: 'low',
+              estimated_effort: 'low',
+              potential_impact: 65
+            }
+          ],
+          created_at: new Date().toISOString()
+        })
+      }
+
+      console.log(`[OpportunityDetector] Found ${opportunities.length} news opportunities`)
+      return opportunities
+    } catch (error) {
+      console.error('[OpportunityDetector] News detection failed:', error)
+      throw new Error(
+        `Local news detection failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      )
+    }
   }
 
   /**

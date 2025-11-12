@@ -123,13 +123,34 @@ export class TrendAnalyzerService {
     keyword: string,
     location?: string
   ): Promise<any> {
+    // Check for API configuration
+    if (!this.TRENDS_API_KEY) {
+      throw new Error(
+        'Google Trends API key not configured. Add VITE_GOOGLE_TRENDS_API_KEY to your .env file. ' +
+        'Note: Google Trends does not have an official API. Consider using a service like SerpAPI or Rapid API.'
+      )
+    }
+
     try {
-      // In production, call Google Trends API or unofficial API
-      // For now, return mock data
-      return this.getMockTrendData(keyword)
+      // TODO: Implement actual Google Trends API call
+      // This requires a third-party service like SerpAPI or similar
+      // For now, throw error until implemented
+      throw new Error(
+        'Google Trends integration pending. This requires a third-party API service like SerpAPI. ' +
+        'Visit https://serpapi.com/ to get an API key for trends data.'
+      )
+
+      // Example implementation with SerpAPI:
+      // const url = `https://serpapi.com/search?engine=google_trends&q=${encodeURIComponent(keyword)}&api_key=${this.TRENDS_API_KEY}`
+      // const response = await fetch(url)
+      // if (!response.ok) throw new Error(`Trends API error: ${response.statusText}`)
+      // return await response.json()
     } catch (error) {
-      console.error('Trends API error:', error)
-      return this.getMockTrendData(keyword)
+      // Re-throw - NO SILENT FAILURES
+      if (error instanceof Error) {
+        throw error
+      }
+      throw new Error(`Trends API failed: ${String(error)}`)
     }
   }
 
@@ -371,18 +392,9 @@ export class TrendAnalyzerService {
   }
 
   /**
-   * Mock trend data for development
+   * NO MOCK DATA - removed to enforce real API usage
+   * Configure VITE_GOOGLE_TRENDS_API_KEY to enable this feature
    */
-  private static getMockTrendData(keyword: string): any {
-    // Simulate trending data with growth
-    return {
-      keyword,
-      values: [45, 52, 61, 75, 88, 100],
-      timestamps: Array.from({ length: 6 }, (_, i) =>
-        new Date(Date.now() - (5 - i) * 7 * 24 * 60 * 60 * 1000).toISOString()
-      ),
-    }
-  }
 
   /**
    * Cache management
