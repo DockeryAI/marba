@@ -229,6 +229,8 @@ export const MirrorPage: React.FC = () => {
             userId={brandId}
             tactics={tactics}
             pillars={[]}
+            industry={state.measure?.industry}
+            brandData={state.measure}
           />
         </div>
 

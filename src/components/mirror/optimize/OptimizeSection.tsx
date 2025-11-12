@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ActionBoard } from './ActionBoard'
+import { OpportunityDashboard } from './OpportunityDashboard'
 import { ActionItem, ActionPlanner, ActionTimeline } from '@/services/mirror/action-planner'
 import { TrendingUp, Users, Calendar, AlertTriangle, Target } from 'lucide-react'
 import { ContentCalendarHub } from '@/components/content-calendar'
@@ -13,6 +14,8 @@ interface OptimizeSectionProps {
   userId: string
   tactics?: any[]
   pillars?: any[]
+  industry?: string
+  brandData?: any
   className?: string
 }
 
@@ -21,6 +24,8 @@ export const OptimizeSection: React.FC<OptimizeSectionProps> = ({
   userId,
   tactics = [],
   pillars = [],
+  industry,
+  brandData,
   className
 }) => {
   const [actions, setActions] = React.useState<ActionItem[]>([])
@@ -111,6 +116,15 @@ export const OptimizeSection: React.FC<OptimizeSectionProps> = ({
             </Tabs>
           </div>
         </div>
+
+        {/* Opportunity Dashboard - NEW */}
+        <section id="opportunity-dashboard">
+          <OpportunityDashboard
+            brandId={brandId}
+            industry={industry}
+            brandData={brandData}
+          />
+        </section>
 
         {/* Content Calendar View */}
         {activeView === 'calendar' && (
