@@ -15,19 +15,27 @@ interface BusinessListing {
 
 class OutScraperAPIService {
   async getBusinessListings(location: string, category: string): Promise<BusinessListing[]> {
-    return [
-      {
-        name: `${category} Business 1`,
-        address: `123 Main St, ${location}`,
-        rating: 4.5,
-        reviews_count: 342,
-        category
-      }
-    ]
+    if (!OUTSCRAPER_API_KEY) {
+      throw new Error(
+        'OutScraper API key not configured. Add VITE_OUTSCRAPER_API_KEY to your .env file. ' +
+        'Get a free API key from https://outscraper.com/'
+      )
+    }
+
+    // TODO: Implement real OutScraper Google Maps scraping
+    throw new Error('OutScraper getBusinessListings() not yet implemented. Use OutScraper Google Maps API.')
   }
 
   async scrapeGoogleReviews(businessId: string): Promise<any[]> {
-    return []
+    if (!OUTSCRAPER_API_KEY) {
+      throw new Error(
+        'OutScraper API key not configured. Add VITE_OUTSCRAPER_API_KEY to your .env file. ' +
+        'Get a free API key from https://outscraper.com/'
+      )
+    }
+
+    // TODO: Implement real OutScraper Google Reviews scraping
+    throw new Error('OutScraper scrapeGoogleReviews() not yet implemented. Use OutScraper Google Reviews API.')
   }
 }
 

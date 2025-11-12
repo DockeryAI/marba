@@ -56,8 +56,10 @@ class YouTubeAPIService {
     if (cached) return cached
 
     if (!YOUTUBE_API_KEY) {
-      console.warn('[YouTube API] API key not configured')
-      return this.getMockTrendingVideos()
+      throw new Error(
+        'YouTube API key not configured. Add VITE_YOUTUBE_API_KEY to your .env file. ' +
+        'Get a free API key from https://console.cloud.google.com/apis/library/youtube.googleapis.com'
+      )
     }
 
     try {
@@ -89,7 +91,7 @@ class YouTubeAPIService {
       return videos
     } catch (error) {
       console.error('[YouTube API] Error fetching trending videos:', error)
-      return this.getMockTrendingVideos()
+      throw error
     }
   }
 
@@ -103,8 +105,10 @@ class YouTubeAPIService {
     if (cached) return cached
 
     if (!YOUTUBE_API_KEY) {
-      console.warn('[YouTube API] API key not configured')
-      return this.getMockSearchVideos(keywords)
+      throw new Error(
+        'YouTube API key not configured. Add VITE_YOUTUBE_API_KEY to your .env file. ' +
+        'Get a free API key from https://console.cloud.google.com/apis/library/youtube.googleapis.com'
+      )
     }
 
     try {
@@ -143,7 +147,7 @@ class YouTubeAPIService {
       return videos
     } catch (error) {
       console.error('[YouTube API] Error searching videos:', error)
-      return this.getMockSearchVideos(keywords)
+      throw error
     }
   }
 
@@ -221,62 +225,7 @@ class YouTubeAPIService {
       return analysis
     } catch (error) {
       console.error('[YouTube API] Error analyzing trends:', error)
-      return this.getMockTrendAnalysis(industry)
-    }
-  }
-
-  // Mock data for when API is unavailable
-  private getMockTrendingVideos(): YouTubeVideo[] {
-    return [
-      {
-        id: 'mock1',
-        title: 'Top Marketing Strategies for 2025',
-        description: 'Learn the latest marketing trends',
-        channelTitle: 'Marketing Pro',
-        publishedAt: new Date().toISOString(),
-        viewCount: 125000,
-        likeCount: 5200,
-        commentCount: 340,
-        tags: ['marketing', 'strategy', '2025'],
-        categoryId: '22'
-      }
-    ]
-  }
-
-  private getMockSearchVideos(keywords: string[]): YouTubeVideo[] {
-    return [
-      {
-        id: 'search1',
-        title: `${keywords[0]} Tutorial - Complete Guide`,
-        description: `Learn everything about ${keywords.join(', ')}`,
-        channelTitle: 'Industry Expert',
-        publishedAt: new Date().toISOString(),
-        viewCount: 45000,
-        likeCount: 2100,
-        commentCount: 156,
-        tags: keywords,
-        categoryId: '22'
-      }
-    ]
-  }
-
-  private getMockTrendAnalysis(industry: string): TrendAnalysis {
-    return {
-      trending_topics: ['digital marketing', 'social media', 'content strategy', 'SEO', 'video marketing'],
-      popular_formats: ['Tutorial', 'How-To', 'Tips', 'Review', 'Case Study'],
-      engagement_patterns: {
-        avgViewCount: 35000,
-        avgEngagementRate: 4.5,
-        peakPostingTimes: ['10 AM EST', '2 PM EST', '6 PM EST']
-      },
-      content_angles: [
-        'Beginner-friendly content',
-        'Best practices',
-        'Common mistakes to avoid',
-        'Expert interviews',
-        'Behind-the-scenes'
-      ],
-      relevance_score: 75
+      throw error
     }
   }
 }

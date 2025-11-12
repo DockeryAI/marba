@@ -61,7 +61,9 @@ export async function generateMirrorSectionsFromIndustry(
   websiteData?: any,
   customization?: any,
   seoMetrics?: any,
-  competitorAnalysis?: any
+  competitorAnalysis?: any,
+  contentGaps?: any,
+  youtubeTrends?: any
 ): Promise<MirrorSections> {
   const fullProfile = industryProfile.full_profile_data || {}
 
@@ -95,23 +97,25 @@ export async function generateMirrorSectionsFromIndustry(
   console.log('[generateMirrorSections] Brand health calculated:', brandHealthScore.overall)
 
   return {
-    measure: generateMeasureSection(brandName, industryProfile, enrichedProfile, websiteData, brandHealthScore, seoMetrics, competitorAnalysis),
+    measure: generateMeasureSection(brandName, industryProfile, enrichedProfile, websiteData, brandHealthScore, seoMetrics, competitorAnalysis, contentGaps, youtubeTrends),
     intend: generateIntendSection(brandName, industryProfile, enrichedProfile),
     reimagine: generateReimagineSection(brandName, industryProfile, enrichedProfile, customization),
     reach: generateReachSection(brandName, industryProfile, enrichedProfile),
-    optimize: generateOptimizeSection(brandName, industryProfile, enrichedProfile),
+    optimize: generateOptimizeSection(brandName, industryProfile, enrichedProfile, contentGaps),
     reflect: generateReflectSection(brandName, industryProfile, enrichedProfile)
   }
 }
 
-function generateMeasureSection(brandName: string, profile: IndustryProfile, fullProfile: any, websiteData?: any, brandHealthScore?: any, seoMetrics?: any, competitorAnalysis?: any) {
+function generateMeasureSection(brandName: string, profile: IndustryProfile, fullProfile: any, websiteData?: any, brandHealthScore?: any, seoMetrics?: any, competitorAnalysis?: any, contentGaps?: any, youtubeTrends?: any) {
   return {
     industry: profile.title,
     brandHealth: brandHealthScore?.overall || 50, // Use calculated score, fallback to 50 if unavailable
     brandHealthDetails: brandHealthScore || null, // Store complete health data
-    seoMetrics: seoMetrics || null, // NEW: SEMrush SEO data
-    keywordOpportunities: seoMetrics?.opportunities || [], // NEW: Keyword opportunities
-    competitorAnalysis: competitorAnalysis || null, // NEW: Competitor intelligence
+    seoMetrics: seoMetrics || null, // SEMrush SEO data
+    keywordOpportunities: seoMetrics?.opportunities || [], // Keyword opportunities
+    competitorAnalysis: competitorAnalysis || null, // Competitor intelligence
+    contentGapAnalysis: contentGaps || null, // NEW: Content gap analysis
+    youtubeTrends: youtubeTrends || null, // NEW: YouTube trending content analysis
     currentMetrics: {
       'Market Awareness': 0,
       'Customer Satisfaction': 0,
@@ -140,13 +144,13 @@ function generateMeasureSection(brandName: string, profile: IndustryProfile, ful
         impact: 'high'
       }
     ],
-    // NEW: Psychology Fields
+    // Psychology Fields
     emotional_triggers: fullProfile.emotional_triggers || [],
     emotional_journey: fullProfile.emotional_journey_map || {},
     customer_avatars: fullProfile.customer_avatars || [],
-    // NEW: API Data Placeholders (to be enriched)
+    // API Data (enriched during brand creation)
     weather_opportunities: [],
-    trending_topics: [],
+    trending_topics: youtubeTrends?.trending_topics || [],
     industry_news: [],
     competitor_intelligence: []
   }
@@ -298,9 +302,21 @@ function generateReachSection(brandName: string, profile: IndustryProfile, fullP
   }
 }
 
-function generateOptimizeSection(brandName: string, profile: IndustryProfile, fullProfile: any) {
+function generateOptimizeSection(brandName: string, profile: IndustryProfile, fullProfile: any, contentGaps?: any) {
   const pricing = fullProfile.pricing_psychology || {}
   const tiers = fullProfile.tiered_service_models || []
+
+  // Generate priority actions from content gaps
+  const contentGapActions = contentGaps?.quick_wins?.slice(0, 3).map((gap: any, index: number) => ({
+    id: `content-gap-${index}`,
+    title: `Create content for "${gap.category}"`,
+    description: `Quick win opportunity: ${gap.content_pieces_needed} pieces needed. Est. ${gap.estimated_monthly_leads} leads/month.`,
+    priority: 'high',
+    status: 'pending',
+    dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    assignee: 'Team',
+    estimatedRevenue: gap.estimated_monthly_revenue
+  })) || []
 
   return {
     actions: [
@@ -321,7 +337,8 @@ function generateOptimizeSection(brandName: string, profile: IndustryProfile, fu
         status: 'pending',
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         assignee: 'Team'
-      }
+      },
+      ...contentGapActions
     ],
     timeline: {
       phases: [
@@ -345,7 +362,7 @@ function generateOptimizeSection(brandName: string, profile: IndustryProfile, fu
         margin: tier.margin
       }))
     },
-    // NEW: Psychology Fields
+    contentGapPriorities: contentGaps?.quick_wins || [], // NEW: Content gap quick wins
     persona_priorities: fullProfile.persona_priority_ranking || [],
     narrative_arc: fullProfile.narrative_arc || {}
   }
@@ -514,6 +531,46 @@ export async function createBrandWithIndustryData(
       competitorAnalysis = null
     }
 
+    // Step 4.7: Analyze content gaps
+    console.log('[createBrandWithIndustryData] Analyzing content gaps...')
+    let contentGaps
+    try {
+      const { ContentGapAnalyzer } = await import('@/services/intelligence/content-gap-analyzer')
+      contentGaps = await ContentGapAnalyzer.analyzeGaps(
+        {
+          uvps: industryProfile.full_profile_data?.value_propositions || [],
+          competitive_advantages: industryProfile.full_profile_data?.competitive_advantages || [],
+          positioning_statement: industryProfile.full_profile_data?.positioning_statement || ''
+        },
+        competitorAnalysis,
+        industryProfile
+      )
+      console.log('[createBrandWithIndustryData] Content gaps analyzed:', {
+        totalGaps: contentGaps.all_gaps.length,
+        quickWins: contentGaps.quick_wins.length,
+        opportunityScore: contentGaps.total_opportunity_score
+      })
+    } catch (gapError) {
+      console.warn('[createBrandWithIndustryData] Content gap analysis failed:', gapError)
+      contentGaps = null
+    }
+
+    // Step 4.8: Fetch trending YouTube content for industry (optional)
+    console.log('[createBrandWithIndustryData] Fetching YouTube trends...')
+    let youtubeTrends
+    try {
+      const { YouTubeAPI } = await import('@/services/intelligence/youtube-api')
+      const keywords = industryProfile.keywords?.slice(0, 3) || [industryProfile.title]
+      youtubeTrends = await YouTubeAPI.analyzeVideoTrends(industryProfile.title, keywords)
+      console.log('[createBrandWithIndustryData] YouTube trends fetched:', {
+        topics: youtubeTrends.trending_topics.length,
+        formats: youtubeTrends.popular_formats.length
+      })
+    } catch (youtubeError) {
+      console.warn('[createBrandWithIndustryData] YouTube trends fetch failed (API key may be missing):', youtubeError)
+      youtubeTrends = null
+    }
+
     // Step 5: Generate MIRROR sections with customized data
     onProgress?.('generating-mirror')
     console.log('[createBrandWithIndustryData] Generating MIRROR sections...')
@@ -524,7 +581,9 @@ export async function createBrandWithIndustryData(
       websiteData,
       customization,
       seoMetrics,
-      competitorAnalysis
+      competitorAnalysis,
+      contentGaps,
+      youtubeTrends
     )
 
     // Step 6: Store MIRROR sections

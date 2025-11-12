@@ -15,14 +15,10 @@ interface SearchResult {
 class SerperAPIService {
   async searchGoogle(query: string): Promise<SearchResult[]> {
     if (!SERPER_API_KEY) {
-      return [
-        {
-          title: `${query} - Complete Guide`,
-          link: 'https://example.com/guide',
-          snippet: `Learn everything about ${query} with our comprehensive guide`,
-          position: 1
-        }
-      ]
+      throw new Error(
+        'Serper API key not configured. Add VITE_SERPER_API_KEY to your .env file. ' +
+        'Get a free API key from https://serper.dev/'
+      )
     }
 
     try {
@@ -44,12 +40,20 @@ class SerperAPIService {
       }))
     } catch (error) {
       console.error('[Serper API] Error:', error)
-      return []
+      throw error
     }
   }
 
   async getTrendingSearches(): Promise<string[]> {
-    return ['AI marketing tools', 'social media strategy 2025', 'content automation', 'video marketing trends']
+    if (!SERPER_API_KEY) {
+      throw new Error(
+        'Serper API key not configured. Add VITE_SERPER_API_KEY to your .env file. ' +
+        'Get a free API key from https://serper.dev/'
+      )
+    }
+
+    // TODO: Implement real trending searches via Serper API
+    throw new Error('getTrendingSearches() not yet implemented. Use Google Trends API instead.')
   }
 
   /**

@@ -53,7 +53,10 @@ class WeatherAPIService {
     if (cached) return cached
 
     if (!WEATHER_API_KEY) {
-      return this.getMockWeather()
+      throw new Error(
+        'Weather API key not configured. Add VITE_WEATHER_API_KEY to your .env file. ' +
+        'Get a free API key from https://openweathermap.org/api'
+      )
     }
 
     try {
@@ -78,7 +81,7 @@ class WeatherAPIService {
       return weather
     } catch (error) {
       console.error('[Weather API] Error:', error)
-      return this.getMockWeather()
+      throw error
     }
   }
 
@@ -88,7 +91,10 @@ class WeatherAPIService {
     if (cached) return cached
 
     if (!WEATHER_API_KEY) {
-      return this.getMockForecast()
+      throw new Error(
+        'Weather API key not configured. Add VITE_WEATHER_API_KEY to your .env file. ' +
+        'Get a free API key from https://openweathermap.org/api'
+      )
     }
 
     try {
@@ -123,15 +129,13 @@ class WeatherAPIService {
       return dailyForecasts.slice(0, 5)
     } catch (error) {
       console.error('[Weather API] Error:', error)
-      return this.getMockForecast()
+      throw error
     }
   }
 
   async detectWeatherOpportunities(location: string, industry: string): Promise<WeatherOpportunity[]> {
     const weather = await this.getCurrentWeather(location)
     const forecast = await this.get5DayForecast(location)
-
-    if (!weather || !forecast) return []
 
     const opportunities: WeatherOpportunity[] = []
 
@@ -186,28 +190,6 @@ class WeatherAPIService {
     }
 
     return opportunities
-  }
-
-  private getMockWeather(): WeatherData {
-    return {
-      temperature: 75,
-      feels_like: 78,
-      condition: 'Clear',
-      description: 'clear sky',
-      humidity: 65,
-      wind_speed: 8,
-      forecast: []
-    }
-  }
-
-  private getMockForecast(): ForecastDay[] {
-    return [
-      { date: '2025-11-12', temp_max: 78, temp_min: 62, condition: 'Clear', precipitation_chance: 10 },
-      { date: '2025-11-13', temp_max: 82, temp_min: 65, condition: 'Sunny', precipitation_chance: 5 },
-      { date: '2025-11-14', temp_max: 85, temp_min: 68, condition: 'Sunny', precipitation_chance: 0 },
-      { date: '2025-11-15', temp_max: 76, temp_min: 64, condition: 'Cloudy', precipitation_chance: 40 },
-      { date: '2025-11-16', temp_max: 72, temp_min: 60, condition: 'Rain', precipitation_chance: 75 }
-    ]
   }
 }
 
