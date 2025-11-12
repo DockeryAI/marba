@@ -2,33 +2,19 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Sparkles, TrendingUp, Users, Target, ArrowRight, AlertCircle } from 'lucide-react'
-
-interface Connection {
-  id: string
-  type: 'customer_trigger_market' | 'competitor_weakness_opportunity' | 'content_gap_trend' | 'archetype_channel'
-  confidence: number
-  insight: string
-  data_points: Array<{
-    source: string
-    data: any
-  }>
-  suggested_actions: Array<{
-    action: string
-    priority: 'high' | 'medium' | 'low'
-    impact: number
-  }>
-  created_at: string
-}
+import { Sparkles, TrendingUp, Users, Target, ArrowRight, AlertCircle, Zap, Brain } from 'lucide-react'
+import { ConnectionDiscoveryEngine } from '@/services/synapse/ConnectionDiscoveryEngine'
+import type { Connection, DeepContext } from '@/types/connections.types'
 
 interface ConnectionDiscoveryProps {
   brandData: any
 }
 
 export function ConnectionDiscovery({ brandData }: ConnectionDiscoveryProps) {
-  const [connections] = useState<Connection[]>([])
+  const [connections, setConnections] = useState<Connection[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [summary, setSummary] = useState<any>(null)
 
   useEffect(() => {
     if (brandData?.id) {
@@ -44,29 +30,44 @@ export function ConnectionDiscovery({ brandData }: ConnectionDiscoveryProps) {
 
     setLoading(true)
     setError(null)
+    setConnections([])
+    setSummary(null)
 
     try {
-      // For now, show a helpful message since the full implementation requires additional setup
-      // In production, this would call the ConnectionDiscoveryEngine
+      console.log('[ConnectionDiscovery] Building deep context...')
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Build deep context from brand data
+      const deepContext: DeepContext = {
+        brand_id: brandData.id,
+        industry: brandData.industry || 'general',
+        keywords: brandData.keywords || [],
+        triggers: brandData.emotional_triggers?.map((t: any) => t.trigger || t) || [],
+        competitors: brandData.competitors || [],
+        content_gaps: brandData.content_gaps || [],
+        current_opportunities: brandData.current_opportunities || [],
+        seo_data: brandData.seo_data || null,
+        weather_data: brandData.weather_data || null,
+        trend_data: brandData.trend_data || null,
+        archetype: brandData.primary_archetype || 'Explorer',
+        brand_voice: brandData.brand_voice || 'professional',
+        target_personas: brandData.target_personas || [],
+        benchmarks: brandData.benchmarks || null
+      }
 
-      // Show helpful error with next steps
-      throw new Error(
-        'Connection Discovery requires OpenAI API key and additional data integrations. ' +
-        'This feature discovers unexpected connections between your brand data, customer triggers, ' +
-        'market trends, and opportunities to create breakthrough insights.'
-      )
+      console.log('[ConnectionDiscovery] Calling AI engine...')
 
-      // Production implementation would be:
-      // const { ConnectionDiscoveryEngine } = await import('@/services/synapse/connections/ConnectionDiscoveryEngine')
-      // const engine = new ConnectionDiscoveryEngine(process.env.OPENAI_API_KEY)
-      // const result = await engine.findConnections(deepContext, {
-      //   minBreakthroughScore: 0.7,
-      //   maxConnections: 20
-      // })
-      // setConnections(result.connections.map(mapToUIConnection))
+      // Call the real Connection Discovery Engine
+      const result = await ConnectionDiscoveryEngine.discoverConnections(deepContext, {
+        minBreakthroughScore: 0.7,
+        maxConnections: 15,
+        includeWeakSignals: true,
+        focusAreas: ['customer_psychology', 'market_trends', 'competitive_gaps', 'timing']
+      })
+
+      console.log(`[ConnectionDiscovery] Found ${result.connections.length} connections`)
+
+      setConnections(result.connections)
+      setSummary(result.summary)
 
     } catch (err: any) {
       setError(err.message || 'Failed to discover connections')
@@ -77,29 +78,19 @@ export function ConnectionDiscovery({ brandData }: ConnectionDiscoveryProps) {
   }
 
   const getConnectionIcon = (type: string) => {
-    switch (type) {
-      case 'customer_trigger_market': return <Users className="h-5 w-5" />
-      case 'competitor_weakness_opportunity': return <Target className="h-5 w-5" />
-      case 'content_gap_trend': return <TrendingUp className="h-5 w-5" />
-      case 'archetype_channel': return <Sparkles className="h-5 w-5" />
-      default: return <Sparkles className="h-5 w-5" />
-    }
+    // Connections are now 2-way, 3-way, 4-way based on data points
+    return <Brain className="h-5 w-5" />
   }
 
   const getConnectionColor = (confidence: number) => {
-    if (confidence >= 0.9) return 'bg-green-100 text-green-800 border-green-200'
-    if (confidence >= 0.7) return 'bg-blue-100 text-blue-800 border-blue-200'
-    return 'bg-gray-100 text-gray-800 border-gray-200'
+    if (confidence >= 0.9) return 'bg-green-50 text-green-900 border-green-300'
+    if (confidence >= 0.8) return 'bg-blue-50 text-blue-900 border-blue-300'
+    if (confidence >= 0.7) return 'bg-purple-50 text-purple-900 border-purple-300'
+    return 'bg-gray-50 text-gray-900 border-gray-300'
   }
 
   const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'customer_trigger_market': return 'Customer + Market'
-      case 'competitor_weakness_opportunity': return 'Competitive Gap'
-      case 'content_gap_trend': return 'Content Opportunity'
-      case 'archetype_channel': return 'Channel Strategy'
-      default: return type.replace(/_/g, ' ')
-    }
+    return `${type.replace('-', ' ').toUpperCase()} CONNECTION`
   }
 
   if (loading) {
@@ -164,90 +155,133 @@ export function ConnectionDiscovery({ brandData }: ConnectionDiscoveryProps) {
     )
   }
 
+  // Show success state with connections
+  if (connections.length > 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5" />
+                Connection Discovery
+              </CardTitle>
+              <CardDescription>
+                AI-discovered insights connecting disparate data points
+              </CardDescription>
+            </div>
+            {summary && (
+              <Badge variant="secondary" className="text-xs">
+                {summary.breakthrough_insights} breakthroughs
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {connections.map((connection) => (
+            <div
+              key={connection.id}
+              className={`rounded-lg border-2 p-4 transition-all hover:shadow-md ${getConnectionColor(connection.confidence)}`}
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  <span className="text-xs font-semibold uppercase tracking-wide">
+                    {getTypeLabel(connection.type)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    {Math.round(connection.breakthrough_score * 100)}% breakthrough
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    {Math.round(connection.confidence * 100)}%
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Title and Description */}
+              <h4 className="font-semibold mb-2">{connection.title}</h4>
+              <p className="text-sm text-muted-foreground mb-3">{connection.description}</p>
+
+              {/* Data Points */}
+              {connection.data_points && connection.data_points.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-3">
+                  {connection.data_points.map((dp, idx) => (
+                    <Badge key={idx} variant="outline" className="text-xs">
+                      {dp.source}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+              {/* Content Angle */}
+              {connection.content_angle && (
+                <div className="bg-white/50 rounded p-2 mb-3">
+                  <p className="text-xs font-semibold mb-1">Content Angle:</p>
+                  <p className="text-xs">{connection.content_angle}</p>
+                </div>
+              )}
+
+              {/* Suggested Actions */}
+              {connection.suggested_actions && connection.suggested_actions.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-current/20">
+                  <p className="text-xs font-semibold mb-2">Suggested Actions:</p>
+                  <ul className="space-y-2">
+                    {connection.suggested_actions.slice(0, 3).map((action, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-xs">
+                        <ArrowRight className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <p className="font-medium">{action.description}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs px-1 py-0">
+                              {action.priority}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">{action.estimated_effort}</span>
+                          </div>
+                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          {action.potential_impact}%
+                        </Badge>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ))}
+
+          <Button onClick={discoverConnections} variant="outline" className="w-full mt-4">
+            <Sparkles className="h-4 w-4 mr-2" />
+            Refresh Connections
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Empty state
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5" />
+          <Brain className="h-5 w-5" />
           Connection Discovery
         </CardTitle>
         <CardDescription>
-          Unexpected insights connecting your brand data, customer psychology, and market opportunities
+          AI-powered analysis to find unexpected connections in your brand data
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {connections.length === 0 ? (
-          <div className="text-center py-8">
-            <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50 text-muted-foreground" />
-            <p className="text-muted-foreground mb-4">No connections discovered yet.</p>
-            <Button onClick={discoverConnections} variant="outline">
-              <Sparkles className="h-4 w-4 mr-2" />
-              Discover Connections
-            </Button>
-          </div>
-        ) : (
-          <>
-            {connections.map((connection) => (
-              <div
-                key={connection.id}
-                className={`rounded-lg border-2 p-4 transition-all hover:shadow-md ${getConnectionColor(connection.confidence)}`}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    {getConnectionIcon(connection.type)}
-                    <span className="text-xs font-semibold uppercase tracking-wide">
-                      {getTypeLabel(connection.type)}
-                    </span>
-                  </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {Math.round(connection.confidence * 100)}% confidence
-                  </Badge>
-                </div>
-
-                <h4 className="font-semibold mb-2 text-sm">{connection.insight}</h4>
-
-                {connection.data_points && connection.data_points.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {connection.data_points.slice(0, 3).map((dp, idx) => (
-                      <Badge key={idx} variant="outline" className="text-xs">
-                        {dp.source}
-                      </Badge>
-                    ))}
-                    {connection.data_points.length > 3 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{connection.data_points.length - 3} more
-                      </Badge>
-                    )}
-                  </div>
-                )}
-
-                {connection.suggested_actions && connection.suggested_actions.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-current/20">
-                    <p className="text-xs font-semibold mb-2 opacity-90">Suggested Actions:</p>
-                    <ul className="space-y-1.5">
-                      {connection.suggested_actions.slice(0, 3).map((action, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-xs">
-                          <ArrowRight className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
-                          <span className="flex-1">{action.action}</span>
-                          {action.priority === 'high' && (
-                            <Badge variant="destructive" className="text-xs px-1.5 py-0">
-                              {action.priority}
-                            </Badge>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ))}
-
-            <Button onClick={discoverConnections} variant="outline" className="w-full mt-4">
-              <Sparkles className="h-4 w-4 mr-2" />
-              Refresh Connections
-            </Button>
-          </>
-        )}
+      <CardContent>
+        <div className="text-center py-8">
+          <Brain className="h-12 w-12 mx-auto mb-4 opacity-50 text-muted-foreground" />
+          <p className="text-muted-foreground mb-4">No connections discovered yet.</p>
+          <Button onClick={discoverConnections} variant="default">
+            <Sparkles className="h-4 w-4 mr-2" />
+            Discover Connections
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )
