@@ -3,6 +3,8 @@ import { BrandStrategy } from './BrandStrategy'
 import { AudienceStrategy } from './AudienceStrategy'
 import { ContentStrategy } from './ContentStrategy'
 import { CompetitiveStrategy } from './CompetitiveStrategy'
+import { ArchetypeVoiceAlignment } from './ArchetypeVoiceAlignment'
+import { BrandStoryBuilder } from './BrandStoryBuilder'
 import { MirrorSectionHeader } from '@/components/layouts/MirrorLayout'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -260,6 +262,12 @@ export const ReimagineSection: React.FC<ReimagineSectionProps> = ({
             />
           </TabsContent>
         </Tabs>
+
+        {/* Brand Personality & Story - NEW */}
+        <div className="mt-6 space-y-6">
+          <ArchetypeVoiceAlignment brandData={brandData} />
+          <BrandStoryBuilder brandData={brandData} />
+        </div>
       </div>
     </div>
   )
