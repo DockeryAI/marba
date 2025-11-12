@@ -489,4 +489,97 @@ Expected outcomes:
     if (hour >= 17 && hour < 21) return 'evening (5pm-9pm)';
     return 'late evening (9pm-12am)';
   }
+
+  /**
+   * Analyze psychology score of content
+   * Returns a score from 0-10 based on psychological effectiveness
+   */
+  async analyzePsychology(content: string, profileData: any): Promise<number> {
+    if (!content || content.length < 10) {
+      return 0;
+    }
+
+    let score = 0;
+    const maxScore = 10;
+    const contentLower = content.toLowerCase();
+
+    // 1. Emotional Trigger Detection (0-2.5 points)
+    const emotionalTriggers = [
+      'discover', 'secret', 'proven', 'guaranteed', 'amazing', 'incredible',
+      'breakthrough', 'revolutionary', 'transform', 'powerful', 'exclusive',
+      'limited', 'urgent', 'don\'t miss', 'fear', 'worried', 'anxiety',
+      'excited', 'thrilled', 'imagine', 'picture this'
+    ];
+
+    const triggerCount = emotionalTriggers.filter(trigger =>
+      contentLower.includes(trigger)
+    ).length;
+
+    score += Math.min(triggerCount * 0.3, 2.5);
+
+    // 2. Power Words (0-2 points)
+    const powerWords = [
+      'you', 'free', 'because', 'instantly', 'new', 'best', 'top',
+      'proven', 'results', 'easy', 'simple', 'fast', 'quick', 'now'
+    ];
+
+    const powerWordCount = powerWords.filter(word =>
+      contentLower.includes(word)
+    ).length;
+
+    score += Math.min(powerWordCount * 0.25, 2);
+
+    // 3. Question/Curiosity Gap (0-1.5 points)
+    if (contentLower.includes('?')) {
+      score += 0.8;
+    }
+    if (contentLower.includes('what') || contentLower.includes('how') ||
+        contentLower.includes('why') || contentLower.includes('when')) {
+      score += 0.7;
+    }
+
+    // 4. Specificity/Numbers (0-1.5 points)
+    const hasNumbers = /\d+/.test(content);
+    const hasPercentages = /%/.test(content);
+    const hasStatistics = /\d+%|\d+x|\$\d+/.test(content);
+
+    if (hasStatistics) score += 1.5;
+    else if (hasPercentages) score += 1;
+    else if (hasNumbers) score += 0.5;
+
+    // 5. Action/CTA Language (0-1 point)
+    const actionWords = ['start', 'get', 'try', 'learn', 'discover', 'join', 'subscribe'];
+    const hasAction = actionWords.some(word => contentLower.includes(word));
+    if (hasAction) score += 1;
+
+    // 6. Brand Voice Alignment (0-1.5 points)
+    if (profileData?.brand_voice) {
+      const voiceLower = profileData.brand_voice.toLowerCase();
+
+      // Check for voice characteristics
+      if (voiceLower.includes('professional') && /\b(expert|proven|research|data)\b/.test(contentLower)) {
+        score += 0.5;
+      }
+      if (voiceLower.includes('friendly') && /\b(you|your|we|let\'s)\b/.test(contentLower)) {
+        score += 0.5;
+      }
+      if (voiceLower.includes('innovative') && /\b(new|cutting-edge|breakthrough|revolutionary)\b/.test(contentLower)) {
+        score += 0.5;
+      }
+    }
+
+    // 7. Customer Trigger Alignment (0-1 point)
+    if (profileData?.emotional_triggers && Array.isArray(profileData.emotional_triggers)) {
+      const triggerMatch = profileData.emotional_triggers.some((trigger: any) => {
+        const triggerText = typeof trigger === 'string' ? trigger : trigger.trigger;
+        return triggerText && contentLower.includes(triggerText.toLowerCase());
+      });
+      if (triggerMatch) score += 1;
+    }
+
+    // Normalize to 0-10 scale
+    score = Math.min(Math.max(score, 0), maxScore);
+
+    return Number(score.toFixed(1));
+  }
 }

@@ -13,7 +13,7 @@ import {
   Search, Zap, CheckCircle2, Copy
 } from 'lucide-react'
 import type { KeywordOpportunity } from '@/services/intelligence/semrush-api'
-import { ContentPsychologyEngine } from '@/services/synapse/ContentPsychologyEngine'
+import { ContentPsychologyEngine } from '@/services/synapse/generation/ContentPsychologyEngine'
 import { Textarea } from '@/components/ui/textarea'
 
 interface KeywordOpportunitiesProps {

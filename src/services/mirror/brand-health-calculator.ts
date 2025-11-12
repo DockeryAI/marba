@@ -8,7 +8,7 @@
  */
 
 import type { BrandProfile } from '@/types'
-import { ContentPsychologyEngine } from '@/services/synapse/ContentPsychologyEngine'
+import { ContentPsychologyEngine } from '@/services/synapse/generation/ContentPsychologyEngine'
 
 // ============================================================================
 // Type Definitions
