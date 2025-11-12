@@ -8,13 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { IntentObjective, ObjectivesGenerator } from '@/services/mirror/objectives-generator'
 import { CheckCircle2, AlertCircle, Plus } from 'lucide-react'
+import { SynapseLiveScoring } from '../reimagine/SynapseLiveScoring'
 
 interface GoalBuilderProps {
   onSave: (objective: IntentObjective) => void
+  brandData?: any
   className?: string
 }
 
-export const GoalBuilder: React.FC<GoalBuilderProps> = ({ onSave, className }) => {
+export const GoalBuilder: React.FC<GoalBuilderProps> = ({ onSave, brandData, className }) => {
   const [objective, setObjective] = React.useState<Partial<IntentObjective>>({
     category: 'awareness',
     timeline: '90_days',
@@ -80,13 +82,25 @@ export const GoalBuilder: React.FC<GoalBuilderProps> = ({ onSave, className }) =
         </div>
 
         <div className="space-y-2">
-          <Label>Goal Title</Label>
-          <Input placeholder="e.g., Increase social media followers by 50%" value={objective.title || ''} onChange={(e) => setObjective({ ...objective, title: e.target.value })} />
+          <SynapseLiveScoring
+            value={objective.title || ''}
+            onChange={(value) => setObjective({ ...objective, title: value })}
+            brandData={brandData}
+            placeholder="e.g., Increase social media followers by 50%"
+            label="Goal Title"
+            minScore={7}
+          />
         </div>
 
         <div className="space-y-2">
-          <Label>Description</Label>
-          <Textarea placeholder="Describe what you want to achieve..." value={objective.description || ''} onChange={(e) => setObjective({ ...objective, description: e.target.value })} rows={3} />
+          <SynapseLiveScoring
+            value={objective.description || ''}
+            onChange={(value) => setObjective({ ...objective, description: value })}
+            brandData={brandData}
+            placeholder="Describe what you want to achieve..."
+            label="Description"
+            minScore={7}
+          />
         </div>
 
         <div className="grid grid-cols-3 gap-4">

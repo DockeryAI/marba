@@ -76,8 +76,8 @@ class CompetitorDiscoveryService {
     const SEMRUSH_API_KEY = import.meta.env.VITE_SEMRUSH_API_KEY
 
     if (!SEMRUSH_API_KEY) {
-      console.warn('[CompetitorDiscovery] No SEMrush API key, using mock competitors')
-      return this.getMockSEMrushCompetitors(domain)
+      console.error('[CompetitorDiscovery] SEMrush API key not configured')
+      throw new Error('CompetitorDiscovery not configured. Configure VITE_SEMRUSH_API_KEY or implement real service.')
     }
 
     try {
@@ -113,7 +113,7 @@ class CompetitorDiscoveryService {
       return competitors
     } catch (error) {
       console.error('[CompetitorDiscovery] SEMrush fetch error:', error)
-      return this.getMockSEMrushCompetitors(domain)
+      throw error
     }
   }
 
@@ -127,8 +127,8 @@ class CompetitorDiscoveryService {
     const SERPER_API_KEY = import.meta.env.VITE_SERPER_API_KEY
 
     if (!SERPER_API_KEY) {
-      console.warn('[CompetitorDiscovery] No Serper API key, using mock competitors')
-      return this.getMockSerperCompetitors(industry)
+      console.error('[CompetitorDiscovery] Serper API key not configured')
+      throw new Error('CompetitorDiscovery not configured. Configure VITE_SERPER_API_KEY or implement real service.')
     }
 
     try {
@@ -145,7 +145,7 @@ class CompetitorDiscoveryService {
       }))
     } catch (error) {
       console.error('[CompetitorDiscovery] Serper fetch error:', error)
-      return this.getMockSerperCompetitors(industry)
+      throw error
     }
   }
 
@@ -222,88 +222,6 @@ class CompetitorDiscoveryService {
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ')
-  }
-
-  // ============================================================================
-  // Mock Data (used when API keys not available)
-  // ============================================================================
-
-  private getMockSEMrushCompetitors(domain: string): Competitor[] {
-    return [
-      {
-        domain: 'hubspot.com',
-        name: 'HubSpot',
-        authority_score: 92,
-        organic_keywords: 245000,
-        organic_traffic: 5200000,
-        overlap_keywords: [],
-        source: 'semrush',
-        confidence: 95,
-      },
-      {
-        domain: 'salesforce.com',
-        name: 'Salesforce',
-        authority_score: 94,
-        organic_keywords: 189000,
-        organic_traffic: 4800000,
-        overlap_keywords: [],
-        source: 'semrush',
-        confidence: 92,
-      },
-      {
-        domain: 'mailchimp.com',
-        name: 'Mailchimp',
-        authority_score: 88,
-        organic_keywords: 98000,
-        organic_traffic: 2100000,
-        overlap_keywords: [],
-        source: 'semrush',
-        confidence: 87,
-      },
-      {
-        domain: 'constantcontact.com',
-        name: 'Constant Contact',
-        authority_score: 79,
-        organic_keywords: 45000,
-        organic_traffic: 890000,
-        overlap_keywords: [],
-        source: 'semrush',
-        confidence: 78,
-      },
-      {
-        domain: 'activecampaign.com',
-        name: 'ActiveCampaign',
-        authority_score: 75,
-        organic_keywords: 32000,
-        organic_traffic: 670000,
-        overlap_keywords: [],
-        source: 'semrush',
-        confidence: 74,
-      },
-    ]
-  }
-
-  private getMockSerperCompetitors(industry: string): Competitor[] {
-    return [
-      {
-        domain: 'shopify.com',
-        name: 'Shopify',
-        source: 'serper',
-        confidence: 85,
-      },
-      {
-        domain: 'squarespace.com',
-        name: 'Squarespace',
-        source: 'serper',
-        confidence: 80,
-      },
-      {
-        domain: 'wix.com',
-        name: 'Wix',
-        source: 'serper',
-        confidence: 75,
-      },
-    ]
   }
 }
 

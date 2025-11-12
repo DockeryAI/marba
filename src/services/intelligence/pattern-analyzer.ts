@@ -544,29 +544,8 @@ export class PatternAnalyzerService {
       return (data as ContentPost[]) || []
     } catch (error) {
       console.error('Failed to get historical posts:', error)
-      // Return mock data for development
-      return this.getMockPosts(brandId)
+      throw new Error('PatternAnalyzer failed to retrieve historical posts. Check database connection and content_posts table.')
     }
-  }
-
-  private static getMockPosts(brandId: string): ContentPost[] {
-    const types: ContentPost['content_type'][] = ['carousel', 'single_image', 'video', 'reel']
-    const platforms = ['instagram', 'facebook', 'linkedin']
-
-    return Array.from({ length: 50 }, (_, i) => ({
-      id: `post_${i}`,
-      platform: platforms[i % platforms.length],
-      content_type: types[i % types.length],
-      posted_at: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
-      caption: `Sample post caption ${i}`,
-      hashtags: ['#business', '#marketing', '#growth'],
-      engagement_rate: types[i % types.length] === 'carousel' ? 8 + Math.random() * 4 : 4 + Math.random() * 3,
-      likes: 100 + Math.floor(Math.random() * 200),
-      comments: 10 + Math.floor(Math.random() * 30),
-      shares: 5 + Math.floor(Math.random() * 15),
-      reach: 1000 + Math.floor(Math.random() * 2000),
-      impressions: 1500 + Math.floor(Math.random() * 3000),
-    }))
   }
 
   private static async savePattern(pattern: ContentPattern): Promise<void> {

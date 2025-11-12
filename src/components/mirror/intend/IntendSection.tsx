@@ -100,6 +100,21 @@ export const IntendSection: React.FC<IntendSectionProps> = ({
     }
   }
 
+  const handleUpdateGoal = async (id: string, updates: Partial<IntentObjective>) => {
+    try {
+      const { error } = await supabase
+        .from('mirror_objectives')
+        .update(updates)
+        .eq('id', id)
+
+      if (!error) {
+        await loadGoals()
+      }
+    } catch (error) {
+      console.error('Failed to update goal:', error)
+    }
+  }
+
   return (
     <div className={className}>
       <MirrorSectionHeader
@@ -127,13 +142,15 @@ export const IntendSection: React.FC<IntendSectionProps> = ({
         />
 
         {/* Goal Builder */}
-        <GoalBuilder onSave={handleSaveGoal} />
+        <GoalBuilder onSave={handleSaveGoal} brandData={brandData} />
 
         {/* Active Goals */}
         <CustomGoals
           goals={goals}
           onDelete={handleDeleteGoal}
           onToggleStatus={handleToggleStatus}
+          onUpdate={handleUpdateGoal}
+          brandData={brandData}
         />
       </div>
     </div>

@@ -221,7 +221,7 @@ function getSuggestions(
   metricName: string,
   yourValue: number,
   industryAvg: number,
-  topTenPercent: number
+  _topTenPercent: number
 ): string[] {
   const suggestions: string[] = []
   const metricLower = metricName.toLowerCase()

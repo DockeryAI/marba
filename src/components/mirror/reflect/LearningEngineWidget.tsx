@@ -3,86 +3,120 @@
  * Displays what the AI has learned about content performance patterns
  */
 
+import * as React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Brain, TrendingUp, TrendingDown, TestTube, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { Brain, TrendingUp, TrendingDown, TestTube, CheckCircle, Clock, AlertCircle } from 'lucide-react'
+import { PatternAnalyzerService } from '@/services/intelligence/pattern-analyzer'
+import type { ContentPattern } from '@/types/intelligence.types'
 
 interface LearningEngineWidgetProps {
   brandId?: string
   className?: string
 }
 
+interface PatternDisplay {
+  pattern: string
+  multiplier?: number
+  impact?: number
+  potential?: number
+  confidence: number
+  description: string
+}
+
 export function LearningEngineWidget({ brandId, className }: LearningEngineWidgetProps) {
-  // In production, this would fetch from PatternAnalyzer + LearningEngine
-  // For now, showing structure with sample data
-  const lastUpdated = new Date()
+  const [patterns, setPatterns] = React.useState<ContentPattern[]>([])
+  const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const [lastUpdated, setLastUpdated] = React.useState<Date>(new Date())
 
-  const provenWinners = [
-    {
-      pattern: 'Hook posts',
-      multiplier: 3.8,
-      confidence: 92,
-      description: 'Posts starting with strong hooks get 3.8x more engagement'
-    },
-    {
-      pattern: '"Emergency" keyword',
-      multiplier: 2.3,
-      confidence: 88,
-      description: 'Content mentioning "emergency" gets 2.3x more clicks'
-    },
-    {
-      pattern: 'Tuesday 10am posting',
-      multiplier: 1.67,
-      confidence: 85,
-      description: 'Tuesday morning posts perform 67% better'
+  React.useEffect(() => {
+    if (brandId) {
+      loadPatterns()
     }
-  ]
+  }, [brandId])
 
-  const avoidThese = [
-    {
-      pattern: 'Promotional posts',
-      impact: -47,
-      confidence: 88,
-      description: 'Direct promotional content gets 47% less engagement'
-    },
-    {
-      pattern: 'Friday posts',
-      impact: -52,
-      confidence: 82,
-      description: 'Friday posts get 52% less reach on average'
-    },
-    {
-      pattern: 'Posts over 200 words',
-      impact: -38,
-      confidence: 76,
-      description: 'Long-form posts get 38% fewer reads'
+  const loadPatterns = async () => {
+    if (!brandId) return
+
+    setLoading(true)
+    setError(null)
+    try {
+      const detectedPatterns = await PatternAnalyzerService.getActivePatterns(brandId)
+      setPatterns(detectedPatterns)
+      setLastUpdated(new Date())
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+
+      // Check if it's a "not implemented" error
+      if (errorMessage.includes('not implemented') || errorMessage.includes('failed to retrieve')) {
+        setError('Pattern analysis requires historical content data. Please ensure content posts are being tracked.')
+      } else {
+        setError(`Failed to load patterns: ${errorMessage}`)
+      }
+      console.error('[LearningEngineWidget] Error:', err)
+    } finally {
+      setLoading(false)
     }
-  ]
+  }
 
-  const testing = [
-    {
-      pattern: 'Video posts',
-      potential: 85,
-      confidence: 42,
-      description: 'Early data suggests video might boost engagement by 85%'
-    },
-    {
-      pattern: 'Question format',
-      potential: 120,
-      confidence: 38,
-      description: 'Questions in posts might increase comments by 120%'
-    }
-  ]
+  // Transform patterns into display format
+  const categorizePatterns = () => {
+    const provenWinners: PatternDisplay[] = []
+    const avoidThese: PatternDisplay[] = []
+    const testing: PatternDisplay[] = []
 
+    patterns.forEach((pattern) => {
+      const improvement = pattern.performance_metrics.improvement_percentage
+      const confidence = Math.round(pattern.confidence_score * 100)
+
+      if (confidence >= 75) {
+        if (improvement > 0) {
+          provenWinners.push({
+            pattern: pattern.title,
+            multiplier: 1 + improvement / 100,
+            confidence,
+            description: pattern.description
+          })
+        } else if (improvement < 0) {
+          avoidThese.push({
+            pattern: pattern.title,
+            impact: improvement,
+            confidence,
+            description: pattern.description
+          })
+        }
+      } else if (confidence >= 30) {
+        testing.push({
+          pattern: pattern.title,
+          potential: Math.abs(improvement),
+          confidence,
+          description: pattern.description
+        })
+      }
+    })
+
+    return { provenWinners, avoidThese, testing }
+  }
+
+  const { provenWinners, avoidThese, testing } = categorizePatterns()
+
+  // Generate auto-adjustments from patterns
   const autoAdjustments = {
-    contentMix: [
-      { type: 'Hooks', percentage: 60 },
-      { type: 'Social Proof', percentage: 25 },
-      { type: 'Promotional', percentage: 15 }
-    ],
-    schedule: ['Tuesday 10am', 'Wednesday 2pm', 'Thursday 9am'],
-    format: 'Short (<150 words), hook first, CTA, photo'
+    contentMix: provenWinners.length > 0 ? [
+      { type: provenWinners[0]?.pattern || 'High-performing content', percentage: 60 },
+      { type: 'Supporting content', percentage: 30 },
+      { type: 'Experimental', percentage: 10 }
+    ] : [],
+    schedule: patterns
+      .filter(p => p.pattern_category === 'timing')
+      .flatMap(p => p.actionable_insights)
+      .slice(0, 3),
+    format: patterns
+      .filter(p => p.pattern_category === 'format')
+      .map(p => p.actionable_insights[0])
+      .join(', ') || 'Optimize based on performance data'
   }
 
   return (
@@ -105,6 +139,44 @@ export function LearningEngineWidget({ brandId, className }: LearningEngineWidge
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-8 text-muted-foreground">
+            <Brain className="h-8 w-8 mx-auto mb-2 animate-pulse" />
+            <p>Analyzing your content patterns...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-semibold text-sm mb-1">Pattern Analysis Unavailable</h4>
+                <p className="text-xs text-muted-foreground">{error}</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  This feature requires configuration. Contact your administrator or ensure your content tracking is set up correctly.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* No Data State */}
+        {!loading && !error && patterns.length === 0 && (
+          <div className="text-center py-8">
+            <Brain className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-50" />
+            <p className="text-sm text-muted-foreground mb-2">No patterns detected yet</p>
+            <p className="text-xs text-muted-foreground">
+              Keep posting content and the AI will learn what works best for your audience.
+            </p>
+          </div>
+        )}
+
+        {/* Patterns Display - Only show if we have data */}
+        {!loading && !error && patterns.length > 0 && (
+          <>
         {/* Proven Winners */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
@@ -265,6 +337,8 @@ export function LearningEngineWidget({ brandId, className }: LearningEngineWidge
           The AI continuously learns from your content performance and automatically adjusts recommendations.
           Confidence increases as more data is collected.
         </div>
+        </>
+        )}
       </CardContent>
     </Card>
   )

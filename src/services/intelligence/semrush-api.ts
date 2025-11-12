@@ -51,8 +51,7 @@ class SemrushAPIService {
     console.log('[Semrush] Fetching domain overview for:', domain)
 
     if (!SEMRUSH_API_KEY) {
-      console.warn('[Semrush] No API key, using mock data')
-      return this.getMockDomainOverview(domain)
+      throw new Error('SEMrush API key not configured. Set VITE_SEMRUSH_API_KEY in your .env file.')
     }
 
     try {
@@ -81,7 +80,7 @@ class SemrushAPIService {
       }
     } catch (error) {
       console.error('[Semrush API] Error:', error)
-      return this.getMockDomainOverview(domain)
+      throw new Error(`Failed to fetch SEMrush data: ${error.message}`)
     }
   }
 
@@ -92,12 +91,17 @@ class SemrushAPIService {
     console.log('[Semrush] Fetching keyword rankings for:', domain)
 
     if (!SEMRUSH_API_KEY) {
-      return this.getMockKeywordRankings(domain, brandName)
+      throw new Error('SEMrush API key not configured. Set VITE_SEMRUSH_API_KEY in your .env file.')
     }
 
     try {
       const url = `https://api.semrush.com/?type=domain_organic&key=${SEMRUSH_API_KEY}&export_columns=Ph,Po,Nq,Cp,Ur,Tr&domain=${domain}&database=us&display_limit=100`
       const response = await fetch(url)
+
+      if (!response.ok) {
+        throw new Error(`SEMrush API error: ${response.status}`)
+      }
+
       const text = await response.text()
       const lines = text.split('\n').slice(1) // Skip header
 
@@ -125,7 +129,7 @@ class SemrushAPIService {
       return rankings
     } catch (error) {
       console.error('[Semrush] Error fetching rankings:', error)
-      return this.getMockKeywordRankings(domain, brandName)
+      throw new Error(`Failed to fetch keyword rankings: ${error.message}`)
     }
   }
 
@@ -263,39 +267,6 @@ class SemrushAPIService {
     return Math.round(score)
   }
 
-  private getMockDomainOverview(domain: string): DomainOverview {
-    return {
-      domain,
-      organic_keywords: 1250,
-      organic_traffic: 25000,
-      paid_keywords: 45,
-      backlinks: 3420,
-      authority_score: 58,
-    }
-  }
-
-  private getMockKeywordRankings(domain: string, brandName?: string): KeywordRanking[] {
-    const mockKeywords = [
-      { keyword: 'business consulting services', position: 8, volume: 2400, traffic: 180 },
-      { keyword: 'small business consulting', position: 12, volume: 1800, traffic: 90 },
-      { keyword: 'strategic planning consultant', position: 15, volume: 1200, traffic: 60 },
-      { keyword: 'business growth strategies', position: 6, volume: 3200, traffic: 280 },
-      { keyword: 'consulting firm near me', position: 22, volume: 890, traffic: 20 },
-      { keyword: 'business advisor', position: 18, volume: 1600, traffic: 40 },
-      { keyword: 'management consulting', position: 45, volume: 8900, traffic: 15 },
-      { keyword: 'business development services', position: 11, volume: 2100, traffic: 95 },
-      { keyword: 'startup consulting', position: 9, volume: 1900, traffic: 140 },
-      { keyword: 'executive coaching', position: 28, volume: 3400, traffic: 25 },
-    ]
-
-    return mockKeywords.map(k => ({
-      ...k,
-      searchVolume: k.volume,
-      difficulty: this.estimateDifficulty(k.volume),
-      url: `https://${domain}/services`,
-      isBranded: brandName ? k.keyword.toLowerCase().includes(brandName.toLowerCase()) : false,
-    }))
-  }
 }
 
 export const SemrushAPI = new SemrushAPIService()

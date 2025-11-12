@@ -38,6 +38,7 @@ export function OpportunityDashboard({
 }: OpportunityDashboardProps) {
   const [opportunities, setOpportunities] = React.useState<OpportunityInsight[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
   const [filter, setFilter] = React.useState<string>('all')
 
   React.useEffect(() => {
@@ -49,6 +50,7 @@ export function OpportunityDashboard({
 
   const loadOpportunities = async () => {
     setIsLoading(true)
+    setError(null)
     try {
       const opps = await OpportunityDetector.detectOpportunities({
         brandId,
@@ -56,8 +58,19 @@ export function OpportunityDashboard({
         keywords: brandData?.uvps || [],
       })
       setOpportunities(opps)
-    } catch (error) {
-      console.error('[OpportunityDashboard] Error loading opportunities:', error)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+
+      // Provide clear, user-friendly error messages
+      if (errorMessage.includes('not implemented')) {
+        setError('Opportunity detection is not fully configured yet. This feature requires API integrations for weather, trends, news, and competitor monitoring.')
+      } else if (errorMessage.includes('API')) {
+        setError('Unable to connect to external data sources. Please check your API configuration.')
+      } else {
+        setError(`Failed to load opportunities: ${errorMessage}`)
+      }
+
+      console.error('[OpportunityDashboard] Error loading opportunities:', err)
     } finally {
       setIsLoading(false)
     }
@@ -169,7 +182,27 @@ export function OpportunityDashboard({
         {/* Opportunities List */}
         {isLoading ? (
           <div className="text-center py-8 text-muted-foreground">
-            Loading opportunities...
+            <Zap className="h-8 w-8 mx-auto mb-2 animate-pulse" />
+            <p>Scanning for opportunities...</p>
+          </div>
+        ) : error ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 p-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-6 w-6 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-semibold text-sm mb-2">Opportunity Detection Unavailable</h4>
+                <p className="text-xs text-muted-foreground mb-3">{error}</p>
+                <p className="text-xs text-muted-foreground">
+                  This feature requires configuration. Contact your administrator to enable:
+                </p>
+                <ul className="text-xs text-muted-foreground mt-2 ml-4 space-y-1">
+                  <li>• Weather API integration</li>
+                  <li>• Google Trends API</li>
+                  <li>• News monitoring service</li>
+                  <li>• Competitor tracking</li>
+                </ul>
+              </div>
+            </div>
           </div>
         ) : filteredOpportunities.length === 0 ? (
           <div className="text-center py-8">
@@ -352,7 +385,7 @@ function OpportunityCard({
                 onClick={() => onAction(opportunity.id, action.action_type)}
                 className="text-xs"
               >
-                {action.title}
+                {action.description}
               </Button>
             ))}
           </div>

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ActionBoard } from './ActionBoard'
 import { OpportunityDashboard } from './OpportunityDashboard'
+import { ConnectionDiscovery } from './ConnectionDiscovery'
 import { ActionItem, ActionPlanner, ActionTimeline } from '@/services/mirror/action-planner'
 import { TrendingUp, Users, Calendar, AlertTriangle, Target } from 'lucide-react'
 import { ContentCalendarHub } from '@/components/content-calendar'
@@ -124,6 +125,11 @@ export const OptimizeSection: React.FC<OptimizeSectionProps> = ({
             industry={industry}
             brandData={brandData}
           />
+        </section>
+
+        {/* Connection Discovery - Phase 6 */}
+        <section id="connection-discovery">
+          <ConnectionDiscovery brandData={brandData} />
         </section>
 
         {/* Content Calendar View */}

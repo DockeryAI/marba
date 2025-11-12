@@ -12,83 +12,8 @@ export class IndustryIntelligenceService {
   static async getIndustryProfile(
     industryIdentifier: string
   ): Promise<IndustryProfile | null> {
-    // Mock implementation - in production, fetch from database or API
-    // For now, return sample data based on common industries
-
-    const profiles: Record<string, IndustryProfile> = {
-      hvac: {
-        naics_code: '238220',
-        industry_name: 'HVAC Services',
-        description: 'Heating, ventilation, and air conditioning installation and repair',
-        market_size: '$120B',
-        growth_rate: 4.2,
-        key_trends: [
-          'Smart thermostats adoption',
-          'Energy efficiency regulations',
-          'Seasonal demand patterns',
-        ],
-        customer_triggers: [
-          {
-            trigger: 'Extreme weather conditions',
-            category: 'seasonal',
-            impact_level: 'high',
-            typical_solutions: ['Emergency service', '24/7 availability'],
-            content_angles: ['Beat the heat', 'Stay warm this winter'],
-            timing: 'Summer peaks June-Aug, Winter peaks Dec-Feb',
-          },
-          {
-            trigger: 'Unit failure during extreme weather',
-            category: 'pain_point',
-            impact_level: 'high',
-            typical_solutions: ['Same-day service', 'Financing options'],
-            content_angles: ['Emergency AC repair', 'Don\'t freeze tonight'],
-          },
-        ],
-        seasonality: {
-          peak_months: ['June', 'July', 'August', 'December', 'January'],
-          slow_months: ['March', 'April', 'September', 'October'],
-          seasonal_trends: [
-            {
-              period: 'Summer',
-              trend_description: 'AC installation and repair demand peaks',
-              content_opportunities: ['Preventative maintenance', 'Energy efficiency tips'],
-              expected_demand_change: 300,
-            },
-          ],
-        },
-        common_pain_points: [
-          'High energy bills',
-          'Inconsistent temperature',
-          'Old inefficient systems',
-        ],
-        buying_journey_stages: [
-          {
-            stage: 'awareness',
-            typical_duration: '1-7 days',
-            key_questions: ['Why is my AC not working?', 'How much does AC repair cost?'],
-            content_types: ['Educational blog posts', 'Troubleshooting guides'],
-            conversion_tactics: ['Free inspection', 'Emergency hotline'],
-          },
-        ],
-        benchmark_metrics: {
-          engagement_rate_range: { min: 2, max: 8, average: 4.5 },
-          posting_frequency: { min: 3, max: 10, recommended: 5 },
-          response_time: { min: 1, max: 24, expected: 4 },
-          content_mix: {
-            'Educational': 30,
-            'Promotional': 25,
-            'Emergency': 20,
-            'Testimonial': 15,
-            'Behind-the-scenes': 10,
-          },
-          top_performing_formats: ['Before/after photos', 'Emergency response videos', 'Energy savings tips'],
-        },
-      },
-      // Add more industry profiles as needed
-    }
-
-    const key = industryIdentifier.toLowerCase().replace(/\s+/g, '_')
-    return profiles[key] || null
+    console.error('[IndustryIntelligence] Industry profile database not implemented')
+    throw new Error('IndustryIntelligence not implemented yet. Implement industry profile database or API integration.')
   }
 
   /**

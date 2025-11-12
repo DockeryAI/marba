@@ -212,7 +212,7 @@ function getArchetypeValues(archetype: string): string {
 
 function getArchetypePromise(archetype: string): string {
   const promises: Record<string, string> = {
-    'The Hero': 'We'll help you overcome challenges',
+    'The Hero': "We'll help you overcome challenges",
     'The Sage': 'Expert guidance you can trust',
     'The Caregiver': 'We take care of you like family',
     'The Rebel': 'Break the rules with us',
@@ -298,36 +298,36 @@ function getTwitterDos(archetype: string): string[] {
 function getInstagramDonts(archetype: string): string[] {
   return [
     'Avoid overly technical jargon',
-    'Don't post low-quality photos',
+    "Don't post low-quality photos",
     'Avoid too much promotion',
-    'Don't ignore user comments'
+    "Don't ignore user comments"
   ]
 }
 
 function getLinkedInDonts(archetype: string): string[] {
   return [
     'Avoid casual or silly content',
-    'Don't oversell products',
+    "Don't oversell products",
     'Avoid controversial topics',
-    'Don't ignore engagement'
+    "Don't ignore engagement"
   ]
 }
 
 function getFacebookDonts(archetype: string): string[] {
   return [
     'Avoid being too corporate',
-    'Don't post walls of text',
+    "Don't post walls of text",
     'Avoid excessive promotion',
-    'Don't argue with critics publicly'
+    "Don't argue with critics publicly"
   ]
 }
 
 function getTwitterDonts(archetype: string): string[] {
   return [
     'Avoid long-winded threads',
-    'Don't spam hashtags',
+    "Don't spam hashtags",
     'Avoid controversial debates',
-    'Don't ignore mentions'
+    "Don't ignore mentions"
   ]
 }
 
