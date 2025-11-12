@@ -33,6 +33,8 @@ import {
   Cell,
 } from 'recharts'
 import { Download, Calendar, TrendingUp } from 'lucide-react'
+import { exportAnalyticsCSV, exportAnalyticsPDF } from '@/services/export'
+import { toast } from 'sonner'
 
 interface PerformanceChartsProps {
   brandId: string
@@ -43,15 +45,31 @@ interface PerformanceChartsProps {
 export const PerformanceCharts: React.FC<PerformanceChartsProps> = ({ brandId, dateRange, className }) => {
   const [dateRangePreset, setDateRangePreset] = React.useState<string>('30d')
   const [selectedChart, setSelectedChart] = React.useState<string>('engagement')
+  const [metricsData, setMetricsData] = React.useState<any[]>([])
 
   const handleExportCSV = () => {
-    // Would implement CSV export
-    console.log('Exporting to CSV...')
+    try {
+      // Export current chart data
+      const filename = `performance-${selectedChart}-${dateRangePreset}`
+      exportAnalyticsCSV(metricsData, filename)
+      toast.success('CSV exported successfully')
+    } catch (error) {
+      console.error('CSV export failed:', error)
+      toast.error('Failed to export CSV')
+    }
   }
 
   const handleExportPDF = () => {
-    // Would implement PDF export
-    console.log('Exporting to PDF...')
+    try {
+      // Export current chart data
+      const title = `Performance Analytics - ${selectedChart}`
+      const filename = `performance-${selectedChart}-${dateRangePreset}`
+      exportAnalyticsPDF(metricsData, title, filename)
+      toast.success('PDF export started (use browser print dialog)')
+    } catch (error) {
+      console.error('PDF export failed:', error)
+      toast.error('Failed to export PDF')
+    }
   }
 
   return (

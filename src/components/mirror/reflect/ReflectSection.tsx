@@ -20,6 +20,8 @@ import {
   PerformanceInsight,
   ReflectionReport,
 } from '@/services/mirror/reflect-dashboard'
+import { exportMIRRORSectionCSV, exportMIRRORSectionPDF } from '@/services/export'
+import { toast } from 'sonner'
 import {
   BarChart3,
   TrendingUp,
@@ -99,6 +101,30 @@ export const ReflectSection: React.FC<ReflectSectionProps> = ({ objectives = [],
     link.download = `mirror-executive-summary-${new Date().toISOString().split('T')[0]}.md`
     link.click()
     URL.revokeObjectURL(url)
+  }
+
+  const handleExportCSV = () => {
+    if (!report) return
+
+    try {
+      exportMIRRORSectionCSV('reflect', report, 'Brand')
+      toast.success('CSV exported successfully')
+    } catch (error) {
+      console.error('CSV export failed:', error)
+      toast.error('Failed to export CSV')
+    }
+  }
+
+  const handleExportPDF = () => {
+    if (!report) return
+
+    try {
+      exportMIRRORSectionPDF('reflect', report, 'Brand')
+      toast.success('PDF export started (use browser print dialog)')
+    } catch (error) {
+      console.error('PDF export failed:', error)
+      toast.error('Failed to export PDF')
+    }
   }
 
   return (
@@ -432,6 +458,14 @@ export const ReflectSection: React.FC<ReflectSectionProps> = ({ objectives = [],
                         <Button variant="outline" onClick={handleExportSummary}>
                           <FileText className="h-4 w-4 mr-2" />
                           Export Executive Summary (MD)
+                        </Button>
+                        <Button variant="outline" onClick={handleExportCSV}>
+                          <Download className="h-4 w-4 mr-2" />
+                          Export CSV
+                        </Button>
+                        <Button variant="outline" onClick={handleExportPDF}>
+                          <FileText className="h-4 w-4 mr-2" />
+                          Export PDF
                         </Button>
                       </div>
                     </CardContent>
