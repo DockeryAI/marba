@@ -56,7 +56,7 @@
 
 ### Test 1: Brand Creation with Existing Profiles (READY NOW)
 ```bash
-1. Open http://localhost:3002
+1. Open http://localhost:3001
 2. Search "software consulting" or "bar" or "restaurant"
 3. Enter a domain (e.g., "test-brand.com")
 4. Verify brand created successfully

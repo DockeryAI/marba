@@ -194,7 +194,7 @@ tail -f scripts/opus-generation/generation.log
 
 ### Test 1: Brand Creation with Existing Profile (READY NOW)
 ```bash
-1. Open http://localhost:3002
+1. Open http://localhost:3001
 2. Search "software consulting" (existing profile with 40 fields)
 3. Enter domain: "test-software.com"
 4. Verify brand created
@@ -305,7 +305,7 @@ tail -f scripts/opus-generation/generation.log
 npx tsx scripts/check-full-profiles.ts
 
 # Check brand creation works
-# (Use browser at http://localhost:3002)
+# (Use browser at http://localhost:3001)
 
 # Verify MIRROR sections created
 npx tsx scripts/verify-mirror-sections.ts

@@ -28,7 +28,7 @@ npm run dev
 ```
 
 **Result:** ✅ RUNNING
-- Server running on http://localhost:3002/
+- Server running on http://localhost:3001/
 - Hot Module Replacement (HMR) working
 - All dependencies optimized
 - No runtime errors

@@ -75,44 +75,87 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
   const handleRefresh = async () => {
     if (!brandData?.name && !brandData?.industry) {
       console.warn('[MeasureSection] No brand data to refresh')
+      alert('Unable to refresh: No brand name or industry found. Please ensure brand data is loaded.')
       return
     }
 
     setIsLoading(true)
     try {
-      console.log('[MeasureSection] Refreshing intelligence data...')
+      console.log('[MeasureSection] ===== STARTING INTELLIGENCE REFRESH =====')
 
       // Get domain from brandData
       const domain = (brandData as any).website || window.location.hostname
       const brandName = (brandData as any).name || 'Brand'
+      const industry = (brandData as any).industry || 'Technology'
 
-      // Fetch fresh SEO metrics
+      console.log('[MeasureSection] Refresh params:', { domain, brandName, industry })
+
+      // Step 1: Fetch fresh SEO metrics
+      console.log('[MeasureSection] Step 1/4: Fetching SEO metrics...')
       const { SemrushAPI } = await import('@/services/intelligence/semrush-api')
       const seoMetrics = await SemrushAPI.getComprehensiveSEOMetrics(domain, brandName)
-      console.log('[MeasureSection] SEO metrics fetched:', seoMetrics?.overview?.authority_score)
+      console.log('[MeasureSection] ✅ SEO metrics fetched:', {
+        authority: seoMetrics?.overview?.authority_score,
+        keywords: seoMetrics?.rankings?.length,
+        opportunities: seoMetrics?.opportunities?.length
+      })
 
-      // Discover competitors
+      // Step 2: Discover competitors
+      console.log('[MeasureSection] Step 2/4: Discovering competitors...')
       const { CompetitorDiscovery } = await import('@/services/intelligence/competitor-discovery')
       const competitorAnalysis = await CompetitorDiscovery.discoverCompetitors(
         domain,
-        (brandData as any).industry || 'Technology',
+        industry,
         brandName
       )
-      console.log('[MeasureSection] Competitors discovered:', competitorAnalysis?.total_found)
+      console.log('[MeasureSection] ✅ Competitors discovered:', {
+        total: competitorAnalysis?.total_found,
+        primary: competitorAnalysis?.primary_competitors?.length,
+        marketLeaders: competitorAnalysis?.market_leaders?.length
+      })
 
-      // Update the section with fresh data
-      if (onDataUpdate) {
-        onDataUpdate({
-          seoMetrics,
-          keywordOpportunities: seoMetrics.opportunities,
-          competitorAnalysis
-        })
+      // Step 3: Calculate brand health
+      console.log('[MeasureSection] Step 3/4: Calculating brand health...')
+      const { BrandHealthCalculator } = await import('@/services/mirror/brand-health-calculator')
+      const brandHealthScore = await BrandHealthCalculator.calculate({
+        brandProfile: {
+          name: brandName,
+          full_profile_data: (brandData as any).full_profile_data || {},
+          positioning_statement: (brandData as any).positioning_statement || '',
+          content_pillars: (brandData as any).content_pillars || []
+        } as any,
+        industryData: {
+          title: industry,
+          full_profile_data: (brandData as any).full_profile_data || {}
+        } as any,
+        seoMetrics: seoMetrics
+      })
+      console.log('[MeasureSection] ✅ Brand health calculated:', brandHealthScore.overall)
+
+      // Step 4: Update the section with fresh data
+      console.log('[MeasureSection] Step 4/4: Updating MirrorContext...')
+      const updatedData = {
+        ...brandData,
+        seoMetrics,
+        keywordOpportunities: seoMetrics?.opportunities || [],
+        competitorAnalysis,
+        brandHealth: brandHealthScore.overall,
+        brandHealthDetails: brandHealthScore
       }
 
-      console.log('[MeasureSection] Intelligence data refreshed successfully')
+      if (onDataUpdate) {
+        onDataUpdate(updatedData)
+        console.log('[MeasureSection] ✅ Data updated in context')
+      } else {
+        console.warn('[MeasureSection] ⚠️ No onDataUpdate handler provided')
+      }
+
+      console.log('[MeasureSection] ===== REFRESH COMPLETE =====')
+      alert('✅ Intelligence data refreshed successfully! Data will save automatically in 2 seconds.')
+
     } catch (error) {
-      console.error('[MeasureSection] Refresh error:', error)
-      alert('Failed to refresh intelligence data. Check console for details.')
+      console.error('[MeasureSection] ❌ Refresh error:', error)
+      alert(`Failed to refresh intelligence data: ${error instanceof Error ? error.message : 'Unknown error'}. Check console for details.`)
     } finally {
       setIsLoading(false)
     }

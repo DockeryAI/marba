@@ -243,7 +243,7 @@ Complete the entire MARBA platform build including:
 ### Build Summary:
 - **Production Build:** ✅ SUCCESS (2.4s, 2.1MB → 585kB gzip)
 - **TypeScript Errors:** 0 critical (warnings only)
-- **Dev Server:** ✅ RUNNING (http://localhost:3002/)
+- **Dev Server:** ✅ RUNNING (http://localhost:3001/)
 - **Total Files Created:** 150+ files
 - **Total Lines of Code:** 25,000+ lines
 - **Database Tables:** 27 tables with RLS

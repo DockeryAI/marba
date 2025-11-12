@@ -156,11 +156,42 @@ export const MirrorProvider: React.FC<MirrorProviderProps> = ({
       setLoading(true)
       setError(null)
 
-      // TODO: Save to Supabase
-      // await MirrorPersistenceService.save(brandId, state)
+      console.log('[MirrorContext] Saving MIRROR state for brand:', brandId)
 
-      // Mock save for now
-      console.log('Saving MIRROR state:', state)
+      // Save each section to Supabase
+      const { supabase } = await import('@/lib/supabase')
+
+      const sections = ['measure', 'intend', 'reimagine', 'reach', 'optimize', 'reflect']
+      const savePromises = sections.map(async (section) => {
+        const sectionKey = section as keyof Omit<MirrorState, 'lastSaved' | 'isDirty'>
+        const sectionData = state[sectionKey]
+
+        if (!sectionData || Object.keys(sectionData).length === 0) {
+          console.log(`[MirrorContext] Skipping empty section: ${section}`)
+          return
+        }
+
+        console.log(`[MirrorContext] Saving section: ${section}`, Object.keys(sectionData))
+
+        const { error } = await supabase
+          .from('mirror_sections')
+          .upsert({
+            brand_id: brandId,
+            section: section,
+            data: sectionData,
+            updated_at: new Date().toISOString()
+          }, {
+            onConflict: 'brand_id,section'
+          })
+
+        if (error) {
+          console.error(`[MirrorContext] Error saving ${section}:`, error)
+          throw error
+        }
+      })
+
+      await Promise.all(savePromises)
+      console.log('[MirrorContext] All sections saved successfully')
 
       setState(prev => ({
         ...prev,
@@ -168,6 +199,7 @@ export const MirrorProvider: React.FC<MirrorProviderProps> = ({
         isDirty: false
       }))
     } catch (err) {
+      console.error('[MirrorContext] Save error:', err)
       setError(err instanceof Error ? err : new Error('Failed to save'))
     } finally {
       setLoading(false)

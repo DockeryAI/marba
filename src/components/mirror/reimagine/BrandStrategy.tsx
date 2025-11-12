@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MessagePillar, StrategyBuilder } from '@/services/mirror/strategy-builder'
 import { SynapseAutoAnalyzer } from '@/services/intelligence/synapse-auto-analyzer'
+import { SynapseLiveScoring } from './SynapseLiveScoring'
 import { Sparkles, Target, Edit, Save, Plus, Trash2, Award } from 'lucide-react'
 
 interface BrandStrategyProps {
@@ -160,30 +161,18 @@ export const BrandStrategy: React.FC<BrandStrategyProps> = ({
             </div>
 
             {isEditingPositioning ? (
-              <Textarea
+              <SynapseLiveScoring
                 value={positioning}
-                onChange={(e) => handlePositioningChange(e.target.value)}
-                rows={4}
+                onChange={handlePositioningChange}
+                brandData={brandData}
                 placeholder="For [target audience] who need [key benefit], [brand] is a [category] that [unique differentiator]..."
-                className="text-base"
+                label=""
+                minScore={7}
               />
             ) : (
               <Card className="p-4 bg-muted/50">
                 <p className="text-base leading-relaxed">{positioning || 'No positioning statement yet'}</p>
               </Card>
-            )}
-
-            {synapseScore !== null && (
-              <div className="flex items-start gap-2 text-sm">
-                <Badge variant={synapseScore >= 70 ? 'default' : 'secondary'}>
-                  Synapse Score: {Math.round(synapseScore)}/100
-                </Badge>
-                <span className="text-muted-foreground">
-                  {synapseScore >= 80 && 'Excellent positioning with strong psychological triggers'}
-                  {synapseScore >= 60 && synapseScore < 80 && 'Good positioning, consider adding more emotional appeal'}
-                  {synapseScore < 60 && 'Positioning needs work - add power words and clearer benefits'}
-                </span>
-              </div>
             )}
           </div>
 

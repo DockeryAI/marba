@@ -408,7 +408,7 @@ npm run dev
 ```
 
 **Result:** ✅ RUNNING
-**URL:** http://localhost:3002/
+**URL:** http://localhost:3001/
 **Status:** All features functional, HMR working
 
 ---
@@ -652,7 +652,7 @@ supabase/
 2. Review TESTING_VALIDATION_SUMMARY.md
 3. Set up local environment (see "Deployment Guide")
 4. Run dev server: `npm run dev`
-5. Explore features at http://localhost:3002/
+5. Explore features at http://localhost:3001/
 6. Review service layer for business logic
 7. Check edge functions for API integration
 8. Implement authentication (high priority)

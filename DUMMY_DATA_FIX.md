@@ -115,7 +115,7 @@ Example data path for Bar/Pub:
    ```
 
 2. **Create new Bar brand**:
-   - Navigate to http://localhost:3002
+   - Navigate to http://localhost:3001
    - Search "bar" or "pub"
    - Enter domain: "test-bar.com"
    - Click "Create Brand"

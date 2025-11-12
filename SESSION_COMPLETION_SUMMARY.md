@@ -613,7 +613,7 @@ npm run dev
 ## Deployment Readiness
 
 ### ✅ Ready Now (Development)
-- [x] Local development server running (http://localhost:3002)
+- [x] Local development server running (http://localhost:3001)
 - [x] All features functional with mock data
 - [x] Production build passing
 - [x] All integration tests passing
@@ -636,7 +636,7 @@ npm run dev
 ## Next Steps
 
 ### For User Testing (Now):
-1. Navigate to http://localhost:3002
+1. Navigate to http://localhost:3001
 2. Test all major flows:
    - Create a MIRROR plan (6 sections)
    - Generate content in Content Calendar
@@ -777,7 +777,7 @@ The MARBA platform is complete and functional with all major features integrated
 
 **The platform is ready for your testing!** 🚀
 
-Navigate to http://localhost:3002 and explore all features.
+Navigate to http://localhost:3001 and explore all features.
 
 ---
 
