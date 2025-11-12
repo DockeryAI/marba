@@ -7,6 +7,7 @@ import { SEOHealthCard } from './SEOHealthCard'
 import { KeywordOpportunities } from './KeywordOpportunities'
 import { CustomerTriggerGallery } from './CustomerTriggerGallery'
 import { CompetitiveDashboard } from './CompetitiveDashboard'
+import { ContentGapAnalysis } from './ContentGapAnalysis'
 import { SituationAnalyzer } from '@/services/mirror/situation-analyzer'
 import { MirrorSectionHeader } from '@/components/layouts/MirrorLayout'
 import { Button } from '@/components/ui/button'
@@ -158,6 +159,15 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
           <CompetitiveDashboard
             analysis={brandData?.competitorAnalysis || null}
             brandAuthority={brandData?.seoMetrics?.overview?.authority_score || health.overall}
+            industryData={brandData}
+          />
+        </section>
+
+        {/* Content Gap Analysis - NEW */}
+        <section id="content-gap-analysis">
+          <ContentGapAnalysis
+            brandData={brandData}
+            competitorAnalysis={brandData?.competitorAnalysis || null}
             industryData={brandData}
           />
         </section>
