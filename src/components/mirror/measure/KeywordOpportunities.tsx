@@ -13,7 +13,7 @@ import {
   Search, Zap, CheckCircle2, Copy
 } from 'lucide-react'
 import type { KeywordOpportunity } from '@/services/intelligence/semrush-api'
-import { ContentPsychologyEngine } from '@/services/synapse/generation/ContentPsychologyEngine'
+import { generateWithSynapse } from '@/lib/openrouter'
 import { Textarea } from '@/components/ui/textarea'
 
 interface KeywordOpportunitiesProps {
@@ -89,33 +89,49 @@ export function KeywordOpportunities({ opportunities, brandProfile }: KeywordOpp
     setPsychologyScore(0)
 
     try {
-      // Generate SEO-optimized content using Synapse
-      const psychologyEngine = new ContentPsychologyEngine()
+      // Generate SEO-optimized content using Synapse + OpenRouter
+      const brandVoice = brandProfile?.full_profile_data?.brand_voice || 'professional'
+      const industry = brandProfile?.full_profile_data?.industry || ''
+      const emotionalTriggers = brandProfile?.full_profile_data?.emotional_triggers || []
 
-      // Create a prompt for content generation
-      const contentPrompt = `Write a compelling 300-word blog post or article targeting the keyword "${opportunity.keyword}".
-Make it informative, engaging, and naturally incorporate the keyword.
-Use the brand voice and emotional triggers from the industry profile.
-Include a strong hook, valuable insights, and a call-to-action.`
+      const audienceInsights = emotionalTriggers
+        .slice(0, 3)
+        .map((t: any) => t.trigger || '')
+        .filter(Boolean)
 
-      // Generate content (simplified - in production, this would call OpenRouter)
-      const mockContent = await generateSEOContent(
-        opportunity.keyword,
-        brandProfile,
-        opportunity.reasoning
-      )
+      console.log('[KeywordOpportunities] Generating content for:', opportunity.keyword)
 
-      // Analyze psychology score
-      const score = await psychologyEngine.analyzePsychology(
-        mockContent,
-        brandProfile?.full_profile_data || {}
-      )
+      // Call REAL OpenRouter API with Synapse psychology
+      const result = await generateWithSynapse({
+        platform: 'blog',
+        topic: `${opportunity.keyword} - ${opportunity.reasoning}`,
+        tone: brandVoice,
+        length: 'medium',
+        industryContext: industry,
+        audienceInsights,
+        edginess: 50
+      })
 
-      setGeneratedContent(mockContent)
-      setPsychologyScore(score)
+      console.log('[KeywordOpportunities] Generated content, score:', result.psychologyScore)
+
+      setGeneratedContent(result.text)
+      setPsychologyScore(result.psychologyScore)
     } catch (error) {
       console.error('[KeywordOpportunities] Error generating content:', error)
-      setGeneratedContent('Error generating content. Please try again.')
+
+      // Show CLEAR error message
+      const errorMessage = error instanceof Error
+        ? error.message
+        : 'Unknown error occurred'
+
+      setGeneratedContent(
+        `❌ Content generation failed:\n\n${errorMessage}\n\n` +
+        `To enable Synapse content generation:\n` +
+        `1. Add VITE_OPENROUTER_API_KEY to your .env file\n` +
+        `2. Get a free API key from https://openrouter.ai/\n` +
+        `3. Restart the development server`
+      )
+      setPsychologyScore(0)
     } finally {
       setIsGenerating(false)
     }
@@ -354,49 +370,6 @@ Include a strong hook, valuable insights, and a call-to-action.`
   )
 }
 
-// ============================================================================
-// Helper: Generate SEO Content (Mock - would use OpenRouter in production)
-// ============================================================================
-
-async function generateSEOContent(
-  keyword: string,
-  brandProfile: any,
-  reasoning: string
-): Promise<string> {
-  // In production, this would call OpenRouter with Claude
-  // For now, return a template that demonstrates the structure
-
-  const brandVoice = brandProfile?.full_profile_data?.brand_voice || 'professional'
-  const emotionalTriggers = brandProfile?.full_profile_data?.emotional_triggers || []
-
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 2000))
-
-  return `🎯 ${keyword.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}: Your Complete Guide
-
-In today's competitive landscape, understanding ${keyword} is crucial for business success. Whether you're just starting out or looking to optimize your existing strategy, this guide will walk you through everything you need to know.
-
-**Why ${keyword} Matters**
-
-${reasoning} This represents a significant opportunity for brands that can capture attention and deliver value in this space.
-
-**The Path Forward**
-
-Success with ${keyword} requires a strategic approach. Start by understanding your audience's needs, then craft content that speaks directly to their pain points while showcasing your unique value proposition.
-
-Key considerations include:
-• Aligning your message with customer expectations
-• Building trust through consistent delivery
-• Leveraging data to refine your approach
-• Staying ahead of industry trends
-
-**Take Action Today**
-
-Don't let this opportunity pass you by. The brands that succeed are those that act decisively while maintaining a customer-first mindset. Start implementing these strategies today and watch your results transform.
-
-${emotionalTriggers[0]?.trigger ? `Remember: ${emotionalTriggers[0].trigger}` : 'Ready to make a change?'} The time to act is now.
-
----
-*Note: This content was generated by Synapse AI and should be reviewed and customized for your specific brand voice and audience.*
-`
-}
+// NO MOCK DATA - removed
+// Real content generation now uses OpenRouter API via generateWithSynapse()
+// Configure VITE_OPENROUTER_API_KEY in .env to enable this feature

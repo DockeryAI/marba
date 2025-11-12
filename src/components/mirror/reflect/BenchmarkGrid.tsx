@@ -30,6 +30,7 @@ export function BenchmarkGrid({
 }: BenchmarkGridProps) {
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [benchmarks, setBenchmarks] = React.useState<any>(null)
 
   React.useEffect(() => {
     if (industry || industryCode) {
@@ -42,12 +43,8 @@ export function BenchmarkGrid({
 
     setLoading(true)
     setError(null)
+    setBenchmarks(null)
     try {
-      // For now, using a simplified call since the full service isn't implemented
-      // In the future, this would call:
-      // const result = await BenchmarkingService.getBenchmarks(industry || industryCode!, currentMetrics)
-
-      // Simulate the call to trigger proper error handling
       const metrics = {
         engagement_rate: currentMetrics.engagement_rate || 0,
         follower_growth: currentMetrics.follower_growth || 0,
@@ -56,22 +53,18 @@ export function BenchmarkGrid({
         response_time: currentMetrics.response_time || 0
       }
 
-      await BenchmarkingService.getBenchmarks(
+      const result = await BenchmarkingService.getBenchmarks(
         industry || industryCode || '',
         metrics
       )
 
-      // If we get here, service is working (currently it throws "not implemented")
-      // In the future, store the result for dynamic display
+      console.log('[BenchmarkGrid] Loaded benchmarks:', result)
+      setBenchmarks(result)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error'
 
-      // Check if it's a "not implemented" error
-      if (errorMessage.includes('not implemented') || errorMessage.includes('not available')) {
-        setError('Industry benchmarking data is not available yet. This feature requires industry profile database configuration.')
-      } else {
-        setError(`Failed to load benchmarks: ${errorMessage}`)
-      }
+      // Show clear error message
+      setError(`Benchmarks unavailable: ${errorMessage}`)
       console.error('[BenchmarkGrid] Error:', err)
     } finally {
       setLoading(false)
@@ -113,68 +106,66 @@ export function BenchmarkGrid({
     )
   }
 
-  // If no benchmarks available (service returned empty), use fallback with placeholder data
-  // In production, you might want to fetch this from a static defaults file
-  const fallbackBenchmarks = {
-    engagement_rate: { industry_avg: 3.5, top_10_percent: 7.2 },
-    follower_growth: { industry_avg: 5.2, top_10_percent: 12.0 },
-    content_score: { industry_avg: 75, top_10_percent: 90 },
-    ctr: { industry_avg: 1.8, top_10_percent: 4.5 },
-    conversion_rate: { industry_avg: 2.1, top_10_percent: 5.0 },
-    response_time: { industry_avg: 120, top_10_percent: 30 }
+  // NO MOCK DATA - if benchmarks not loaded, show nothing
+  // This enforces real data or errors only
+  if (!benchmarks) {
+    return (
+      <div className="rounded-lg border border-muted bg-muted/20 p-6 text-center">
+        <p className="text-sm text-muted-foreground">
+          No benchmark data available. Configure industry benchmarking database.
+        </p>
+      </div>
+    )
   }
 
+  // Render real benchmarks from service
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <BenchmarkComparison
-        metricName="Engagement Rate"
-        yourValue={currentMetrics.engagement_rate || 4.8}
-        industryAvg={fallbackBenchmarks.engagement_rate.industry_avg}
-        topTenPercent={fallbackBenchmarks.engagement_rate.top_10_percent}
-        format="percentage"
-        improvement="+0.5%"
-        goal={5.5}
-      />
-      <BenchmarkComparison
-        metricName="Follower Growth Rate"
-        yourValue={currentMetrics.follower_growth || 8.3}
-        industryAvg={fallbackBenchmarks.follower_growth.industry_avg}
-        topTenPercent={fallbackBenchmarks.follower_growth.top_10_percent}
-        format="percentage"
-        improvement="+1.2%"
-      />
-      <BenchmarkComparison
-        metricName="Content Performance Score"
-        yourValue={82}
-        industryAvg={fallbackBenchmarks.content_score.industry_avg}
-        topTenPercent={fallbackBenchmarks.content_score.top_10_percent}
-        improvement="+3"
-        goal={90}
-      />
-      <BenchmarkComparison
-        metricName="Click-Through Rate"
-        yourValue={currentMetrics.ctr || 2.4}
-        industryAvg={fallbackBenchmarks.ctr.industry_avg}
-        topTenPercent={fallbackBenchmarks.ctr.top_10_percent}
-        format="percentage"
-        improvement="+0.3%"
-      />
-      <BenchmarkComparison
-        metricName="Conversion Rate"
-        yourValue={currentMetrics.conversion_rate || 3.2}
-        industryAvg={fallbackBenchmarks.conversion_rate.industry_avg}
-        topTenPercent={fallbackBenchmarks.conversion_rate.top_10_percent}
-        format="percentage"
-        goal={4.0}
-      />
-      <BenchmarkComparison
-        metricName="Average Response Time"
-        yourValue={currentMetrics.response_time || 45}
-        industryAvg={fallbackBenchmarks.response_time.industry_avg}
-        topTenPercent={fallbackBenchmarks.response_time.top_10_percent}
-        unit=" min"
-        improvement="-15 min"
-      />
+      {benchmarks.engagement_rate && (
+        <BenchmarkComparison
+          metricName="Engagement Rate"
+          yourValue={currentMetrics.engagement_rate || 0}
+          industryAvg={benchmarks.engagement_rate.industry_avg}
+          topTenPercent={benchmarks.engagement_rate.top_10_percent}
+          format="percentage"
+        />
+      )}
+      {benchmarks.follower_growth && (
+        <BenchmarkComparison
+          metricName="Follower Growth Rate"
+          yourValue={currentMetrics.follower_growth || 0}
+          industryAvg={benchmarks.follower_growth.industry_avg}
+          topTenPercent={benchmarks.follower_growth.top_10_percent}
+          format="percentage"
+        />
+      )}
+      {benchmarks.ctr && (
+        <BenchmarkComparison
+          metricName="Click-Through Rate"
+          yourValue={currentMetrics.ctr || 0}
+          industryAvg={benchmarks.ctr.industry_avg}
+          topTenPercent={benchmarks.ctr.top_10_percent}
+          format="percentage"
+        />
+      )}
+      {benchmarks.conversion_rate && (
+        <BenchmarkComparison
+          metricName="Conversion Rate"
+          yourValue={currentMetrics.conversion_rate || 0}
+          industryAvg={benchmarks.conversion_rate.industry_avg}
+          topTenPercent={benchmarks.conversion_rate.top_10_percent}
+          format="percentage"
+        />
+      )}
+      {benchmarks.response_time && (
+        <BenchmarkComparison
+          metricName="Average Response Time"
+          yourValue={currentMetrics.response_time || 0}
+          industryAvg={benchmarks.response_time.industry_avg}
+          topTenPercent={benchmarks.response_time.top_10_percent}
+          unit=" min"
+        />
+      )}
     </div>
   )
 }

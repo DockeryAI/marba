@@ -572,8 +572,12 @@ export class PatternAnalyzerService {
       if (error) throw error
       return (data as ContentPattern[]) || []
     } catch (error) {
-      console.error('Failed to get active patterns:', error)
-      return []
+      console.error('[PatternAnalyzer] Failed to get active patterns:', error)
+      // ERROR LOUDLY - don't return empty array
+      throw new Error(
+        'Pattern analysis failed: ' + (error instanceof Error ? error.message : 'Unknown error') +
+        '. Ensure content_patterns table exists and has data.'
+      )
     }
   }
 }
