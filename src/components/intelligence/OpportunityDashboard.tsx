@@ -6,7 +6,7 @@ import { RefreshCw, Sparkles, Filter } from 'lucide-react'
 import { OpportunityCard } from './OpportunityCard'
 import { OpportunityDetector } from '@/services/intelligence/opportunity-detector'
 import { OpportunityInsight } from '@/types/intelligence.types'
-import { generateContent } from '@/lib/openrouter'
+import { generateWithMARBA } from '@/lib/openrouter'
 import { cn } from '@/lib/utils'
 
 interface OpportunityDashboardProps {
@@ -90,16 +90,13 @@ export const OpportunityDashboard: React.FC<OpportunityDashboardProps> = ({
         const contentSuggestion = action.content_suggestions?.[0] || action.description
 
         // Call content generation
-        const content = await generateContent({
+        const content = await generateWithMARBA({
           platform: 'linkedin',
-          contentType: 'post',
           topic: contentSuggestion,
           tone: 'professional',
-          mode: 'marba',
-          context: {
-            opportunity: opportunity.title,
-            urgency: opportunity.urgency,
-          },
+          length: 'medium',
+          includeHashtags: true,
+          includeCTA: true,
         })
 
         // TODO: Navigate to content calendar with generated content

@@ -19,7 +19,7 @@ interface ApiCostByFeatureProps {
   className?: string
 }
 
-export const ApiCostByFeatureComponent: React.FC<ApiCostByFeatureProps> = ({
+export const ApiCostByFeature: React.FC<ApiCostByFeatureProps> = ({
   data,
   loading = false,
   showChart = true,

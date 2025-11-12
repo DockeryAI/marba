@@ -300,3 +300,140 @@ export interface EngagementInboxItem {
   created_at: string;
   updated_at: string;
 }
+
+// Weather Intelligence Types
+export interface WeatherAlert {
+  id: string;
+  location: string;
+  condition: 'heat' | 'cold' | 'rain' | 'snow' | 'storm' | 'clear';
+  temperature?: number;
+  precipitation?: string;
+  forecast_days: number;
+  severity: 'low' | 'medium' | 'high' | 'extreme';
+  relevance_score: number;
+  industry_impact: string[];
+  detected_at: string;
+  expires_at: string;
+}
+
+// Trend Intelligence Types
+export interface TrendingTopic {
+  id: string;
+  keyword: string;
+  category: string;
+  growth_rate: number;
+  search_volume: number;
+  related_queries: string[];
+  trending_duration: string;
+  peak_interest: string;
+  geographic_data?: Record<string, number>;
+  relevance_to_brand: number;
+  content_angles: string[];
+  detected_at: string;
+}
+
+// Competitive Move Types
+export interface CompetitorActivity {
+  id: string;
+  competitor_id: string;
+  competitor_name: string;
+  activity_type: 'product_launch' | 'campaign' | 'price_change' | 'content' | 'acquisition' | 'expansion';
+  description: string;
+  platform?: string;
+  engagement_metrics?: {
+    likes: number;
+    comments: number;
+    shares: number;
+    reach?: number;
+  };
+  sentiment: 'positive' | 'neutral' | 'negative' | 'mixed';
+  threat_level: 'low' | 'medium' | 'high' | 'critical';
+  opportunity_level: 'low' | 'medium' | 'high';
+  recommended_response: string[];
+  detected_at: string;
+  source_url?: string;
+}
+
+// Pattern Analysis Types
+export interface ContentPattern {
+  id: string;
+  brand_id: string;
+  pattern_category: 'format' | 'timing' | 'topic' | 'hashtag' | 'length' | 'tone';
+  title: string;
+  description: string;
+  discovered_from: {
+    posts_analyzed: number;
+    time_period: string;
+    platforms: string[];
+  };
+  performance_metrics: {
+    baseline_engagement: number;
+    pattern_engagement: number;
+    improvement_percentage: number;
+  };
+  confidence_score: number;
+  statistical_significance: number;
+  actionable_insights: string[];
+  implementation_guide: string[];
+  evidence_examples: {
+    post_id?: string;
+    description: string;
+    metric_value: number;
+  }[];
+  created_at: string;
+  last_validated: string;
+}
+
+// Power Word Analysis
+export interface PowerWordAnalysis {
+  word: string;
+  category: 'urgency' | 'exclusivity' | 'emotion' | 'value' | 'trust' | 'action';
+  effectiveness_score: number;
+  usage_count: number;
+  avg_engagement_lift: number;
+  best_context: string[];
+  alternatives: string[];
+  sentiment_impact: number;
+}
+
+// Synapse Competitive Analysis
+export interface CompetitivePositioningAnalysis {
+  id: string;
+  brand_id: string;
+  competitor_id: string;
+  our_messaging: string;
+  their_messaging: string;
+  psychology_comparison: {
+    our_score: number;
+    their_score: number;
+    gap_analysis: string[];
+  };
+  positioning_gaps: {
+    gap: string;
+    severity: 'low' | 'medium' | 'high';
+    opportunity_description: string;
+    suggested_adjustment: string;
+  }[];
+  strengths: string[];
+  weaknesses: string[];
+  recommended_pivots: {
+    current_position: string;
+    suggested_position: string;
+    expected_impact: number;
+    implementation_difficulty: 'easy' | 'medium' | 'hard';
+  }[];
+  created_at: string;
+  updated_at: string;
+}
+
+// Intelligence Signal Types
+export interface IntelligenceSignal {
+  id: string;
+  signal_type: 'weather' | 'trend' | 'competitive' | 'seasonal' | 'news' | 'platform' | 'audience';
+  source: string;
+  raw_data: Record<string, any>;
+  processed: boolean;
+  opportunities_generated: number;
+  detected_at: string;
+  processed_at?: string;
+}

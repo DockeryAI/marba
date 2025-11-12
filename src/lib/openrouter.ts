@@ -147,12 +147,14 @@ export async function generateWithSynapse(params: {
   length?: 'short' | 'medium' | 'long';
   industryContext?: string;
   audienceInsights?: string[];
+  edginess?: number;
 }): Promise<{
   text: string;
   variations: string[];
   psychologyScore: number;
   connections: Array<{ from: string; to: string; strength: number }>;
   powerWords: string[];
+  provenance?: any;
 }> {
   const {
     platform,
@@ -161,6 +163,7 @@ export async function generateWithSynapse(params: {
     length = 'medium',
     industryContext = '',
     audienceInsights = [],
+    edginess = 50,
   } = params;
 
   const systemMessage: OpenRouterMessage = {
@@ -181,17 +184,29 @@ You analyze content through the lens of:
   const contextInfo = industryContext ? `\nIndustry context: ${industryContext}` : '';
   const audienceInfo = audienceInsights.length > 0 ? `\nAudience insights: ${audienceInsights.join(', ')}` : '';
 
+  // Get edginess description
+  const edginessDescription =
+    edginess <= 25
+      ? 'Professional and polished tone, corporate-safe'
+      : edginess <= 50
+      ? 'Approachable and warm tone, relatable and friendly'
+      : edginess <= 75
+      ? 'Casual and conversational tone, witty and personable'
+      : 'Edgy and bold tone, attention-grabbing and playful';
+
   const userMessage: OpenRouterMessage = {
     role: 'user',
     content: `Create highly persuasive ${length} ${platform} content about: ${topic}${contextInfo}${audienceInfo}
 
 Tone: ${tone}
+Edginess Level: ${edginess}/100 (${edginessDescription})
 
 Requirements:
 - Use psychology-backed persuasion techniques
 - Include power words strategically
 - Create strong conceptual connections
 - Optimize for emotional impact
+- Match the specified edginess level (${edginess}/100)
 - Include relevant hashtags
 - Include a compelling call-to-action
 

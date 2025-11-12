@@ -327,7 +327,7 @@ export const tiktokAPI = {
 /**
  * Universal publish function that routes to the correct platform
  */
-export async function publishToPlat form(
+export async function publishToPlatform(
   platform: ContentPlatform,
   params: {
     content: string;

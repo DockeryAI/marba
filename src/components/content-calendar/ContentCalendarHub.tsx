@@ -6,13 +6,15 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Grid, List } from 'lucide-react';
+import { Plus, Grid, List, Palette } from 'lucide-react';
 import { CalendarView } from './CalendarView';
 import { OpportunityFeed } from './OpportunityFeed';
 import { ContentGenerator } from './ContentGenerator';
 import { BulkContentGenerator } from './BulkContentGenerator';
 import { PublishingQueue } from './PublishingQueue';
+import { DesignStudio } from '@/components/design-studio';
 import type { ContentItem, ContentPillar } from '@/types/content-calendar.types';
 
 interface ContentCalendarHubProps {
@@ -25,7 +27,9 @@ export function ContentCalendarHub({ brandId, userId, pillars = [] }: ContentCal
   const [activeTab, setActiveTab] = useState<'calendar' | 'queue'>('calendar');
   const [showContentGenerator, setShowContentGenerator] = useState(false);
   const [showBulkGenerator, setShowBulkGenerator] = useState(false);
+  const [showDesignStudio, setShowDesignStudio] = useState(false);
   const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
+  const [editingContentId, setEditingContentId] = useState<string | undefined>();
   const [refreshKey, setRefreshKey] = useState(0);
 
   /**
@@ -41,6 +45,22 @@ export function ContentCalendarHub({ brandId, userId, pillars = [] }: ContentCal
    */
   const handleRefresh = () => {
     setRefreshKey((prev) => prev + 1);
+  };
+
+  /**
+   * Open design studio for a content item
+   */
+  const handleOpenDesignStudio = (contentId?: string) => {
+    setEditingContentId(contentId);
+    setShowDesignStudio(true);
+  };
+
+  /**
+   * Handle design save
+   */
+  const handleDesignSave = () => {
+    handleRefresh();
+    setShowDesignStudio(false);
   };
 
   return (
@@ -64,6 +84,10 @@ export function ContentCalendarHub({ brandId, userId, pillars = [] }: ContentCal
           <Button variant="outline" onClick={() => setShowBulkGenerator(true)}>
             <Grid className="w-4 h-4 mr-2" />
             Bulk Generate
+          </Button>
+          <Button variant="outline" onClick={() => handleOpenDesignStudio()}>
+            <Palette className="w-4 h-4 mr-2" />
+            Design Studio
           </Button>
         </div>
 
@@ -116,6 +140,20 @@ export function ContentCalendarHub({ brandId, userId, pillars = [] }: ContentCal
         pillars={pillars}
         onContentCreated={handleRefresh}
       />
+
+      {/* Design Studio Modal */}
+      <Dialog open={showDesignStudio} onOpenChange={setShowDesignStudio}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] h-[95vh] p-0">
+          <DesignStudio
+            contentItemId={editingContentId}
+            brandId={brandId}
+            userId={userId}
+            mode="modal"
+            onSave={handleDesignSave}
+            onClose={() => setShowDesignStudio(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

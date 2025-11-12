@@ -41,7 +41,7 @@ const PROVIDER_ICONS: Record<ApiProvider, string> = {
   other: '🔧',
 }
 
-export const ApiCostByApiComponent: React.FC<ApiCostByApiProps> = ({
+export const ApiCostByApi: React.FC<ApiCostByApiProps> = ({
   data,
   loading = false,
   showChart = true,

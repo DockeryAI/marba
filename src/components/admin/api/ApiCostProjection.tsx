@@ -31,7 +31,7 @@ interface ApiCostProjectionProps {
   className?: string
 }
 
-export const ApiCostProjectionComponent: React.FC<ApiCostProjectionProps> = ({
+export const ApiCostProjection: React.FC<ApiCostProjectionProps> = ({
   projection,
   loading = false,
   className,

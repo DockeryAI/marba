@@ -19,7 +19,7 @@ import {
   createDataSourcesFromIntelligence
 } from './helpers/ConnectionHintGenerator';
 
-import type { SynapseInsight } from '../../types/synapse.types';
+import type { SynapseInsight } from '@/types/synapse/synapse.types';
 
 export interface SynapseInput {
   business: {
@@ -52,9 +52,16 @@ export interface SynapseResult {
 function cleanMetaInstructions(text: string): string {
   if (!text) return text;
 
-  // Remove common instruction patterns
+  // Log if we find meta-instructions
+  if (text.toLowerCase().includes('start with') || text.toLowerCase().includes('secret')) {
+    console.warn('[SynapseGenerator] Found meta-instruction in text:', text.substring(0, 100));
+  }
+
+  // AGGRESSIVE cleaning - match all variants
   const patterns = [
-    /^Start with ['"]?[^'"]*['"]?\s*/i,
+    /^Start with ["']?secret["']?\s*/i,  // Specific "secret" pattern FIRST
+    /^Start with ["'][^"']*["']\s*/i,    // Any quoted phrase after "Start with"
+    /^Start with\s+/i,                   // Just "Start with"
     /^Begin with\s+/i,
     /^Open with\s+/i,
     /^Create (a|an)\s+/i,
@@ -67,16 +74,36 @@ function cleanMetaInstructions(text: string): string {
     /^Post (a|an)\s+/i,
     /^Share (a|an)\s+/i,
     /^Show (a|an)\s+/i,
+    /^POV:\s*/i,
+    /^Video series:\s*/i,
+    /^"?secret"?\s*/i  // Any remaining "secret" at start
   ];
 
   let cleaned = text;
   for (const pattern of patterns) {
+    const before = cleaned;
     cleaned = cleaned.replace(pattern, '');
+    if (before !== cleaned) {
+      console.warn('[SynapseGenerator] Removed pattern:', pattern.toString().substring(0, 50));
+    }
+  }
+
+  // Remove "secret" from anywhere in the text (it's a meta-instruction artifact)
+  if (cleaned.toLowerCase().includes('secret')) {
+    console.warn('[SynapseGenerator] Removing "secret" from text');
+    cleaned = cleaned.replace(/\bsecret\b\s*/gi, '');
   }
 
   // If we removed something, capitalize the first letter
   if (cleaned !== text && cleaned.length > 0) {
     cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  }
+
+  // Clean up multiple spaces
+  cleaned = cleaned.replace(/\s{2,}/g, ' ').trim();
+
+  if (cleaned !== text) {
+    console.log('[SynapseGenerator] Cleaned text:', text.substring(0, 80), '→', cleaned.substring(0, 80));
   }
 
   return cleaned;
@@ -245,12 +272,19 @@ function buildSynapsePrompt(params: {
   costEquivalenceText: string;
   connectionHintText: string;
 }): string {
-  return `You are a viral content strategist who creates ENTERTAINING, CULTURALLY-RELEVANT content that makes people say "this is SO good I need to share it!"
+  // Get current date for seasonal context
+  const now = new Date();
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+  const currentDate = `${monthNames[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
 
-Your job is to find the FUN, SURPRISING, CULTURAL angle - NOT the boring business case.
+  return `You are a business marketing strategist who creates engaging content that DRIVES CUSTOMER ACTION.
+
+Your job: Find insights that are BOTH engaging AND business-focused, with clear calls-to-action that drive visits, bookings, purchases, or inquiries.
 
 BUSINESS: ${params.business.name} (${params.business.industry})
 LOCATION: ${params.business.location.city}, ${params.business.location.state}
+TODAY'S DATE: ${currentDate}
 
 ${params.dataContext}
 
@@ -260,36 +294,70 @@ ${params.connectionHintText}
 
 ---
 
-YOUR TASK: Generate 3 ENTERTAINING content ideas that connect this business to culture, trends, or unexpected moments.
+CRITICAL FACT-CHECKING RULES:
 
-WHAT MAKES GREAT CONTENT (LEARN FROM THESE):
+1. WEATHER & SEASONS: Use CURRENT weather and season data from the context above. It is ${currentDate} - do NOT reference summer, heat waves, or hot weather unless the weather data specifically shows that. Use actual current conditions and upcoming seasonal transitions.
+
+2. NO FALSE URGENCY: Do NOT create fake deadlines or urgency unless there's ACTUAL supporting data:
+   ❌ "The next 72 hours are crucial" (unless there's actual weather/event data showing this)
+   ❌ "You only have until Friday" (unless there's a real deadline)
+   ❌ "Winter is coming" in November in Austin, TX (it doesn't freeze there until late December/January)
+   ✅ "Holiday entertaining season is starting" (factually true in November)
+   ✅ "Fall planting window is closing" (if weather data supports this)
+
+3. VERIFY CLAIMS: Only make claims you can support with the data provided. If you don't have weather data showing freezing temps, don't claim urgency around freezing. If you don't have event data, don't invent events.
+
+YOUR TASK: Generate 3 business-focused content ideas that connect behavioral insights to customer action.
+
+WHAT MAKES GREAT BUSINESS CONTENT:
+
+For a Bar/Pub:
+❌ "Getting drunk at our bar is your toxic trait" (irresponsible, legal liability)
+❌ "Taylor Swift Eras cocktails" (dated reference, no business purpose)
+✅ "Thursday nights in Uptown - when 'one drink' turns into reconnecting with your college friends. That's why we added the nostalgia playlist. Reserve your table." (relatable + clear CTA)
 
 For a Coffee Cart:
-❌ "Wedding venues charge 3x markup on coffee" (boring ROI talk)
-✅ "That TikTok sound everyone's using at weddings? We time the coffee service drop to THAT moment - couples lose their minds" (cultural + fun)
+❌ "We're the wedding crashers but everyone loves us" (no clear value)
+❌ "Save $500 on coffee service vs venue pricing" (ROI/cost-saving angle)
+✅ "Wedding planners: Your 3pm ceremony energy slump? We handle it. Mobile espresso bar shows up at golden hour. Guests stay energized through speeches. DM to add us to your next event." (problem + solution + CTA)
 
-For a Mobile Barista:
-❌ "Save 40 minutes of productivity with coffee delivery" (boring business case)
-✅ "Your Zoom background is giving 'forgot to make coffee again' energy - we pull up mid-meeting and become the hero of the call" (relatable + entertaining)
+For a Local Business:
+❌ "Mercury Retrograde vibes at the office" (random, no purpose)
+✅ "Dallas mornings hit different when your usual spot is packed. We're the quiet alternative with the strong cold brew locals know about. Find us on Oak Lawn." (relatable + clear direction)
 
-For an Event Coffee Service:
-❌ "Professional coffee service increases attendee satisfaction" (yawn)
-✅ "Corporate events where someone brings their own ceramic mug have 73% better networking - we're making it a thing in Dallas" (quirky data + trend-starting)
+RULES FOR BUSINESS CONTENT:
+1. ✅ BUSINESS PURPOSE - Every insight must lead to a clear action (visit, book, try, join, inquire)
+2. ✅ PROFESSIONAL TONE - Match small business owner voice, not Gen Z social media manager
+3. ✅ LEGALLY SAFE - No irresponsible messaging (avoid "get drunk", liability issues)
+4. ✅ BEHAVIORAL INSIGHTS - Focus on customer behavior patterns, timing, needs
+5. ✅ CLEAR VALUE - What problem does this solve? What experience does it create?
+6. ✅ ACTIONABLE CTA - Every insight needs a next step (visit, book, DM, try, find us)
+7. ✅ RELEVANT HOOKS - Weather, local events, seasonal moments (but not memes)
+8. ❌ NO VIRAL MEMES - No TikTok sounds, dated trends (Taylor Swift Eras), Gen Z slang
+9. ❌ NO IRRESPONSIBLE CONTENT - No encouraging excessive drinking, risky behavior
+10. ❌ NO ROI/COST-SAVING ANGLES - No "save money", "cut costs", "increase productivity", "improve ROI"
+11. ✅ FRAMEWORK-READY - Insights should work with Hook-Story-Offer, AIDA, PAS structures
 
-RULES FOR BREAKTHROUGH CONTENT:
-1. ✅ CULTURAL CONNECTIONS - TikTok sounds, viral moments, trending topics, memes
-2. ✅ FUN & ENTERTAINING - Make people smile, not calculate ROI
-3. ✅ RELATABLE MOMENTS - "This is so me" reactions
-4. ✅ SURPRISING TRUTHS - Counter-intuitive but makes sense
-5. ✅ SHAREABILITY - "I need to send this to my friend"
-6. ❌ NO BORING BUSINESS CASES - No "save money", "increase productivity", "ROI calculations"
-7. ❌ NO GENERIC ADVICE - No "5 tips to...", "How to improve..."
-8. ✅ USE REAL-TIME HOOKS - Weather, local events, trending topics, seasonal moments
+TONE GUIDELINES BY INDUSTRY:
+- Bar/Pub: Welcoming, community-focused, responsible ("great night out" not "get drunk")
+- Coffee/Food: Service-focused, problem-solving, professional
+- Events: Value-demonstrating, reliability-focused
+- Professional Services: Authority-building, trust-focused
 
-CRITICAL: Your contentAngle MUST be the actual content hook, NOT instructions on how to create it.
+CRITICAL RULES FOR contentAngle:
+1. Write the ACTUAL CONTENT HOOK - exactly what the headline should say
+2. NEVER include meta-instructions like "Start with", "Begin with", "Create a", etc.
+3. NEVER use the word "secret" anywhere in your content (it's a meta-instruction artifact)
+4. Write as if you're posting directly to social media
 
-BAD contentAngle: "Start with 'secret' Video series showing cost comparisons..."
-GOOD contentAngle: "The barista at your wedding who's more popular than the bride - yes that's our cart and it's always like this"
+BAD contentAngle: "Start with 'secret' Video series showing..."
+GOOD contentAngle: "The quiet coffee shop locals know about when the main street is packed"
+
+BAD contentAngle: "Guest room isn't secret ready" (uses "secret" as a word)
+GOOD contentAngle: "When your in-laws announce their visit and your guest room needs an upgrade"
+
+BAD insight: "Taylor Swift fans love themed cocktails"
+GOOD insight: "Thursday nights in Dallas - when coworkers become friends over drinks, not just small talk"
 
 OUTPUT FORMAT (JSON):
 
@@ -297,18 +365,60 @@ OUTPUT FORMAT (JSON):
   "synapses": [
     {
       "title": "Hook-style title that captures attention",
-      "insight": "The core insight (FUN/CULTURAL, not business-y)",
-      "whyCounterIntuitive": "Why this goes against conventional thinking",
+      "insight": "The behavioral insight (customer-focused, business-appropriate)",
+      "whyProfound": "Why this matters to the customer and business",
+      "whyNow": "2-3 sentences explaining why this timing/moment matters with specific details (seasonal, local, behavioral)",
+      "evidencePoints": ["Specific example or proof point 1", "Specific example or proof point 2", "Specific example or proof point 3"],
       "psychologyPrinciple": "The psychological/behavioral principle at work",
-      "contentAngle": "THE ACTUAL CONTENT HOOK - not creation instructions",
-      "expectedReaction": "What 'holy shit' or 'omg same' moment this creates",
-      "dataUsed": ["weather", "trending topic", "local event", "connection", etc.],
-      "confidence": 0.85
+      "contentAngle": "THE ACTUAL CONTENT HOOK - ready to use as headline",
+      "expectedReaction": "What customer action or emotional response this drives",
+      "callToAction": "Clear next step (visit, book, DM, try, find us, call)",
+      "dataUsed": ["weather", "local event", "behavioral pattern", "seasonal timing"],
+      "confidence": 0.85,
+
+      "provenance": {
+        "rawDataSources": [
+          {
+            "platform": "google-reviews",
+            "type": "review",
+            "content": "Actual quote from review/comment/post that triggered this insight",
+            "sentiment": "negative",
+            "relevanceScore": 0.9
+          }
+        ],
+        "psychologySelection": {
+          "selectedPrinciple": "The psychology principle chosen",
+          "selectionReasoning": "Why this principle was selected based on the data",
+          "dataPointsThatTriggered": ["Review about X", "Comment mentioning Y"]
+        },
+        "topicCorrelation": {
+          "primaryTopic": "Main topic identified",
+          "relatedTopics": [
+            {"topic": "Related topic 1", "similarityScore": 0.85, "source": "reviews"}
+          ]
+        },
+        "platformBreakdown": [
+          {
+            "platform": "Google Reviews",
+            "dataPoints": 3,
+            "keyInsights": ["Pain point about X", "Positive mention of Y"],
+            "contributionToFinalContent": "Drove the hook about timing anxiety"
+          }
+        ],
+        "decisionPipeline": [
+          {"step": 1, "action": "Analyzed review sentiment", "input": "5 reviews mentioning X", "output": "85% negative sentiment", "reasoning": "High pain point signal"},
+          {"step": 2, "action": "Selected psychology principle", "input": "Negative sentiment + urgency timing", "output": "Cognitive Dissonance", "reasoning": "Gap between customer expectation and reality"}
+        ]
+      }
     }
   ]
 }
 
-Generate 3 synapse ideas that are ENTERTAINING and SHAREABLE. Make people want to repost them, not calculate business value.`;
+CRITICAL: Make whyNow 2-3 full sentences with specific details, NOT just one short sentence. Include evidencePoints with 2-3 concrete examples or proof points that support the insight.
+
+DEEP PROVENANCE: Include the provenance object showing exactly what data triggered this insight - quote actual reviews/comments/posts, show psychology selection reasoning, include platform breakdown, and document the complete decision pipeline.
+
+Generate 3 business-focused insights that DRIVE CUSTOMER ACTION. Content must be engaging but professional, with clear CTAs that lead to visits, bookings, or inquiries.`;
 }
 
 /**
@@ -384,13 +494,12 @@ function parseClaudeResponse(response: any, business: any): SynapseInsight[] {
       type: 'counter_intuitive',
       thinkingStyle: 'analytical',
       insight: cleanMetaInstructions(bt.insight || ''),
-      whyProfound: bt.whyCounterIntuitive || bt.psychologyPrinciple,
-      whyNow: `Based on current ${(bt.dataUsed || []).join(', ')}`,
+      whyProfound: bt.whyProfound || bt.psychologyPrinciple || '',
+      whyNow: bt.whyNow || `Based on current ${(bt.dataUsed || []).join(', ')}`,
       contentAngle: cleanMetaInstructions(bt.contentAngle || ''),
       expectedReaction: bt.expectedReaction,
-      // NOTE: Don't use dataUsed as evidence - it's data SOURCES, not actual proof points
-      // Leave evidence empty for now - generators will use whyProfound instead
-      evidence: [],
+      // Use evidencePoints from Claude response if available
+      evidence: bt.evidencePoints || [],
       confidence: bt.confidence || 0.75,
       metadata: {
         generatedAt: new Date(),
@@ -401,7 +510,11 @@ function parseClaudeResponse(response: any, business: any): SynapseInsight[] {
       // Additional fields for display
       title: bt.title,
       psychologyPrinciple: bt.psychologyPrinciple,
-      dataUsed: bt.dataUsed
+      dataUsed: bt.dataUsed,
+      callToAction: bt.callToAction,  // Capture CTA from prompt response
+
+      // DEEP PROVENANCE: Capture the provenance data from Claude
+      deepProvenance: bt.provenance || null
     } as any));
 
   } catch (error) {

@@ -1,6 +1,6 @@
 import { MarbsAction, MarbsActionType, MarbsContext } from '@/types/marbs.types'
 import { supabase } from '@/lib/supabase'
-import { generateContent } from '@/lib/openrouter'
+import { chat } from '@/lib/openrouter'
 
 /**
  * Action Executor Service
@@ -81,17 +81,10 @@ export class ActionExecutor {
         mode = 'marba',
       } = action.data
 
-      const content = await generateContent({
-        platform,
-        contentType,
-        topic,
-        tone,
-        mode,
-        context: {
-          section: context.current_section,
-          brandData: context.relevant_data,
-        },
-      })
+      const content = await chat([
+        { role: 'system', content: 'You are a professional content writer.' },
+        { role: 'user', content: `Generate ${contentType} content for ${platform} about ${topic} in a ${tone} tone.` }
+      ], { maxTokens: 1000 })
 
       return {
         success: true,

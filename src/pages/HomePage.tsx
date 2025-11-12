@@ -1,38 +1,16 @@
 import * as React from 'react'
 import { Link } from 'react-router-dom'
+import { AppLayout } from '@/components/layout/AppLayout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Target, Users, FileText, TrendingUp, Sparkles, ArrowRight } from 'lucide-react'
+import { Target, Calendar, BarChart3, Lightbulb, Palette, TrendingUp, Sparkles, ArrowRight } from 'lucide-react'
 
 export const HomePage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">MARBA.ai</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link to="/admin">
-              <Button variant="outline">
-                Admin
-              </Button>
-            </Link>
-            <Link to="/mirror">
-              <Button>
-                Launch Mirror
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section className="container mx-auto px-6 py-20 text-center">
+    <AppLayout showBreadcrumbs={false}>
+      <div className="space-y-16">{/* Hero */}
+      <section className="text-center py-12">
         <Badge className="mb-4">Marketing Intelligence Platform</Badge>
         <h2 className="text-5xl font-bold mb-6">
           Strategic Marketing,
@@ -50,185 +28,170 @@ export const HomePage: React.FC = () => {
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
-          <Button size="lg" variant="outline">
-            Learn More
-          </Button>
+          <Link to="/intelligence">
+            <Button size="lg" variant="outline">
+              Explore Intelligence
+            </Button>
+          </Link>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="container mx-auto px-6 py-20">
+      {/* Quick Access Features */}
+      <section>
         <h3 className="text-3xl font-bold text-center mb-12">
-          Complete Marketing Intelligence Suite
+          Platform Features
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* MIRROR Framework */}
-          <Card>
-            <CardHeader>
-              <Target className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>MIRROR Framework</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Comprehensive strategic framework covering Market analysis, Intent setting,
-                Reach strategy, Resonance tactics, Optimization actions, and Results tracking.
-              </p>
-              <ul className="mt-4 space-y-2 text-sm">
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  Brand health analysis
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  SMART goal setting
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  Strategic planning
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+          <Link to="/mirror">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <CardHeader>
+                <Target className="h-8 w-8 text-primary mb-2" />
+                <CardTitle>MIRROR Framework</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Complete strategic framework: Measure, Intend, Reimagine, Reach, Optimize, Reflect
+                </p>
+                <Badge className="bg-green-500">Complete</Badge>
+              </CardContent>
+            </Card>
+          </Link>
 
-          {/* UVP Builder */}
-          <Card>
-            <CardHeader>
-              <Sparkles className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>UVP Builder</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Create compelling value propositions using proven formulas and
-                AI-powered psychology scoring.
-              </p>
-              <ul className="mt-4 space-y-2 text-sm">
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  5 proven formulas
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  Synapse scoring
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  A/B testing
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+          {/* Content Calendar */}
+          <Link to="/content-calendar">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <CardHeader>
+                <Calendar className="h-8 w-8 text-primary mb-2" />
+                <CardTitle>Content Calendar</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  AI-powered content creation, scheduling, and publishing across all platforms
+                </p>
+                <Badge className="bg-green-500">Complete</Badge>
+              </CardContent>
+            </Card>
+          </Link>
 
-          {/* Intelligence */}
-          <Card>
-            <CardHeader>
-              <TrendingUp className="h-8 w-8 text-primary mb-2" />
-              <CardTitle>Intelligence</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Multi-signal opportunity detection powered by AI analyzing weather,
-                trends, competitors, and more.
-              </p>
-              <ul className="mt-4 space-y-2 text-sm">
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  Real-time alerts
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  Industry triggers
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  Benchmarking
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+          {/* Analytics */}
+          <Link to="/analytics">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <CardHeader>
+                <BarChart3 className="h-8 w-8 text-primary mb-2" />
+                <CardTitle>Analytics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Track performance, measure goals, and gain actionable insights
+                </p>
+                <Badge className="bg-green-500">Complete</Badge>
+              </CardContent>
+            </Card>
+          </Link>
+
+          {/* Intelligence Hub */}
+          <Link to="/intelligence">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <CardHeader>
+                <Lightbulb className="h-8 w-8 text-primary mb-2" />
+                <CardTitle>Intelligence Hub</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Real-time opportunities from weather, trends, competitors, and events
+                </p>
+                <Badge className="bg-green-500">Complete</Badge>
+              </CardContent>
+            </Card>
+          </Link>
+
+          {/* Design Studio */}
+          <Link to="/design-studio">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <CardHeader>
+                <Palette className="h-8 w-8 text-primary mb-2" />
+                <CardTitle>Design Studio</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Visual content creation with templates, brand assets, and export tools
+                </p>
+                <Badge className="bg-green-500">Complete</Badge>
+              </CardContent>
+            </Card>
+          </Link>
 
           {/* Marbs AI */}
-          <Card>
+          <Card className="h-full border-primary/50">
             <CardHeader>
-              <Users className="h-8 w-8 text-primary mb-2" />
+              <Sparkles className="h-8 w-8 text-primary mb-2" />
               <CardTitle>Marbs AI</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Context-aware AI assistant that understands where you are and
-                provides relevant insights and actions.
+              <p className="text-sm text-muted-foreground mb-4">
+                Context-aware AI assistant available throughout the platform
               </p>
-              <ul className="mt-4 space-y-2 text-sm">
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  Smart suggestions
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  Quick actions
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  Auto-analysis
-                </li>
-              </ul>
+              <Badge className="bg-green-500">Active</Badge>
             </CardContent>
           </Card>
         </div>
       </section>
 
-      {/* Status */}
-      <section className="container mx-auto px-6 py-20">
-        <Card className="max-w-2xl mx-auto">
+      {/* Development Status */}
+      <section>
+        <Card className="max-w-3xl mx-auto">
           <CardHeader>
-            <CardTitle className="text-center">Development Status</CardTitle>
+            <CardTitle className="text-center">Platform Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm">Foundation & Design System</span>
+                <span className="text-sm">Phase 1: Database & Backend</span>
                 <Badge className="bg-green-500">Complete</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">Marbs AI Assistant</span>
+                <span className="text-sm">Phase 2: Type System & Utilities</span>
                 <Badge className="bg-green-500">Complete</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">Intelligence Showcase</span>
+                <span className="text-sm">Phase 3: MIRROR Framework</span>
                 <Badge className="bg-green-500">Complete</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">Mirror: Situation & Objectives</span>
+                <span className="text-sm">Phase 4: Major Features</span>
                 <Badge className="bg-green-500">Complete</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">Mirror: Strategy & Tactics</span>
+                <span className="text-sm">Phase 5: UI Integration</span>
                 <Badge className="bg-green-500">Complete</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">UVP Builder</span>
-                <Badge className="bg-green-500">Complete</Badge>
+                <span className="text-sm">Content Calendar System</span>
+                <Badge className="bg-green-500">Live</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">Mirror: Action & Control</span>
-                <Badge variant="secondary">Planned</Badge>
+                <span className="text-sm">Analytics Dashboard</span>
+                <Badge className="bg-green-500">Live</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">Content Calendar</span>
-                <Badge variant="secondary">Planned</Badge>
+                <span className="text-sm">Intelligence Hub</span>
+                <Badge className="bg-green-500">Live</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">Design Studio</span>
+                <Badge className="bg-green-500">Live</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm">API Management</span>
+                <Badge className="bg-green-500">Live</Badge>
               </div>
             </div>
           </CardContent>
         </Card>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t bg-muted/50 py-8">
-        <div className="container mx-auto px-6 text-center text-sm text-muted-foreground">
-          <p>MARBA.ai - Marketing Intelligence Platform</p>
-          <p className="mt-2">Built with React, TypeScript, Vite, and Supabase</p>
-        </div>
-      </footer>
-    </div>
+      </div>
+    </AppLayout>
   )
 }

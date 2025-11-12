@@ -101,9 +101,9 @@ export class OpportunityDetector {
             estimated_effort: 'low',
             potential_impact: 85,
             content_suggestions: [
-              '"Beat the Heat: Emergency AC Service Available Today"',
-              '"Heat Wave Alert: Check Your AC Now Before It's Too Late"',
-              '"Stay Cool: 24/7 AC Repair During This Heat Wave"',
+              'Beat the Heat: Emergency AC Service Available Today',
+              'Heat Wave Alert: Check Your AC Now Before It\'s Too Late',
+              'Stay Cool: 24/7 AC Repair During This Heat Wave',
             ],
           },
           {
@@ -146,8 +146,8 @@ export class OpportunityDetector {
             estimated_effort: 'low',
             potential_impact: 75,
             content_suggestions: [
-              '"Heavy Rain Coming: Free Roof Inspection This Week"',
-              '"Don't Wait for a Leak: Pre-Storm Roof Check"',
+              'Heavy Rain Coming: Free Roof Inspection This Week',
+              'Don\'t Wait for a Leak: Pre-Storm Roof Check',
             ],
           },
         ],
@@ -195,9 +195,9 @@ export class OpportunityDetector {
           estimated_effort: 'medium',
           potential_impact: 70,
           content_suggestions: [
-            '"How We Reduced Our Carbon Footprint by 40%"',
-            '"5 Sustainable Practices Every Business Should Adopt"',
-            '"Our Journey to Becoming a Certified Green Business"',
+            'How We Reduced Our Carbon Footprint by 40%',
+            '5 Sustainable Practices Every Business Should Adopt',
+            'Our Journey to Becoming a Certified Green Business',
           ],
         },
       ],
@@ -297,9 +297,9 @@ export class OpportunityDetector {
               estimated_effort: 'low',
               potential_impact: 90,
               content_suggestions: [
-                '"Only X Days Until Tax Deadline - Book Your Appointment"',
-                '"Avoid Last-Minute Tax Stress - Schedule Today"',
-                '"Tax Season Checklist: What You Need to File"',
+                'Only X Days Until Tax Deadline - Book Your Appointment',
+                'Avoid Last-Minute Tax Stress - Schedule Today',
+                'Tax Season Checklist: What You Need to File',
               ],
             },
             {
@@ -355,8 +355,8 @@ export class OpportunityDetector {
           estimated_effort: 'low',
           potential_impact: 60,
           content_suggestions: [
-            '"Visiting the Festival? Stop By for a Special Offer"',
-            '"Festival Weekend Special: Show Your Ticket, Get 20% Off"',
+            'Visiting the Festival? Stop By for a Special Offer',
+            'Festival Weekend Special: Show Your Ticket, Get 20% Off',
           ],
         },
       ],

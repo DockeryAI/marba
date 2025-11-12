@@ -5,6 +5,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { KPIDashboard } from './KPIDashboard'
 import { PerformanceInsights } from './PerformanceInsights'
+import { GoalProgressTracker } from '@/components/analytics/GoalProgressTracker'
+import { KPIScorecard } from '@/components/analytics/KPIScorecard'
+import { PerformanceCharts } from '@/components/analytics/PerformanceCharts'
+import { ContentAnalytics } from '@/components/analytics/ContentAnalytics'
+import { AudienceInsights } from '@/components/analytics/AudienceInsights'
+import { EngagementInbox } from '@/components/analytics/EngagementInbox'
+import { LearningEngineWidget } from '@/components/analytics/LearningEngineWidget'
+import { CompetitiveMonitoring } from '@/components/analytics/CompetitiveMonitoring'
 import {
   ReflectDashboard,
   KPIMetric,
@@ -19,6 +27,12 @@ import {
   RefreshCw,
   Target,
   Lightbulb,
+  Users,
+  MessageCircle,
+  Brain,
+  Eye,
+  LineChart,
+  FileBarChart,
 } from 'lucide-react'
 
 interface ReflectSectionProps {
@@ -189,30 +203,93 @@ export const ReflectSection: React.FC<ReflectSectionProps> = ({ objectives = [],
             </CardContent>
           </Card>
         ) : (
-          <Tabs defaultValue="kpis" className="space-y-4">
-            <TabsList>
+          <Tabs defaultValue="goals" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-9">
+              <TabsTrigger value="goals">
+                <Target className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Goals</span>
+              </TabsTrigger>
               <TabsTrigger value="kpis">
                 <BarChart3 className="h-4 w-4 mr-2" />
-                KPI Dashboard
+                <span className="hidden sm:inline">KPIs</span>
               </TabsTrigger>
-              <TabsTrigger value="insights">
-                <Lightbulb className="h-4 w-4 mr-2" />
-                Insights
+              <TabsTrigger value="performance">
+                <LineChart className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Performance</span>
+              </TabsTrigger>
+              <TabsTrigger value="content">
+                <FileBarChart className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Content</span>
+              </TabsTrigger>
+              <TabsTrigger value="audience">
+                <Users className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Audience</span>
+              </TabsTrigger>
+              <TabsTrigger value="engagement">
+                <MessageCircle className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Engagement</span>
+              </TabsTrigger>
+              <TabsTrigger value="learning">
+                <Brain className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Learning</span>
+              </TabsTrigger>
+              <TabsTrigger value="competitive">
+                <Eye className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Competitive</span>
               </TabsTrigger>
               <TabsTrigger value="report">
                 <FileText className="h-4 w-4 mr-2" />
-                Full Report
+                <span className="hidden sm:inline">Report</span>
               </TabsTrigger>
             </TabsList>
 
-            {/* KPI Dashboard Tab */}
-            <TabsContent value="kpis" className="space-y-4">
-              <KPIDashboard kpis={kpis} />
+            {/* Goal Progress Tab */}
+            <TabsContent value="goals" className="space-y-4">
+              <GoalProgressTracker brandId="demo-brand" objectives={objectives} />
             </TabsContent>
 
-            {/* Insights Tab */}
-            <TabsContent value="insights" className="space-y-4">
-              <PerformanceInsights insights={insights} />
+            {/* KPI Dashboard Tab */}
+            <TabsContent value="kpis" className="space-y-4">
+              <KPIScorecard
+                brandId="demo-brand"
+                dateRange={{ start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), end: new Date().toISOString(), preset: '30d' }}
+              />
+            </TabsContent>
+
+            {/* Performance Charts Tab */}
+            <TabsContent value="performance" className="space-y-4">
+              <PerformanceCharts
+                brandId="demo-brand"
+                dateRange={{ start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), end: new Date().toISOString(), preset: '30d' }}
+              />
+            </TabsContent>
+
+            {/* Content Analytics Tab */}
+            <TabsContent value="content" className="space-y-4">
+              <ContentAnalytics
+                brandId="demo-brand"
+                dateRange={{ start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), end: new Date().toISOString(), preset: '30d' }}
+              />
+            </TabsContent>
+
+            {/* Audience Insights Tab */}
+            <TabsContent value="audience" className="space-y-4">
+              <AudienceInsights brandId="demo-brand" />
+            </TabsContent>
+
+            {/* Engagement Inbox Tab */}
+            <TabsContent value="engagement" className="space-y-4">
+              <EngagementInbox brandId="demo-brand" />
+            </TabsContent>
+
+            {/* Learning Engine Tab */}
+            <TabsContent value="learning" className="space-y-4">
+              <LearningEngineWidget brandId="demo-brand" />
+            </TabsContent>
+
+            {/* Competitive Monitoring Tab */}
+            <TabsContent value="competitive" className="space-y-4">
+              <CompetitiveMonitoring brandId="demo-brand" />
             </TabsContent>
 
             {/* Full Report Tab */}

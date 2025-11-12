@@ -4,7 +4,7 @@
  * Tasks 306-315
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,14 +22,32 @@ import {
   MessageCircle,
   Share2,
   Eye,
+  TrendingUp,
+  RefreshCw,
+  Eye as ViewIcon,
 } from 'lucide-react';
 import type { ContentItem as ContentItemType, Platform } from '@/types/content-calendar.types';
+import { VariantModal } from './VariantModal';
+import { RegenerationModal } from './RegenerationModal';
+import { ProvenanceModal } from './ProvenanceModal';
+import type {
+  ABTestGroup,
+  RegenerationResult,
+  ContentSection,
+  ContentProvenance,
+  SynapseContent,
+  BusinessProfile,
+} from '@/types/synapse/synapseContent.types';
+import type { BreakthroughInsight } from '@/types/synapse/breakthrough.types';
+import { VariantGenerator } from '@/services/synapse/generation/VariantGenerator';
+import { SectionRegenerator } from '@/services/synapse/generation/SectionRegenerator';
 
 interface ContentItemProps {
   item: ContentItemType;
   onEdit?: (item: ContentItemType) => void;
   onDelete?: (item: ContentItemType) => void;
   onDuplicate?: (item: ContentItemType) => void;
+  onUpdate?: (item: ContentItemType) => void;
   compact?: boolean;
 }
 
@@ -78,8 +96,23 @@ export function ContentItem({
   onEdit,
   onDelete,
   onDuplicate,
+  onUpdate,
   compact = false,
 }: ContentItemProps) {
+  // State for modals
+  const [variantModalOpen, setVariantModalOpen] = useState(false);
+  const [regenerationModalOpen, setRegenerationModalOpen] = useState(false);
+  const [provenanceModalOpen, setProvenanceModalOpen] = useState(false);
+
+  // State for generation
+  const [generatingVariants, setGeneratingVariants] = useState(false);
+  const [variants, setVariants] = useState<ABTestGroup | null>(null);
+  const [regeneratingSection, setRegeneratingSection] = useState<ContentSection | null>(null);
+  const [regenerationResult, setRegenerationResult] = useState<RegenerationResult | null>(null);
+
+  // Generators
+  const variantGenerator = new VariantGenerator();
+  const sectionRegenerator = new SectionRegenerator();
   /**
    * Format date/time for display
    */
@@ -113,6 +146,237 @@ export function ContentItem({
     if (badge.toLowerCase().includes('data')) return '📊';
     if (badge.toLowerCase().includes('high-performing')) return '🎯';
     return '✨';
+  };
+
+  /**
+   * Generate A/B variants
+   */
+  const handleGenerateVariants = async () => {
+    setGeneratingVariants(true);
+    setVariantModalOpen(true);
+
+    try {
+      // Create mock SynapseContent from ContentItem
+      // Note: This is a simplified version - in production you'd have the full SynapseContent
+      const mockContent: SynapseContent = {
+        id: item.id,
+        insightId: 'mock-insight',
+        format: 'hook-post',
+        content: {
+          headline: extractSection(item.content_text, 'headline') || item.content_text.substring(0, 100),
+          hook: extractSection(item.content_text, 'hook') || '',
+          body: extractSection(item.content_text, 'body') || item.content_text,
+          cta: extractSection(item.content_text, 'cta') || ''
+        },
+        psychology: {
+          principle: 'Curiosity Gap',
+          trigger: { type: 'curiosity', strength: 0.8 },
+          persuasionTechnique: 'Pattern Interrupt',
+          expectedReaction: 'High engagement'
+        },
+        optimization: {
+          powerWords: [],
+          framingDevice: 'Standard',
+          narrativeStructure: 'Hook → Story → Lesson',
+          pacing: 'medium'
+        },
+        meta: {
+          platform: [item.platform as any],
+          targetAudience: 'General',
+          tone: 'professional'
+        },
+        prediction: {
+          engagementScore: 0.8,
+          viralPotential: 0.6,
+          leadGeneration: 0.7,
+          brandImpact: 'positive',
+          confidenceLevel: 0.8
+        },
+        metadata: {
+          generatedAt: new Date(),
+          model: 'claude-3.5-sonnet',
+          iterationCount: 1
+        }
+      };
+
+      const mockBusiness: BusinessProfile = {
+        name: 'Business',
+        industry: 'General',
+        targetAudience: 'Professionals',
+        brandVoice: 'professional',
+        contentGoals: ['engagement']
+      };
+
+      const result = await variantGenerator.generateVariants(mockContent, mockBusiness);
+      setVariants(result);
+    } catch (error) {
+      console.error('Failed to generate variants:', error);
+      alert('Failed to generate variants. Please try again.');
+    } finally {
+      setGeneratingVariants(false);
+    }
+  };
+
+  /**
+   * Handle selecting a variant
+   */
+  const handleSelectVariant = (variant: SynapseContent) => {
+    if (onUpdate) {
+      const updatedItem: ContentItemType = {
+        ...item,
+        content_text: `${variant.content.headline}\n\n${variant.content.hook}\n\n${variant.content.body}\n\n${variant.content.cta}`
+      };
+      onUpdate(updatedItem);
+    }
+  };
+
+  /**
+   * Handle section regeneration
+   */
+  const handleRegenerateSection = async (section: ContentSection) => {
+    setRegeneratingSection(section);
+    setRegenerationModalOpen(true);
+
+    try {
+      // Create mock data for regeneration
+      const mockContent: SynapseContent = {
+        id: item.id,
+        insightId: 'mock-insight',
+        format: 'hook-post',
+        content: {
+          headline: extractSection(item.content_text, 'headline') || item.content_text.substring(0, 100),
+          hook: extractSection(item.content_text, 'hook') || '',
+          body: extractSection(item.content_text, 'body') || item.content_text,
+          cta: extractSection(item.content_text, 'cta') || ''
+        },
+        psychology: {
+          principle: 'Curiosity Gap',
+          trigger: { type: 'curiosity', strength: 0.8 },
+          persuasionTechnique: 'Pattern Interrupt',
+          expectedReaction: 'High engagement'
+        },
+        optimization: {
+          powerWords: [],
+          framingDevice: 'Standard',
+          narrativeStructure: 'Hook → Story → Lesson',
+          pacing: 'medium'
+        },
+        meta: {
+          platform: [item.platform as any],
+          targetAudience: 'General',
+          tone: 'professional'
+        },
+        prediction: {
+          engagementScore: 0.8,
+          viralPotential: 0.6,
+          leadGeneration: 0.7,
+          brandImpact: 'positive',
+          confidenceLevel: 0.8
+        },
+        metadata: {
+          generatedAt: new Date(),
+          model: 'claude-3.5-sonnet',
+          iterationCount: 1
+        }
+      };
+
+      const mockBusiness: BusinessProfile = {
+        name: 'Business',
+        industry: 'General',
+        targetAudience: 'Professionals',
+        brandVoice: 'professional',
+        contentGoals: ['engagement']
+      };
+
+      const mockInsight: BreakthroughInsight = {
+        id: 'mock-insight',
+        insight: 'Content insight',
+        contentAngle: 'Engagement',
+        emotionalHook: 'Curiosity',
+        connectionToAudience: 'Professionals',
+        score: 8.5
+      };
+
+      const result = await sectionRegenerator.regenerateSection(
+        mockContent,
+        section,
+        mockBusiness,
+        mockInsight
+      );
+      setRegenerationResult(result);
+    } catch (error) {
+      console.error('Failed to regenerate section:', error);
+      alert('Failed to regenerate section. Please try again.');
+      setRegenerationModalOpen(false);
+    } finally {
+      setRegeneratingSection(null);
+    }
+  };
+
+  /**
+   * Handle selecting regenerated option
+   */
+  const handleSelectRegeneration = (section: ContentSection, optionIndex: number) => {
+    if (!regenerationResult || !onUpdate) return;
+
+    const updatedContent: SynapseContent = {
+      id: item.id,
+      insightId: 'mock',
+      format: 'hook-post',
+      content: {
+        headline: section === 'headline' ? regenerationResult.regenerated[optionIndex] : extractSection(item.content_text, 'headline') || '',
+        hook: section === 'hook' ? regenerationResult.regenerated[optionIndex] : extractSection(item.content_text, 'hook') || '',
+        body: section === 'body' ? regenerationResult.regenerated[optionIndex] : extractSection(item.content_text, 'body') || item.content_text,
+        cta: section === 'cta' ? regenerationResult.regenerated[optionIndex] : extractSection(item.content_text, 'cta') || ''
+      },
+      psychology: { principle: 'Curiosity Gap', trigger: { type: 'curiosity', strength: 0.8 }, persuasionTechnique: 'Pattern Interrupt', expectedReaction: '' },
+      optimization: { powerWords: [], framingDevice: '', narrativeStructure: 'Hook → Story → Lesson', pacing: 'medium' },
+      meta: { platform: [item.platform as any], targetAudience: '', tone: 'professional' },
+      prediction: { engagementScore: 0, viralPotential: 0, leadGeneration: 0, brandImpact: 'neutral', confidenceLevel: 0 },
+      metadata: { generatedAt: new Date(), model: '', iterationCount: 0 }
+    };
+
+    const applied = sectionRegenerator.applyRegeneration(updatedContent, regenerationResult, optionIndex);
+
+    const updatedItem: ContentItemType = {
+      ...item,
+      content_text: `${applied.content.headline}\n\n${applied.content.hook}\n\n${applied.content.body}\n\n${applied.content.cta}`
+    };
+
+    onUpdate(updatedItem);
+    setRegenerationResult(null);
+  };
+
+  /**
+   * Extract section from content text (simple heuristic)
+   */
+  const extractSection = (text: string, section: ContentSection): string | null => {
+    const lines = text.split('\n').filter(l => l.trim());
+    if (section === 'headline') return lines[0] || null;
+    if (section === 'hook') return lines[1] || null;
+    if (section === 'body') return lines.slice(2, -1).join('\n') || null;
+    if (section === 'cta') return lines[lines.length - 1] || null;
+    return null;
+  };
+
+  /**
+   * Get provenance data (mock for now)
+   */
+  const getProvenance = (): ContentProvenance => {
+    return {
+      dataSourcesUsed: ['Google Reviews', 'Social Media'],
+      psychologyTrigger: 'Curiosity Gap',
+      frameworkStagesUsed: [
+        { stage: 'Hook', sourceField: 'emotionalHook', content: 'Opening line...' },
+        { stage: 'Story', sourceField: 'contentAngle', content: 'Main narrative...' }
+      ],
+      contentAssembly: {
+        headline: { source: 'AI Generation', field: 'headline', preview: 'Preview...' },
+        hook: { source: 'Psychology Engine', field: 'hook', preview: 'Preview...' },
+        body: { source: 'Content Framework', field: 'body', preview: 'Preview...' },
+        cta: { source: 'CTA Library', field: 'cta', preview: 'Preview...' }
+      }
+    };
   };
 
   return (
@@ -258,6 +522,77 @@ export function ContentItem({
           {item.error_message}
         </div>
       )}
+
+      {/* Synapse Enhancement Buttons */}
+      {!compact && (item.generation_mode === 'synapse' || item.intelligence_badges?.some(b => b.includes('Synapse'))) && (
+        <div className="mt-4 pt-4 border-t border-gray-200 flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleGenerateVariants}
+            disabled={generatingVariants}
+            className="flex items-center gap-1 text-xs"
+          >
+            <TrendingUp className="w-3 h-3" />
+            Generate Variants
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleRegenerateSection('headline')}
+            className="flex items-center gap-1 text-xs"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Regenerate Headline
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleRegenerateSection('body')}
+            className="flex items-center gap-1 text-xs"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Regenerate Body
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setProvenanceModalOpen(true)}
+            className="flex items-center gap-1 text-xs"
+          >
+            <ViewIcon className="w-3 h-3" />
+            View Sources
+          </Button>
+        </div>
+      )}
+
+      {/* Modals */}
+      <VariantModal
+        open={variantModalOpen}
+        onClose={() => setVariantModalOpen(false)}
+        variants={variants}
+        loading={generatingVariants}
+        onSelectVariant={handleSelectVariant}
+      />
+
+      <RegenerationModal
+        open={regenerationModalOpen}
+        onClose={() => setRegenerationModalOpen(false)}
+        section={regeneratingSection}
+        result={regenerationResult}
+        loading={!!regeneratingSection}
+        onSelectOption={handleSelectRegeneration}
+        onRegenerate={() => regeneratingSection && handleRegenerateSection(regeneratingSection)}
+      />
+
+      <ProvenanceModal
+        open={provenanceModalOpen}
+        onClose={() => setProvenanceModalOpen(false)}
+        provenance={getProvenance()}
+      />
     </Card>
   );
 }

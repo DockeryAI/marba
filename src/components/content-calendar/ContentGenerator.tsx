@@ -21,12 +21,20 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sparkles, Zap, Edit, Save, Info } from 'lucide-react';
 import { ContentCalendarService } from '@/services/content-calendar.service';
+import { EdginessSlider } from '@/components/synapse/EdginessSlider';
+import { CharacterCountBadge } from '@/components/synapse/CharacterCountBadge';
+import { CharacterValidator } from '@/services/synapse/validation/CharacterValidator';
 import type {
   Platform,
   GenerationMode,
   ContentVariation,
   ContentPillar,
 } from '@/types/content-calendar.types';
+import type {
+  EdginessLevel,
+  CharacterValidation,
+  SynapseContent,
+} from '@/types/synapse/synapseContent.types';
 
 interface ContentGeneratorProps {
   open: boolean;
@@ -70,6 +78,13 @@ export function ContentGenerator({
   const [editedContent, setEditedContent] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
+  // Synapse-specific states
+  const [edginess, setEdginess] = useState<EdginessLevel>(50);
+  const [characterValidation, setCharacterValidation] = useState<CharacterValidation | null>(null);
+
+  // Character validator instance
+  const characterValidator = new CharacterValidator();
+
   /**
    * Reset form when modal closes
    */
@@ -81,8 +96,65 @@ export function ContentGenerator({
       setVariations([]);
       setSelectedVariation(null);
       setEditedContent('');
+      setEdginess(50);
+      setCharacterValidation(null);
     }
   }, [open]);
+
+  /**
+   * Validate character count when content changes
+   */
+  useEffect(() => {
+    if (editedContent && mode === 'synapse') {
+      // Create mock SynapseContent for validation
+      const mockContent: SynapseContent = {
+        id: 'temp',
+        insightId: 'temp',
+        format: 'hook-post',
+        content: {
+          headline: editedContent.split('\n')[0] || '',
+          hook: editedContent.split('\n')[1] || '',
+          body: editedContent.split('\n').slice(2, -1).join('\n') || '',
+          cta: editedContent.split('\n').slice(-1)[0] || ''
+        },
+        psychology: {
+          principle: 'Curiosity Gap',
+          trigger: { type: 'curiosity', strength: 0.8 },
+          persuasionTechnique: 'Pattern Interrupt',
+          expectedReaction: ''
+        },
+        optimization: {
+          powerWords: [],
+          framingDevice: '',
+          narrativeStructure: 'Hook → Story → Lesson',
+          pacing: 'medium'
+        },
+        meta: {
+          platform: [platform as any],
+          targetAudience: '',
+          tone: 'professional'
+        },
+        prediction: {
+          engagementScore: 0,
+          viralPotential: 0,
+          leadGeneration: 0,
+          brandImpact: 'neutral',
+          confidenceLevel: 0
+        },
+        metadata: {
+          generatedAt: new Date(),
+          model: '',
+          iterationCount: 0
+        }
+      };
+
+      const validation = characterValidator.validateContent(mockContent, [platform as any]);
+      const totalValidation = validation.validations.find(v => v.section === 'total' && v.platform === platform);
+      if (totalValidation) {
+        setCharacterValidation(totalValidation);
+      }
+    }
+  }, [editedContent, platform, mode]);
 
   /**
    * Generate content
@@ -350,6 +422,13 @@ Synapse = Enhanced with psychology optimization and deeper analysis"
             </p>
           </div>
 
+          {/* Edginess Slider (Synapse only) */}
+          {mode === 'synapse' && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <EdginessSlider value={edginess} onChange={setEdginess} />
+            </div>
+          )}
+
           {/* Generate Button */}
           <Button onClick={handleGenerate} disabled={generating} className="w-full">
             {generating ? (
@@ -449,16 +528,26 @@ Synapse = Enhanced with psychology optimization and deeper analysis"
                     {/* Inline Editing */}
                     {selectedVariation === variation.id && (
                       <div>
-                        <Label className="flex items-center gap-2">
-                          <Edit className="w-4 h-4" />
-                          Edit Content
-                        </Label>
+                        <div className="flex items-center justify-between mb-2">
+                          <Label className="flex items-center gap-2">
+                            <Edit className="w-4 h-4" />
+                            Edit Content
+                          </Label>
+                          {mode === 'synapse' && characterValidation && (
+                            <CharacterCountBadge validation={characterValidation} />
+                          )}
+                        </div>
                         <Textarea
                           value={editedContent}
                           onChange={(e) => setEditedContent(e.target.value)}
                           rows={6}
                           className="mt-2"
                         />
+                        {mode === 'synapse' && characterValidation && characterValidation.status !== 'valid' && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {characterValidation.message}
+                          </p>
+                        )}
                       </div>
                     )}
                   </TabsContent>

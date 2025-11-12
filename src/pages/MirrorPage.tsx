@@ -6,15 +6,22 @@ import { StrategySection } from '@/components/mirror/reimagine'
 import { TacticsSection } from '@/components/mirror/reach'
 import { ActionSection } from '@/components/mirror/optimize'
 import { ReflectSection } from '@/components/mirror/reflect'
+import { useMirror } from '@/contexts/MirrorContext'
+import { useBrand } from '@/contexts/BrandContext'
+import { Badge } from '@/components/ui/badge'
+import { Save, Check, AlertCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export const MirrorPage: React.FC = () => {
-  // Mock brand data - in production this would come from auth/context
-  const brandId = 'demo-brand-001'
+  const { currentBrand } = useBrand()
+  const { state, updateMeasure, updateIntend, updateReimagine, updateReach, updateOptimize, updateReflect, loading, error } = useMirror()
+
+  const brandId = currentBrand?.id || 'demo-brand-001'
   const brandData = {
-    name: 'Demo Brand',
-    industry: 'Technology',
-    founded: '2020',
-    size: 'Small (1-50 employees)',
+    name: currentBrand?.name || 'Demo Brand',
+    industry: currentBrand?.industry || 'Technology',
+    founded: currentBrand?.founded || '2020',
+    size: currentBrand?.size || 'Small (1-50 employees)',
     competitors: [
       { name: 'Competitor A', score: 75 },
       { name: 'Competitor B', score: 68 },
@@ -23,18 +30,21 @@ export const MirrorPage: React.FC = () => {
   }
 
   const [activeSection, setActiveSection] = React.useState('measure')
-  const [objectives, setObjectives] = React.useState<any[]>([])
-  const [strategy, setStrategy] = React.useState<any>({})
-  const [tactics, setTactics] = React.useState<any[]>([])
-  const [measureData, setMeasureData] = React.useState<any>({
-    brandHealth: 72,
-    industry: 'Technology',
-    currentMetrics: {
+
+  // Extract data from context state
+  const objectives = state.intend.objectives || []
+  const strategy = state.reimagine || {}
+  const tactics = state.reach.tactics || []
+  const measureData = {
+    brandHealth: state.measure.brandHealth || 72,
+    industry: state.measure.industry || brandData.industry,
+    currentMetrics: state.measure.currentMetrics || {
       website_traffic: 10000,
       social_followers: 5000,
       email_subscribers: 2000,
     },
-  })
+    ...state.measure
+  }
 
   // Scroll to section when activeSection changes
   React.useEffect(() => {
@@ -101,23 +111,79 @@ export const MirrorPage: React.FC = () => {
     },
   ]
 
+  // Calculate section completion
+  const sectionCompletion = React.useMemo(() => ({
+    measure: Object.keys(state.measure).length > 0,
+    intend: Object.keys(state.intend).length > 0,
+    reimagine: Object.keys(state.reimagine).length > 0,
+    reach: Object.keys(state.reach).length > 0,
+    optimize: Object.keys(state.optimize).length > 0,
+    reflect: Object.keys(state.reflect).length > 0
+  }), [state])
+
+  const completedCount = Object.values(sectionCompletion).filter(Boolean).length
+
   return (
     <MirrorLayout
       sections={sections}
       activeSection={activeSection}
       onSectionChange={setActiveSection}
     >
+      {/* Save Status Indicator */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b p-3 mb-6">
+        <div className="flex items-center justify-between max-w-4xl mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Progress:</span>
+              <Badge variant="outline">{completedCount}/6 Sections</Badge>
+            </div>
+            {sectionCompletion.measure && <Badge variant="secondary">Measure</Badge>}
+            {sectionCompletion.intend && <Badge variant="secondary">Intend</Badge>}
+            {sectionCompletion.reimagine && <Badge variant="secondary">Reimagine</Badge>}
+            {sectionCompletion.reach && <Badge variant="secondary">Reach</Badge>}
+            {sectionCompletion.optimize && <Badge variant="secondary">Optimize</Badge>}
+            {sectionCompletion.reflect && <Badge variant="secondary">Reflect</Badge>}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {error && (
+              <div className="flex items-center gap-1 text-destructive text-sm">
+                <AlertCircle className="h-4 w-4" />
+                <span>Error saving</span>
+              </div>
+            )}
+            {!state.isDirty && state.lastSaved && (
+              <div className="flex items-center gap-1 text-green-600 text-sm">
+                <Check className="h-4 w-4" />
+                <span>Saved</span>
+              </div>
+            )}
+            {state.isDirty && !loading && (
+              <div className="flex items-center gap-1 text-muted-foreground text-sm">
+                <Save className="h-4 w-4 animate-pulse" />
+                <span>Saving...</span>
+              </div>
+            )}
+            {state.lastSaved && (
+              <span className="text-xs text-muted-foreground">
+                Last saved: {new Date(state.lastSaved).toLocaleTimeString()}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-12">
-        {/* Measure Phase (formerly Situation) */}
+        {/* Measure Phase */}
         <div id="measure">
           <SituationSection
             brandId={brandId}
             brandData={brandData}
-            onDataUpdate={setMeasureData}
+            onDataUpdate={updateMeasure}
           />
         </div>
 
-        {/* Intend Phase (formerly Objectives) */}
+        {/* Intend Phase */}
         <div id="intend">
           <ObjectivesSection
             brandId={brandId}
@@ -125,7 +191,7 @@ export const MirrorPage: React.FC = () => {
           />
         </div>
 
-        {/* Reimagine Phase (formerly Strategy) */}
+        {/* Reimagine Phase */}
         <div id="reimagine">
           <StrategySection
             brandId={brandId}
@@ -136,7 +202,7 @@ export const MirrorPage: React.FC = () => {
           />
         </div>
 
-        {/* Reach Phase (formerly Tactics) */}
+        {/* Reach Phase */}
         <div id="reach">
           <TacticsSection
             brandId={brandId}
@@ -147,14 +213,14 @@ export const MirrorPage: React.FC = () => {
           />
         </div>
 
-        {/* Optimize Phase (formerly Action) */}
+        {/* Optimize Phase */}
         <div id="optimize">
           <ActionSection
             tactics={tactics}
           />
         </div>
 
-        {/* Reflect Phase (formerly Control) */}
+        {/* Reflect Phase */}
         <div id="reflect">
           <ReflectSection
             objectives={objectives}
