@@ -196,7 +196,7 @@ export const ReimagineSection: React.FC<ReimagineSectionProps> = ({
   return (
     <div className={className}>
       <MirrorSectionHeader
-        title="Strategy"
+        title="Reimagine"
         description="Define your positioning, audience, content, and competitive approach"
         badge={<span className="text-xs">MIRROR Analysis</span>}
         actions={

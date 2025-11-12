@@ -157,7 +157,7 @@ export const ReachSection: React.FC<ReachSectionProps> = ({
   return (
     <div className={className}>
       <MirrorSectionHeader
-        title="Tactics"
+        title="Reach"
         description="Executable marketing tactics and campaign plans"
         badge={<span className="text-xs">MIRROR Analysis</span>}
         actions={

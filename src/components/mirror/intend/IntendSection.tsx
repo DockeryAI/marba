@@ -118,7 +118,7 @@ export const IntendSection: React.FC<IntendSectionProps> = ({
   return (
     <div className={className}>
       <MirrorSectionHeader
-        title="Objectives"
+        title="Intend"
         description="Set SMART goals and track progress towards your targets"
         badge={<span className="text-xs">MIRROR Analysis</span>}
         actions={

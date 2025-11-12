@@ -4,10 +4,13 @@
  * from the 475K+ word industry psychology database
  */
 
+import * as React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Heart, Brain, Users, Zap, Target } from 'lucide-react'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Heart, Brain, Users, Zap, Target, ChevronDown, ChevronRight } from 'lucide-react'
 
 interface CustomerTriggerGalleryProps {
   triggers: any[]
@@ -20,6 +23,22 @@ export function CustomerTriggerGallery({
   psychologicalHooks = [],
   customerAvatars = [],
 }: CustomerTriggerGalleryProps) {
+  const [openTriggers, setOpenTriggers] = React.useState<Record<number, boolean>>({})
+  const [openHooks, setOpenHooks] = React.useState<Record<number, boolean>>({})
+  const [openAvatars, setOpenAvatars] = React.useState<Record<number, boolean>>({})
+
+  const toggleTrigger = (index: number) => {
+    setOpenTriggers(prev => ({ ...prev, [index]: !prev[index] }))
+  }
+
+  const toggleHook = (index: number) => {
+    setOpenHooks(prev => ({ ...prev, [index]: !prev[index] }))
+  }
+
+  const toggleAvatar = (index: number) => {
+    setOpenAvatars(prev => ({ ...prev, [index]: !prev[index] }))
+  }
+
   if ((!triggers || triggers.length === 0) && psychologicalHooks.length === 0 && customerAvatars.length === 0) {
     return (
       <Card>
@@ -73,34 +92,58 @@ export function CustomerTriggerGallery({
                   const intensity = typeof trigger === 'object' ? trigger.intensity : null
 
                   return (
-                    <div
+                    <Collapsible
                       key={index}
-                      className="rounded-lg border p-4 hover:bg-accent/50 transition-colors"
+                      open={openTriggers[index]}
+                      onOpenChange={() => toggleTrigger(index)}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Heart className="h-4 w-4 text-pink-500" />
-                            <h4 className="font-semibold">{triggerText}</h4>
-                            {intensity && (
-                              <Badge variant="outline" className="ml-auto">
-                                Intensity: {intensity}/10
-                              </Badge>
-                            )}
-                          </div>
+                      <div className="rounded-lg border hover:bg-accent/50 transition-colors">
+                        <CollapsibleTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-start p-4 h-auto text-left font-normal hover:bg-transparent"
+                          >
+                            <div className="flex items-center gap-2 w-full">
+                              {openTriggers[index] ? (
+                                <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 flex-shrink-0" />
+                              )}
+                              <Heart className="h-4 w-4 text-pink-500 flex-shrink-0" />
+                              <span className="font-semibold flex-1">{triggerText}</span>
+                              {intensity && (
+                                <Badge variant="outline" className="ml-auto">
+                                  {intensity}/10
+                                </Badge>
+                              )}
+                            </div>
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="px-4 pb-4 space-y-2">
                           {psychology && (
-                            <p className="text-sm text-muted-foreground mb-2">
-                              <strong>Why it works:</strong> {psychology}
-                            </p>
+                            <div className="pl-8">
+                              <p className="text-sm text-muted-foreground">
+                                <strong className="text-foreground">Why it works:</strong> {psychology}
+                              </p>
+                            </div>
                           )}
                           {application && (
-                            <p className="text-sm text-muted-foreground">
-                              <strong>How to use:</strong> {application}
-                            </p>
+                            <div className="pl-8">
+                              <p className="text-sm text-muted-foreground">
+                                <strong className="text-foreground">How to use:</strong> {application}
+                              </p>
+                            </div>
                           )}
-                        </div>
+                          {!psychology && !application && (
+                            <div className="pl-8">
+                              <p className="text-sm text-muted-foreground">
+                                Click to learn more about this emotional trigger
+                              </p>
+                            </div>
+                          )}
+                        </CollapsibleContent>
                       </div>
-                    </div>
+                    </Collapsible>
                   )
                 })}
               </div>

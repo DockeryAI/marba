@@ -13,44 +13,74 @@ interface GoldenCircleProps {
 }
 
 export function GoldenCircle({ brandData }: GoldenCircleProps) {
-  const fullProfile = brandData?.full_profile_data || brandData || {}
+  // Extract from multiple possible locations
+  const fullProfile = brandData?.full_profile_data || {}
 
-  // Extract Golden Circle data from brand profile
+  console.log('[GoldenCircle] brandData received:', brandData)
+  console.log('[GoldenCircle] full_profile_data:', fullProfile)
+
+  // WHY - Purpose & Belief
+  // Try: mission, vision, brand_purpose, positioning_statement
+  const whyContent =
+    fullProfile.mission ||
+    fullProfile.vision ||
+    fullProfile.brand_purpose ||
+    brandData?.positioning_statement ||
+    fullProfile.positioning_statement ||
+    (fullProfile.overview && typeof fullProfile.overview === 'string' ? fullProfile.overview : null) ||
+    'Your core purpose and reason for existing'
+
   const why = {
     title: 'WHY',
     subtitle: 'Purpose & Belief',
-    content: fullProfile.positioning_statement ||
-             fullProfile.brand_purpose ||
-             'Your core purpose and reason for existing',
+    content: whyContent,
     icon: Heart,
     color: 'from-yellow-500 to-amber-600',
     textColor: 'text-yellow-700 dark:text-yellow-300',
     bgColor: 'bg-yellow-50 dark:bg-yellow-950/20',
   }
 
+  // HOW - Unique Approach
+  // Try: uvps, competitive_advantages, differentiators, brand_values
+  const howItems =
+    fullProfile.uvps?.slice(0, 4) ||
+    fullProfile.competitive_advantages?.slice(0, 4) ||
+    fullProfile.differentiators?.slice(0, 4) ||
+    fullProfile.brand_values?.slice(0, 4) ||
+    brandData?.uvps?.slice(0, 4) ||
+    ['Innovative solutions', 'Customer-first approach', 'Quality-driven', 'Data-informed decisions']
+
   const how = {
     title: 'HOW',
     subtitle: 'Unique Approach',
-    items: fullProfile.competitive_advantages?.slice(0, 4) ||
-           fullProfile.brand_values?.slice(0, 4) ||
-           ['Innovative solutions', 'Customer-first approach', 'Quality-driven', 'Data-informed decisions'],
+    items: howItems,
     icon: Lightbulb,
     color: 'from-blue-500 to-indigo-600',
     textColor: 'text-blue-700 dark:text-blue-300',
     bgColor: 'bg-blue-50 dark:bg-blue-950/20',
   }
 
+  // WHAT - Products & Services
+  // Try: offerings, products_services, value_propositions, content_pillars
+  const whatItems =
+    fullProfile.offerings?.slice(0, 4) ||
+    fullProfile.products_services?.slice(0, 4) ||
+    fullProfile.value_propositions?.slice(0, 4) ||
+    brandData?.content_pillars?.map((p: any) => p.title || p.name || p).slice(0, 4) ||
+    fullProfile.content_pillars?.map((p: any) => p.title || p.name || p).slice(0, 4) ||
+    ['Product/service offering 1', 'Product/service offering 2', 'Product/service offering 3']
+
   const what = {
     title: 'WHAT',
     subtitle: 'Products & Services',
-    items: fullProfile.uvps?.slice(0, 4) ||
-           fullProfile.value_propositions?.slice(0, 4) ||
-           ['Product/service offering 1', 'Product/service offering 2', 'Product/service offering 3'],
+    items: whatItems,
     icon: Package,
     color: 'from-green-500 to-emerald-600',
     textColor: 'text-green-700 dark:text-green-300',
     bgColor: 'bg-green-50 dark:bg-green-950/20',
   }
+
+  console.log('[GoldenCircle] Extracted data:', { why: whyContent, how: howItems, what: whatItems })
 
   return (
     <Card>
