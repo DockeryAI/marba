@@ -4,7 +4,8 @@
   "status": "in_progress",
   "last_updated": "2025-11-11T14:45:00Z",
   "description": "MARBA Mirror - MIRROR Framework-based marketing intelligence platform with AI-powered insights, real-time opportunities, and automated content generation. Inspired by SOSTAC® (PR Smith trademark).",
-  "repository": "~/Projects/MARBA",
+  "repository": "https://github.com/DockeryAI/marba",
+  "local_path": "~/Projects/MARBA",
   "features": [
     {
       "id": "asset-analysis-engine",

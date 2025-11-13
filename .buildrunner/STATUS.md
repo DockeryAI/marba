@@ -1,5 +1,6 @@
 # marba - Project Status
 
+**Repository:** https://github.com/DockeryAI/marba
 **Version:** 2.4.0
 **Status:** In Progress
 **Last Updated:** 2025-11-07

@@ -4,6 +4,14 @@
   "private": true,
   "type": "module",
   "description": "MARBA Mirror - MIRROR Framework marketing intelligence platform (Measure, Intend, Reimagine, Reach, Optimize, Reflect)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DockeryAI/marba.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DockeryAI/marba/issues"
+  },
+  "homepage": "https://github.com/DockeryAI/marba#readme",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
