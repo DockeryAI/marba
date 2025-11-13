@@ -96,10 +96,19 @@ export const MirrorPage: React.FC = () => {
       color: 'blue',
       locked: false, // Always unlocked
       subsections: [
-        { id: 'brand-health', label: 'Brand Health' },
-        { id: 'market-position', label: 'Market Position' },
-        { id: 'competitive', label: 'Competitive Landscape' },
-        { id: 'assets', label: 'Current Assets' },
+        // Pre-UVP subsections (always visible)
+        { id: 'brand-perception-gap', label: 'Brand Perception Gap' },
+        { id: 'competitive-intelligence', label: 'Competitive Intelligence' },
+        { id: 'customer-understanding', label: 'Customer Understanding' },
+        { id: 'search-visibility', label: 'Search Visibility' },
+        // Post-UVP subsections (visible after UVP completion)
+        ...(hasCompletedUVP ? [
+          { id: 'customer-discovery-journey', label: 'Customer Discovery Journey' },
+          { id: 'value-delivery-analysis', label: 'Value Delivery' },
+          { id: 'competitive-positioning-canvas', label: 'Positioning Canvas' },
+          { id: 'dynamic-swot', label: 'SWOT Analysis' },
+          { id: 'brand-perception-mirror', label: 'Brand Perception Mirror' },
+        ] : []),
       ],
     },
     {

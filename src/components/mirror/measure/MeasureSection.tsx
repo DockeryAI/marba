@@ -1,18 +1,20 @@
 import * as React from 'react'
-import { BrandHealthCard } from './BrandHealthCard'
-import { MarketPositionCard } from './MarketPositionCard'
-import { CompetitiveLandscapeCard } from './CompetitiveLandscapeCard'
-import { CurrentAssetsCard } from './CurrentAssetsCard'
-import { SEOHealthCard } from './SEOHealthCard'
-import { KeywordOpportunities } from './KeywordOpportunities'
-import { KeywordRankingTable } from './KeywordRankingTable'
-import { CustomerTriggerGallery } from './CustomerTriggerGallery'
-import { CompetitiveDashboard } from './CompetitiveDashboard'
-import { ContentGapAnalysis } from './ContentGapAnalysis'
-import { SituationAnalyzer } from '@/services/mirror/situation-analyzer'
 import { MirrorSectionHeader } from '@/components/layouts/MirrorLayout'
+import { SubsectionTabs } from '../SubsectionTabs'
+import {
+  BrandPerceptionGapSection,
+  CompetitiveIntelligenceSection,
+  CustomerUnderstandingSection,
+  SearchVisibilitySection,
+  CustomerDiscoveryJourneySection,
+  ValueDeliveryAnalysisSection,
+  CompetitivePositioningCanvasSection,
+  DynamicSWOTSection,
+  BrandPerceptionMirrorSection,
+} from '../subsections'
 import { Button } from '@/components/ui/button'
 import { RefreshCw, Sparkles } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 interface MeasureSectionProps {
   brandId: string
@@ -28,190 +30,109 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
   className,
 }) => {
   const [isLoading, setIsLoading] = React.useState(false)
+  const [hasCompletedUVP, setHasCompletedUVP] = React.useState(false)
+  const [activeSubsection, setActiveSubsection] = React.useState('brand-perception-gap')
 
-  // Debug logging
+  // Check if UVP is completed
   React.useEffect(() => {
-    console.log('[MeasureSection] brandData received:', brandData)
-    console.log('[MeasureSection] competitiveLandscape:', brandData?.competitiveLandscape)
-    console.log('[MeasureSection] advantages:', brandData?.competitiveLandscape?.advantages)
-  }, [brandData])
+    const checkUVPCompletion = async () => {
+      if (!brandId) return
 
-  // Calculate brand health
-  const health = SituationAnalyzer.calculateBrandHealth(brandData)
-  const hotSpots = SituationAnalyzer.getHotSpots(health)
-  const attentionNeeded = SituationAnalyzer.getAttentionNeeded(health)
+      const { data, error } = await supabase
+        .from('value_statements')
+        .select('id, is_primary')
+        .eq('brand_id', brandId)
+        .eq('is_primary', true)
+        .maybeSingle()
 
-  // Get market position
-  const position = SituationAnalyzer.getMarketPosition(brandData)
+      setHasCompletedUVP(!error && !!data)
+    }
 
-  // Get real competitive data from industry profile
-  const competitiveAdvantages = brandData?.competitiveLandscape?.advantages || []
-  const differentiators = competitiveAdvantages.slice(0, 5)
+    checkUVPCompletion()
+  }, [brandId])
 
-  // Use real weaknesses from assets as gaps
-  const gaps = brandData?.assets?.weaknesses || []
+  // Sync active subsection with URL hash
+  React.useEffect(() => {
+    const hash = window.location.hash.slice(1)
+    if (hash && hash.startsWith('mirror-')) {
+      const subsectionId = hash.replace('mirror-', '')
+      setActiveSubsection(subsectionId)
+    }
+  }, [])
 
-  // No competitor data in database - show differentiators only
-  const competitors = []
-
-  // Get real assets from industry profile
-  const marketPosition = brandData?.marketPosition || {}
-  const realAssets = brandData?.assets || {}
-  const assets = {
-    colors: ['#2563eb', '#7c3aed', '#059669', '#f59e0b'],
-    fonts: ['Inter', 'Roboto', 'Open Sans'],
-    messagingThemes: marketPosition.keyTrends?.slice(0, 4) || [],
-    contentPerformance: {
-      totalPosts: 0,
-      avgEngagement: 0,
-      topFormat: 'To be determined',
-    },
-    // Include SWOT data from industry profile
-    opportunities: realAssets.opportunities || [],
-    threats: realAssets.threats || [],
-    strengths: realAssets.strengths || [],
-    weaknesses: realAssets.weaknesses || [],
+  // Update URL hash when subsection changes
+  const handleSubsectionChange = (id: string) => {
+    setActiveSubsection(id)
+    window.history.pushState(null, '', `#mirror-${id}`)
   }
 
   const handleRefresh = async () => {
-    if (!brandData?.name && !brandData?.industry) {
-      console.warn('[MeasureSection] No brand data to refresh')
-      alert('Unable to refresh: No brand name or industry found. Please ensure brand data is loaded.')
-      return
-    }
-
     setIsLoading(true)
-    try {
-      console.log('[MeasureSection] ===== STARTING INTELLIGENCE REFRESH =====')
-
-      // Get domain from brandData
-      const domain = (brandData as any).website || window.location.hostname
-      const brandName = (brandData as any).name || 'Brand'
-      const industry = (brandData as any).industry || 'Technology'
-
-      console.log('[MeasureSection] Refresh params:', { domain, brandName, industry })
-
-      // Step 1: Fetch fresh SEO metrics
-      console.log('[MeasureSection] Step 1/4: Fetching SEO metrics...')
-      const { SemrushAPI } = await import('@/services/intelligence/semrush-api')
-      const seoMetrics = await SemrushAPI.getComprehensiveSEOMetrics(domain, brandName)
-      console.log('[MeasureSection] ✅ SEO metrics fetched:', {
-        authority: seoMetrics?.overview?.authority_score,
-        keywords: seoMetrics?.rankings?.length,
-        opportunities: seoMetrics?.opportunities?.length
-      })
-
-      // Step 2: Discover competitors
-      console.log('[MeasureSection] Step 2/4: Discovering competitors...')
-      const { CompetitorDiscovery } = await import('@/services/intelligence/competitor-discovery')
-      const competitorAnalysis = await CompetitorDiscovery.discoverCompetitors(
-        domain,
-        industry,
-        brandName
-      )
-      console.log('[MeasureSection] ✅ Competitors discovered:', {
-        total: competitorAnalysis?.total_found,
-        primary: competitorAnalysis?.primary_competitors?.length,
-        marketLeaders: competitorAnalysis?.market_leaders?.length
-      })
-
-      // Step 3: Calculate brand health
-      console.log('[MeasureSection] Step 3/4: Calculating brand health...')
-      const { BrandHealthCalculator } = await import('@/services/mirror/brand-health-calculator')
-      const brandHealthScore = await BrandHealthCalculator.calculate({
-        brandProfile: {
-          name: brandName,
-          full_profile_data: (brandData as any).full_profile_data || {},
-          positioning_statement: (brandData as any).positioning_statement || '',
-          content_pillars: (brandData as any).content_pillars || []
-        } as any,
-        industryData: {
-          title: industry,
-          full_profile_data: (brandData as any).full_profile_data || {}
-        } as any,
-        seoMetrics: seoMetrics
-      })
-      console.log('[MeasureSection] ✅ Brand health calculated:', brandHealthScore.overall)
-
-      // Step 4: Update the section with fresh data
-      console.log('[MeasureSection] Step 4/4: Updating MirrorContext...')
-      const updatedData = {
-        ...brandData,
-        seoMetrics,
-        keywordOpportunities: seoMetrics?.opportunities || [],
-        competitorAnalysis,
-        brandHealth: brandHealthScore.overall,
-        brandHealthDetails: brandHealthScore
-      }
-
-      if (onDataUpdate) {
-        onDataUpdate(updatedData)
-        console.log('[MeasureSection] ✅ Data updated in context')
-      } else {
-        console.warn('[MeasureSection] ⚠️ No onDataUpdate handler provided')
-      }
-
-      console.log('[MeasureSection] ===== REFRESH COMPLETE =====')
-      alert('✅ Intelligence data refreshed successfully! Data will save automatically in 2 seconds.')
-
-    } catch (error) {
-      console.error('[MeasureSection] ❌ Refresh error:', error)
-      alert(`Failed to refresh intelligence data: ${error instanceof Error ? error.message : 'Unknown error'}. Check console for details.`)
-    } finally {
-      setIsLoading(false)
-    }
+    // TODO: Implement refresh logic for active subsection
+    console.log('[MeasureSection] Refreshing data for subsection:', activeSubsection)
+    setTimeout(() => setIsLoading(false), 2000)
   }
 
-  // Transform SEMrush keyword rankings to KeywordRankingTable format
-  const transformKeywordRankings = React.useMemo(() => {
-    const rankings = brandData?.seoMetrics?.rankings || []
-    const competitorData = brandData?.competitorAnalysis?.primary_competitors || []
+  // Define subsections based on UVP completion
+  const subsections = React.useMemo(() => {
+    const preUVP = [
+      { id: 'brand-perception-gap', label: 'Brand Perception Gap' },
+      { id: 'competitive-intelligence', label: 'Competitive Intelligence' },
+      { id: 'customer-understanding', label: 'Customer Understanding' },
+      { id: 'search-visibility', label: 'Search Visibility' },
+    ]
 
-    return rankings.map((ranking: any) => {
-      // Calculate trend based on position changes (if previousPosition exists)
-      let trend: 'up' | 'down' | 'stable' = 'stable'
-      let changeAmount: number | undefined
+    const postUVP = hasCompletedUVP
+      ? [
+          { id: 'customer-discovery-journey', label: 'Customer Discovery' },
+          { id: 'value-delivery-analysis', label: 'Value Delivery' },
+          { id: 'competitive-positioning-canvas', label: 'Positioning Canvas' },
+          { id: 'dynamic-swot', label: 'SWOT Analysis' },
+          { id: 'brand-perception-mirror', label: 'Perception Mirror' },
+        ]
+      : []
 
-      if (ranking.previousPosition) {
-        const change = ranking.previousPosition - ranking.position
-        if (change > 0) {
-          trend = 'up'
-          changeAmount = change
-        } else if (change < 0) {
-          trend = 'down'
-          changeAmount = Math.abs(change)
-        }
-      }
+    return [...preUVP, ...postUVP]
+  }, [hasCompletedUVP])
 
-      // Extract competitor rankings for this keyword (if available)
-      const competitors = competitorData
-        .slice(0, 3)
-        .map((comp: any) => ({
-          domain: comp.domain || comp.name || 'Unknown',
-          position: Math.floor(Math.random() * 20) + 1, // TODO: Get real competitor positions
-          url: `https://${comp.domain || comp.name}`
-        }))
+  // Render active subsection content
+  const renderActiveSubsection = () => {
+    const commonProps = {
+      brandId,
+      brandData,
+      className: 'mt-6',
+    }
 
-      return {
-        keyword: ranking.keyword,
-        position: ranking.position,
-        previousPosition: ranking.previousPosition,
-        searchVolume: ranking.searchVolume || 0,
-        difficulty: ranking.difficulty || 50,
-        url: ranking.url || '',
-        competitors: competitors,
-        trend: trend,
-        changeAmount: changeAmount
-      }
-    })
-  }, [brandData?.seoMetrics?.rankings, brandData?.competitorAnalysis?.primary_competitors])
+    switch (activeSubsection) {
+      case 'brand-perception-gap':
+        return <BrandPerceptionGapSection {...commonProps} hasCompletedUVP={hasCompletedUVP} />
+      case 'competitive-intelligence':
+        return <CompetitiveIntelligenceSection {...commonProps} />
+      case 'customer-understanding':
+        return <CustomerUnderstandingSection {...commonProps} />
+      case 'search-visibility':
+        return <SearchVisibilitySection {...commonProps} />
+      case 'customer-discovery-journey':
+        return <CustomerDiscoveryJourneySection {...commonProps} hasCompletedUVP={hasCompletedUVP} />
+      case 'value-delivery-analysis':
+        return <ValueDeliveryAnalysisSection {...commonProps} hasCompletedUVP={hasCompletedUVP} />
+      case 'competitive-positioning-canvas':
+        return <CompetitivePositioningCanvasSection {...commonProps} hasCompletedUVP={hasCompletedUVP} />
+      case 'dynamic-swot':
+        return <DynamicSWOTSection {...commonProps} hasCompletedUVP={hasCompletedUVP} />
+      case 'brand-perception-mirror':
+        return <BrandPerceptionMirrorSection {...commonProps} hasCompletedUVP={hasCompletedUVP} />
+      default:
+        return <BrandPerceptionGapSection {...commonProps} hasCompletedUVP={hasCompletedUVP} />
+    }
+  }
 
   return (
     <div className={className}>
       <MirrorSectionHeader
         title="Mirror"
         description="See where you are — your audience, market, and message today"
-        badge={<span className="text-xs">MARBA Analysis</span>}
+        badge={<span className="text-xs">AI-Powered Intelligence</span>}
         actions={
           <>
             <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
@@ -226,93 +147,15 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
         }
       />
 
-      <div className="container py-6 px-6 space-y-6">
-        {/* Brand Health */}
-        <section id="brand-health">
-          <BrandHealthCard
-            health={health}
-            hotSpots={hotSpots}
-            attentionNeeded={attentionNeeded}
-            industryAverage={65}
-            brandHealthDetails={brandData?.brandHealthDetails}
-          />
-        </section>
+      {/* Horizontal subsection tabs */}
+      <SubsectionTabs
+        subsections={subsections}
+        activeSubsection={activeSubsection}
+        onSubsectionChange={handleSubsectionChange}
+      />
 
-        {/* Grid of other cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <section id="market-position">
-            <MarketPositionCard position={position} />
-          </section>
-
-          <section id="competitive-landscape">
-            <CompetitiveLandscapeCard
-              competitors={competitors}
-              userScore={health.overall}
-              differentiators={differentiators}
-              gaps={gaps}
-            />
-          </section>
-        </div>
-
-        {/* Current Assets */}
-        <section id="current-assets">
-          <CurrentAssetsCard assets={assets} />
-        </section>
-
-        {/* SEO Health & Keywords - NEW */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <section id="seo-health">
-            <SEOHealthCard seoMetrics={brandData?.seoMetrics} />
-          </section>
-
-          <section id="keyword-opportunities">
-            <KeywordOpportunities
-              opportunities={brandData?.keywordOpportunities || []}
-              brandProfile={brandData}
-            />
-          </section>
-        </div>
-
-        {/* Comprehensive Keyword Rankings - NEW */}
-        <section id="keyword-rankings">
-          <KeywordRankingTable
-            keywords={transformKeywordRankings}
-            isLoading={isLoading}
-            onGenerateContent={(keyword) => {
-              console.log('[MeasureSection] Generate content for keyword:', keyword)
-              // TODO: Integrate with Ask Marbs content generation
-              alert(`Content generation for "${keyword}" - Coming soon!`)
-            }}
-          />
-        </section>
-
-        {/* Customer Psychology - NEW */}
-        <section id="customer-psychology">
-          <CustomerTriggerGallery
-            triggers={brandData?.emotional_triggers || []}
-            psychologicalHooks={brandData?.psychological_hooks || []}
-            customerAvatars={brandData?.customer_avatars || []}
-          />
-        </section>
-
-        {/* Competitive Intelligence - NEW */}
-        <section id="competitive-intelligence">
-          <CompetitiveDashboard
-            analysis={brandData?.competitorAnalysis || null}
-            brandAuthority={brandData?.seoMetrics?.overview?.authority_score || health.overall}
-            industryData={brandData}
-          />
-        </section>
-
-        {/* Content Gap Analysis - NEW */}
-        <section id="content-gap-analysis">
-          <ContentGapAnalysis
-            brandData={brandData}
-            competitorAnalysis={brandData?.competitorAnalysis || null}
-            industryData={brandData}
-          />
-        </section>
-      </div>
+      {/* Active subsection content */}
+      {renderActiveSubsection()}
     </div>
   )
 }
