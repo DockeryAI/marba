@@ -119,7 +119,6 @@ export const MirrorPage: React.FC = () => {
       color: 'purple',
       locked: !hasCompletedUVP, // Locked until UVP complete
       subsections: [
-        { id: 'uvp-flow', label: 'Value Proposition' },
         { id: 'wwh-framework', label: 'Why, What, How' },
         { id: 'goals', label: 'Goals' },
         { id: 'targets', label: 'Targets' },
@@ -130,8 +129,9 @@ export const MirrorPage: React.FC = () => {
       label: 'Roadmap',
       tooltip: 'Plan how to get there — the channels, audience, and strategy',
       color: 'green',
-      locked: !hasCompletedUVP, // Locked until UVP complete
+      locked: false, // Always unlocked since UVP is inside
       subsections: [
+        { id: 'uvp-flow', label: 'Value Proposition' },
         { id: 'strategy', label: 'Strategy' },
         { id: 'channels', label: 'Channels' },
         { id: 'campaigns', label: 'Campaigns' },
@@ -185,7 +185,7 @@ export const MirrorPage: React.FC = () => {
         !hasCompletedUVP ? (
           <button
             onClick={() => {
-              setActiveSection('align')
+              setActiveSection('roadmap')
               setTimeout(() => {
                 const uvpSection = document.getElementById('uvp-flow')
                 uvpSection?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -274,46 +274,24 @@ export const MirrorPage: React.FC = () => {
 
         {/* ROADMAP - Plan how to get there (combines Reimagine + Reach) */}
         <div id="roadmap" className="relative">
-          {!hasCompletedUVP && (
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
-              <div className="text-center p-8 max-w-md">
-                <div className="rounded-full bg-muted p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <Lock className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">Complete Your Value Proposition First</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Your UVP is the foundation for everything that follows. Scroll up to the Align section to define it now.
-                </p>
-                <Button onClick={() => {
-                  const uvpSection = document.getElementById('uvp-flow')
-                  uvpSection?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                }}>
-                  <Zap className="h-4 w-4 mr-2" />
-                  Go to Value Proposition
-                </Button>
-              </div>
-            </div>
-          )}
-          <div className={cn(!hasCompletedUVP && "pointer-events-none opacity-50")}>
-            <div className="space-y-12">
-              {/* Strategy & Content Planning */}
-              <ReimagineSection
-                brandId={brandId}
-                brandData={state.reimagine}
-                objectives={objectives}
-                situationAnalysis={measureData}
-                competitors={brandData?.competitors || []}
-              />
+          <div className="space-y-12">
+            {/* Strategy & Content Planning - UVP is now the first tab here */}
+            <ReimagineSection
+              brandId={brandId}
+              brandData={state.reimagine}
+              objectives={objectives}
+              situationAnalysis={measureData}
+              competitors={brandData?.competitors || []}
+            />
 
-              {/* Channel & Campaign Planning */}
-              <ReachSection
-                brandId={brandId}
-                strategy={strategy}
-                objectives={objectives}
-                budget={0}
-                teamSize={0}
-              />
-            </div>
+            {/* Channel & Campaign Planning */}
+            <ReachSection
+              brandId={brandId}
+              strategy={strategy}
+              objectives={objectives}
+              budget={0}
+              teamSize={0}
+            />
           </div>
         </div>
 

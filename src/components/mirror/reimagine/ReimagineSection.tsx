@@ -9,12 +9,14 @@ import { CustomerAnalysisTab } from './CustomerAnalysisTab'
 import { ProductAnalysisTab } from './ProductAnalysisTab'
 import { CompetitorOpportunitiesTab } from './CompetitorOpportunitiesTab'
 import { SWOTAnalysisTab } from './SWOTAnalysisTab'
+import { UVPFlowSection } from '@/components/mirror/value/UVPFlowSection'
 import { MirrorSectionHeader } from '@/components/layouts/MirrorLayout'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
 import { StrategyBuilder, MarketingStrategy } from '@/services/mirror/strategy-builder'
 import { supabase } from '@/lib/supabase'
-import { Sparkles, Target, Users, FileText, Swords, UserCircle, Package, Zap, LayoutGrid } from 'lucide-react'
+import { Sparkles, Target, Users, FileText, Swords, UserCircle, Package, Zap, LayoutGrid, Lightbulb } from 'lucide-react'
 
 interface ReimagineSectionProps {
   brandId: string
@@ -36,7 +38,7 @@ export const ReimagineSection: React.FC<ReimagineSectionProps> = ({
   const [strategy, setStrategy] = React.useState<Partial<MarketingStrategy>>({})
   const [personas, setPersonas] = React.useState<any[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
-  const [activeTab, setActiveTab] = React.useState('brand')
+  const [activeTab, setActiveTab] = React.useState('uvp')
   const [hasCompletedUVP, setHasCompletedUVP] = React.useState(false)
 
   // Check if UVP is completed
@@ -232,44 +234,79 @@ export const ReimagineSection: React.FC<ReimagineSectionProps> = ({
 
       <div className="container py-6 px-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`grid w-full ${hasCompletedUVP ? 'grid-cols-8' : 'grid-cols-4'}`}>
+          <TabsList className={`grid w-full ${hasCompletedUVP ? 'grid-cols-9' : 'grid-cols-5'}`}>
+            <TabsTrigger value="uvp" className="flex items-center gap-2">
+              <Lightbulb className="h-4 w-4" />
+              <span className="hidden sm:inline">UVP</span>
+              {!hasCompletedUVP && (
+                <Badge variant="default" className="ml-1 text-xs bg-blue-600">
+                  Start
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="brand" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
-              Brand
+              <span className="hidden sm:inline">Brand</span>
             </TabsTrigger>
             <TabsTrigger value="audience" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Audience
+              <span className="hidden sm:inline">Audience</span>
             </TabsTrigger>
             <TabsTrigger value="content" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              Content
+              <span className="hidden sm:inline">Content</span>
             </TabsTrigger>
             <TabsTrigger value="competitive" className="flex items-center gap-2">
               <Swords className="h-4 w-4" />
-              Competitive
+              <span className="hidden sm:inline">Competitive</span>
             </TabsTrigger>
             {hasCompletedUVP && (
               <>
                 <TabsTrigger value="customers" className="flex items-center gap-2">
                   <UserCircle className="h-4 w-4" />
-                  Customers
+                  <span className="hidden sm:inline">Customers</span>
                 </TabsTrigger>
                 <TabsTrigger value="product" className="flex items-center gap-2">
                   <Package className="h-4 w-4" />
-                  Product
+                  <span className="hidden sm:inline">Product</span>
                 </TabsTrigger>
                 <TabsTrigger value="opportunities" className="flex items-center gap-2">
                   <Zap className="h-4 w-4" />
-                  Opportunities
+                  <span className="hidden sm:inline">Opportunities</span>
                 </TabsTrigger>
                 <TabsTrigger value="swot" className="flex items-center gap-2">
                   <LayoutGrid className="h-4 w-4" />
-                  SWOT
+                  <span className="hidden sm:inline">SWOT</span>
                 </TabsTrigger>
               </>
             )}
           </TabsList>
+
+          <TabsContent value="uvp" className="mt-6">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg p-6 mb-6 border-2 border-blue-200 dark:border-blue-800">
+              <div className="flex items-start gap-4">
+                <div className="rounded-full bg-blue-600 p-3 animate-pulse">
+                  <Zap className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
+                    {hasCompletedUVP ? 'Your Value Proposition' : 'Start Here: Define Your Value Proposition'}
+                    {!hasCompletedUVP && (
+                      <Badge variant="default" className="bg-blue-600">
+                        Required
+                      </Badge>
+                    )}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {hasCompletedUVP
+                      ? 'Review and refine your Unique Value Proposition. This is the foundation of your entire marketing strategy.'
+                      : 'Your Unique Value Proposition (UVP) is the foundation of your entire marketing strategy. It tells customers why they should choose you over competitors. Complete this first - it only takes 5 minutes - then advanced insights will unlock.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <UVPFlowSection brandId={brandId} brandData={brandData} />
+          </TabsContent>
 
           <TabsContent value="brand" className="mt-6">
             <BrandStrategy
