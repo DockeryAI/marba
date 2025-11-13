@@ -6,8 +6,6 @@ import { WWHFramework } from './WWHFramework'
 import { IntentObjective } from '@/services/mirror/objectives-generator'
 import { MirrorSectionHeader } from '@/components/layouts/MirrorLayout'
 import { supabase } from '@/lib/supabase'
-import { Button } from '@/components/ui/button'
-import { Sparkles } from 'lucide-react'
 
 interface IntendSectionProps {
   brandId: string
@@ -121,12 +119,6 @@ export const IntendSection: React.FC<IntendSectionProps> = ({
         title="Align"
         description="Set your direction — goals, results, and what success looks like"
         badge={<span className="text-xs">MARBA Analysis</span>}
-        actions={
-          <Button size="sm">
-            <Sparkles className="h-4 w-4 mr-2" />
-            Ask Marbs
-          </Button>
-        }
       />
 
       <div className="container py-6 px-6 space-y-8">

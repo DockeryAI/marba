@@ -99,19 +99,9 @@ export const MirrorPage: React.FC = () => {
       color: 'blue',
       locked: false, // Always unlocked
       subsections: [
-        // Pre-UVP subsections (always visible)
-        { id: 'brand-perception-gap', label: 'Brand Perception Gap' },
-        { id: 'competitive-intelligence', label: 'Competitive Intelligence' },
-        { id: 'customer-understanding', label: 'Customer Understanding' },
-        { id: 'search-visibility', label: 'Search Visibility' },
-        // Post-UVP subsections (visible after UVP completion)
-        ...(hasCompletedUVP ? [
-          { id: 'customer-discovery-journey', label: 'Customer Discovery Journey' },
-          { id: 'value-delivery-analysis', label: 'Value Delivery' },
-          { id: 'competitive-positioning-canvas', label: 'Positioning Canvas' },
-          { id: 'dynamic-swot', label: 'SWOT Analysis' },
-          { id: 'brand-perception-mirror', label: 'Brand Perception Mirror' },
-        ] : []),
+        { id: 'market', label: 'Market Position Reality Check' },
+        { id: 'customer', label: 'Customer Truth Assessment' },
+        { id: 'brand', label: 'Brand Clarity & Fit' },
       ],
     },
     {
@@ -181,7 +171,7 @@ export const MirrorPage: React.FC = () => {
   return (
     <MirrorLayout
       sections={sections}
-      activeSection={activeSection}
+      currentSection={activeSection}
       onSectionChange={setActiveSection}
       sidebarCTA={
         !hasCompletedUVP ? (
@@ -211,58 +201,6 @@ export const MirrorPage: React.FC = () => {
         ) : null
       }
     >
-      {/* Save Status Indicator */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b p-3 mb-6">
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Progress:</span>
-              <Badge variant="outline">{completedCount}/5 Sections</Badge>
-            </div>
-            {sectionCompletion.mirror && <Badge variant="secondary">Mirror</Badge>}
-            {sectionCompletion.align && <Badge variant="secondary">Align</Badge>}
-            {sectionCompletion.roadmap && <Badge variant="secondary">Roadmap</Badge>}
-            {sectionCompletion.broadcast && <Badge variant="secondary">Broadcast</Badge>}
-            {sectionCompletion.assess && <Badge variant="secondary">Assess</Badge>}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {error && (
-              <div className="flex items-center gap-1 text-destructive text-sm">
-                <AlertCircle className="h-4 w-4" />
-                <span>Error saving</span>
-              </div>
-            )}
-            {!state.isDirty && state.lastSaved && (
-              <div className="flex items-center gap-1 text-green-600 text-sm">
-                <Check className="h-4 w-4" />
-                <span>Saved</span>
-              </div>
-            )}
-            {state.isDirty && !loading && (
-              <div className="flex items-center gap-1 text-muted-foreground text-sm">
-                <Save className="h-4 w-4 animate-pulse" />
-                <span>Saving...</span>
-              </div>
-            )}
-            {state.lastSaved && (
-              <span className="text-xs text-muted-foreground">
-                Last saved: {new Date(state.lastSaved).toLocaleTimeString()}
-              </span>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/sessions')}
-              className="ml-2"
-            >
-              <Database className="h-4 w-4 mr-2" />
-              Sessions
-            </Button>
-          </div>
-        </div>
-      </div>
-
       <div className="space-y-12">
         {/* MIRROR - See where you are */}
         <div id="mirror">

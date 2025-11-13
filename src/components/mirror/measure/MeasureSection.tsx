@@ -171,16 +171,14 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
           </Card>
         )}
 
-        {/* No Data State */}
+        {/* No Data State - automatically triggers analysis */}
         {!diagnostic && !isAnalyzing && !error && (
           <Card>
             <CardContent className="text-center py-12">
-              <div className="text-lg font-semibold mb-2">Ready to Analyze Your Brand</div>
-              <p className="text-sm text-muted-foreground mb-4">
-                We'll discover your competitors, analyze customer reviews, check your market
-                position, and evaluate messaging consistency.
+              <div className="text-lg font-semibold mb-2">Waiting for Brand Information</div>
+              <p className="text-sm text-muted-foreground">
+                Analysis will start automatically once you provide your domain and URL in the onboarding.
               </p>
-              <Button onClick={runDiagnostic}>Run Brand Diagnostic</Button>
             </CardContent>
           </Card>
         )}
