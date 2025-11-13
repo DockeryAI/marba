@@ -168,7 +168,7 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
         }
       />
 
-      <div className="mt-6 space-y-6">
+      <div className="container max-w-7xl mx-auto px-6 mt-6 space-y-6">
         {/* Loading State */}
         {isAnalyzing && (
           <Card>

@@ -25,65 +25,64 @@ export const MirrorHealthDashboard: React.FC<MirrorHealthDashboardProps> = ({
   const overallStatus = getScoreStatus(diagnostic.overall_health_score)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 max-w-full">
       {/* Overall Health */}
       <Card className="border-2">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl">Overall Brand Health</CardTitle>
-              <CardDescription>
-                Based on market position, customer alignment, and brand clarity
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-xl truncate">Overall Brand Health</CardTitle>
+              <CardDescription className="text-xs">
+                Market position + customer alignment + brand clarity
               </CardDescription>
             </div>
-            <div className="text-right">
-              <div className={`text-4xl font-bold ${overallStatus.color}`}>
+            <div className="text-right flex-shrink-0">
+              <div className={`text-3xl font-bold ${overallStatus.color}`}>
                 {diagnostic.overall_health_score}
               </div>
-              <div className="text-sm text-muted-foreground capitalize">
+              <div className="text-xs text-muted-foreground capitalize">
                 {overallStatus.status.replace('-', ' ')}
               </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <Progress value={diagnostic.overall_health_score} className="h-3" />
+        <CardContent className="pt-0">
+          <Progress value={diagnostic.overall_health_score} className="h-2" />
         </CardContent>
       </Card>
 
       {/* Three Core Scores */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3">
         {/* Market Position Score */}
         <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Market Position</span>
-              <span className={`text-2xl font-bold ${marketStatus.color}`}>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center justify-between text-base">
+              <span className="truncate">Market Position</span>
+              <span className={`text-xl font-bold ${marketStatus.color}`}>
                 {diagnostic.market_position_score}
               </span>
             </CardTitle>
-            <CardDescription>Where you stand vs competitors</CardDescription>
+            <CardDescription className="text-xs">Where you stand vs competitors</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Progress value={diagnostic.market_position_score} />
+          <CardContent className="space-y-3 pt-0">
+            <Progress value={diagnostic.market_position_score} className="h-1.5" />
 
-            <div className="space-y-2 text-sm">
+            <div className="space-y-1 text-xs">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Market Rank</span>
-                <span className="font-medium">
-                  #{diagnostic.market_position_data.current_rank} of{' '}
-                  {diagnostic.market_position_data.total_competitors}
+                <span className="text-muted-foreground truncate">Market Rank</span>
+                <span className="font-medium flex-shrink-0">
+                  #{diagnostic.market_position_data.current_rank}/{diagnostic.market_position_data.total_competitors}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Pricing Tier</span>
-                <span className="font-medium capitalize">
+                <span className="text-muted-foreground truncate">Pricing Tier</span>
+                <span className="font-medium capitalize flex-shrink-0">
                   {diagnostic.market_position_data.pricing_position.tier}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Competitive Gaps</span>
-                <span className="font-medium">
+                <span className="text-muted-foreground truncate">Competitive Gaps</span>
+                <span className="font-medium flex-shrink-0">
                   {diagnostic.market_position_data.competitive_gaps.length} identified
                 </span>
               </div>
@@ -93,10 +92,10 @@ export const MirrorHealthDashboard: React.FC<MirrorHealthDashboardProps> = ({
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full"
+                className="w-full text-xs h-7"
                 onClick={() => onViewSection('market')}
               >
-                View Details <ArrowRight className="ml-2 h-4 w-4" />
+                View Details <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
             )}
           </CardContent>
@@ -104,36 +103,36 @@ export const MirrorHealthDashboard: React.FC<MirrorHealthDashboardProps> = ({
 
         {/* Customer Match Score */}
         <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Customer Match</span>
-              <span className={`text-2xl font-bold ${customerStatus.color}`}>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center justify-between text-base">
+              <span className="truncate">Customer Match</span>
+              <span className={`text-xl font-bold ${customerStatus.color}`}>
                 {diagnostic.customer_match_score}
               </span>
             </CardTitle>
-            <CardDescription>Who really buys from you</CardDescription>
+            <CardDescription className="text-xs">Who really buys from you</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Progress value={diagnostic.customer_match_score} />
+          <CardContent className="space-y-3 pt-0">
+            <Progress value={diagnostic.customer_match_score} className="h-1.5" />
 
-            <div className="space-y-2 text-sm">
+            <div className="space-y-1 text-xs">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Demographic Match</span>
-                <span className="font-medium">
+                <span className="text-muted-foreground truncate">Demographic Match</span>
+                <span className="font-medium flex-shrink-0">
                   {diagnostic.customer_truth_data.match_percentage}%
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Value Perception</span>
-                <span className="font-medium">
+                <span className="text-muted-foreground truncate">Value Perception</span>
+                <span className="font-medium flex-shrink-0">
                   {diagnostic.customer_truth_data.price_vs_value_perception.includes('cheapest')
                     ? 'Price-driven'
                     : 'Value-driven'}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Journey Gaps</span>
-                <span className="font-medium">
+                <span className="text-muted-foreground truncate">Journey Gaps</span>
+                <span className="font-medium flex-shrink-0">
                   {diagnostic.customer_truth_data.buyer_journey_gaps.length} found
                 </span>
               </div>
@@ -143,10 +142,10 @@ export const MirrorHealthDashboard: React.FC<MirrorHealthDashboardProps> = ({
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full"
+                className="w-full text-xs h-7"
                 onClick={() => onViewSection('customer')}
               >
-                View Details <ArrowRight className="ml-2 h-4 w-4" />
+                View Details <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
             )}
           </CardContent>
@@ -154,34 +153,34 @@ export const MirrorHealthDashboard: React.FC<MirrorHealthDashboardProps> = ({
 
         {/* Brand Clarity Score */}
         <Card className="hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Brand Clarity</span>
-              <span className={`text-2xl font-bold ${brandStatus.color}`}>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center justify-between text-base">
+              <span className="truncate">Brand Clarity</span>
+              <span className={`text-xl font-bold ${brandStatus.color}`}>
                 {diagnostic.brand_clarity_score}
               </span>
             </CardTitle>
-            <CardDescription>Message consistency & clarity</CardDescription>
+            <CardDescription className="text-xs">Message consistency & clarity</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Progress value={diagnostic.brand_clarity_score} />
+          <CardContent className="space-y-3 pt-0">
+            <Progress value={diagnostic.brand_clarity_score} className="h-1.5" />
 
-            <div className="space-y-2 text-sm">
+            <div className="space-y-1 text-xs">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Message Consistency</span>
-                <span className="font-medium">
+                <span className="text-muted-foreground truncate">Message Consistency</span>
+                <span className="font-medium flex-shrink-0">
                   {diagnostic.brand_fit_data.messaging_consistency}%
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Differentiation</span>
-                <span className="font-medium">
+                <span className="text-muted-foreground truncate">Differentiation</span>
+                <span className="font-medium flex-shrink-0">
                   {diagnostic.brand_fit_data.differentiation_score}%
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Clarity Issues</span>
-                <span className="font-medium">
+                <span className="text-muted-foreground truncate">Clarity Issues</span>
+                <span className="font-medium flex-shrink-0">
                   {diagnostic.brand_fit_data.clarity_issues.length} identified
                 </span>
               </div>
@@ -191,10 +190,10 @@ export const MirrorHealthDashboard: React.FC<MirrorHealthDashboardProps> = ({
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full"
+                className="w-full text-xs h-7"
                 onClick={() => onViewSection('brand')}
               >
-                View Details <ArrowRight className="ml-2 h-4 w-4" />
+                View Details <ArrowRight className="ml-1 h-3 w-3" />
               </Button>
             )}
           </CardContent>
@@ -202,7 +201,7 @@ export const MirrorHealthDashboard: React.FC<MirrorHealthDashboardProps> = ({
       </div>
 
       {/* Analysis Timestamp */}
-      <div className="text-center text-sm text-muted-foreground">
+      <div className="text-center text-xs text-muted-foreground">
         Last analyzed: {new Date(diagnostic.analyzed_at).toLocaleString()}
       </div>
     </div>
