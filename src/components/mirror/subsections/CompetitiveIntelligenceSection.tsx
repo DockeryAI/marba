@@ -185,7 +185,7 @@ export const CompetitiveIntelligenceSection: React.FC<CompetitiveIntelligenceSec
                   </div>
                 </Card>
               ))}
-            </Card>
+            </div>
 
             {/* Comparison Table */}
             {intelligence.comparisonTable?.competitors?.length > 0 && (
