@@ -10,6 +10,7 @@ import { ContentCalendarPage } from './pages/ContentCalendarPage'
 import { AnalyticsPage } from './pages/AnalyticsPage'
 import { IntelligencePage } from './pages/IntelligencePage'
 import { DesignStudioPage } from './pages/DesignStudioPage'
+import { SessionManagerPage } from './pages/SessionManagerPage'
 
 function App() {
   return (
@@ -21,7 +22,9 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/onboarding" element={<OnboardingPage />} />
               <Route path="/mirror" element={<MirrorPage />} />
+              <Route path="/marba" element={<MirrorPage />} />
               <Route path="/admin" element={<AdminPage />} />
+              <Route path="/sessions" element={<SessionManagerPage />} />
               <Route path="/content-calendar" element={<ContentCalendarPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/intelligence" element={<IntelligencePage />} />

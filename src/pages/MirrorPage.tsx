@@ -12,10 +12,12 @@ import { useBrand } from '@/contexts/BrandContext'
 import { supabase } from '@/lib/supabase'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Save, Check, AlertCircle, Lock, Zap } from 'lucide-react'
+import { Save, Check, AlertCircle, Lock, Zap, Database } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useNavigate } from 'react-router-dom'
 
 export const MirrorPage: React.FC = () => {
+  const navigate = useNavigate()
   const { currentBrand } = useBrand()
   const { state, updateMeasure, updateIntend, updateReimagine, updateReach, updateOptimize, updateReflect, loading, error } = useMirror()
 
@@ -248,6 +250,15 @@ export const MirrorPage: React.FC = () => {
                 Last saved: {new Date(state.lastSaved).toLocaleTimeString()}
               </span>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/sessions')}
+              className="ml-2"
+            >
+              <Database className="h-4 w-4 mr-2" />
+              Sessions
+            </Button>
           </div>
         </div>
       </div>

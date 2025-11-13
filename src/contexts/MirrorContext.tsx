@@ -110,20 +110,38 @@ export const MirrorProvider: React.FC<MirrorProviderProps> = ({
     section: keyof Omit<MirrorState, 'lastSaved' | 'isDirty'>,
     data: any
   ) => {
-    setState(prev => ({
-      ...prev,
-      [section]: { ...prev[section], ...data },
-      isDirty: true
-    }))
+    setState(prev => {
+      const newState = {
+        ...prev,
+        [section]: { ...prev[section], ...data },
+        isDirty: true
+      }
 
-    // Debounced auto-save
+      // Trigger session auto-save with updated state
+      // Note: We'll import SessionService dynamically to avoid circular deps
+      import('@/services/session/session.service').then(({ SessionService }) => {
+        if (brandId && currentBrand) {
+          const urlSlug = SessionService.generateUrlSlug(currentBrand.name)
+          SessionService.saveSession({
+            brandId,
+            sessionName: currentBrand.name,
+            urlSlug,
+            mirrorState: newState,
+          })
+        }
+      })
+
+      return newState
+    })
+
+    // Debounced auto-save to mirror_sections table
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
     }
     saveTimeoutRef.current = setTimeout(() => {
       saveToServer()
     }, 2000)
-  }, [])
+  }, [brandId, currentBrand])
 
   const updateMeasure = React.useCallback((data: Partial<MeasureData>) => {
     updateSection('measure', data)

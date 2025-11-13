@@ -219,17 +219,30 @@ export const UVPWizardProvider: React.FC<UVPWizardProviderProps> = ({
           updated.differentiation = value
         }
 
+        // Trigger session auto-save with updated UVP state
+        import('@/services/session/session.service').then(({ SessionService }) => {
+          if (brandId && brandData) {
+            const urlSlug = SessionService.generateUrlSlug(brandData.name || 'session')
+            SessionService.saveSession({
+              brandId,
+              sessionName: brandData.name || 'New Session',
+              urlSlug,
+              uvpState: updated,
+            })
+          }
+        })
+
         return updated
       })
 
-      // Auto-save after a delay
+      // Auto-save to database after a delay
       const saveTimer = setTimeout(() => {
         saveUVP()
       }, 2000)
 
       return () => clearTimeout(saveTimer)
     },
-    []
+    [brandId, brandData]
   )
 
   /**
