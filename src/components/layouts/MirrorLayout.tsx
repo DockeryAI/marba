@@ -141,9 +141,17 @@ export const MirrorLayout: React.FC<MirrorLayoutProps> = ({
                             size="sm"
                             className="w-full justify-start text-xs"
                             onClick={() => {
-                              // Scroll to subsection
-                              const element = document.getElementById(sub.id)
-                              element?.scrollIntoView({ behavior: 'smooth' })
+                              // Dispatch custom event to open accordion
+                              window.dispatchEvent(
+                                new CustomEvent('mirrorSubsectionClick', {
+                                  detail: { sectionId: sub.id },
+                                })
+                              )
+                              // Scroll to subsection with delay for accordion animation
+                              setTimeout(() => {
+                                const element = document.getElementById(sub.id)
+                                element?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                              }, 300)
                             }}
                           >
                             {sub.label}

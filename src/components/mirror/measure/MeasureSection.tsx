@@ -42,7 +42,7 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
   const [diagnostic, setDiagnostic] = React.useState<MirrorDiagnostic | null>(null)
   const [isAnalyzing, setIsAnalyzing] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
-  const [activeSection, setActiveSection] = React.useState<string | undefined>('dashboard')
+  const [activeSection, setActiveSection] = React.useState<string | undefined>(undefined)
 
   // Auto-analyze on mount or when brandData changes
   React.useEffect(() => {
@@ -132,6 +132,21 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
     setActiveSection(section)
   }
 
+  // Listen for section changes from sidebar
+  React.useEffect(() => {
+    const handleSidebarClick = (e: CustomEvent) => {
+      const sectionId = e.detail.sectionId
+      if (['market', 'customer', 'brand'].includes(sectionId)) {
+        setActiveSection(sectionId)
+      }
+    }
+
+    window.addEventListener('mirrorSubsectionClick' as any, handleSidebarClick)
+    return () => {
+      window.removeEventListener('mirrorSubsectionClick' as any, handleSidebarClick)
+    }
+  }, [])
+
   return (
     <div className={className}>
       <MirrorSectionHeader
@@ -213,7 +228,7 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
               onValueChange={setActiveSection}
               className="space-y-4"
             >
-              <AccordionItem value="market" className="border rounded-lg px-6">
+              <AccordionItem id="market" value="market" className="border rounded-lg px-6">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
                     <div className="text-left">
@@ -232,7 +247,7 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="customer" className="border rounded-lg px-6">
+              <AccordionItem id="customer" value="customer" className="border rounded-lg px-6">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
                     <div className="text-left">
@@ -251,7 +266,7 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="brand" className="border rounded-lg px-6">
+              <AccordionItem id="brand" value="brand" className="border rounded-lg px-6">
                 <AccordionTrigger className="hover:no-underline">
                   <div className="flex items-center gap-3">
                     <div className="text-left">
