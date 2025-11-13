@@ -13,8 +13,11 @@ import {
   type TrustSignals,
   type Competitor,
 } from '@/types/mirror-diagnostics'
-import { openRouterAI } from '@/services/uvp-wizard/openrouter-ai'
-import { perplexityAPI } from '@/services/uvp-wizard/perplexity-api'
+import { chat } from '@/lib/openrouter'
+import { PerplexityAPI } from '@/services/uvp-wizard/perplexity-api'
+
+// Initialize Perplexity API
+const perplexityAPI = new PerplexityAPI()
 
 export class BrandFitService {
   /**
@@ -116,11 +119,13 @@ export class BrandFitService {
 
     try {
       // Use Perplexity to analyze website content
-      const response = await perplexityAPI.search(
-        `What is the main message and value proposition on ${brandData.website}? What do they claim to be best at?`
-      )
+      const response = await perplexityAPI.getIndustryInsights({
+        query: `What is the main message and value proposition on ${brandData.website}? What do they claim to be best at?`,
+        context: { industry: brandData.industry },
+        max_results: 3,
+      })
 
-      return response
+      return response.insights.join('\n')
     } catch (error) {
       console.error('[BrandFitService] Website extraction failed:', error)
       return 'Unable to extract website message'
@@ -132,11 +137,13 @@ export class BrandFitService {
    */
   private static async extractGoogleMessage(brandData: BrandData): Promise<string> {
     try {
-      const response = await perplexityAPI.search(
-        `What does ${brandData.name} say in their Google Business Profile? What is their business description?`
-      )
+      const response = await perplexityAPI.getIndustryInsights({
+        query: `What does ${brandData.name} say in their Google Business Profile? What is their business description?`,
+        context: { industry: brandData.industry },
+        max_results: 3,
+      })
 
-      return response
+      return response.insights.join('\n')
     } catch (error) {
       console.error('[BrandFitService] Google extraction failed:', error)
       return 'Unable to extract Google message'
@@ -148,11 +155,13 @@ export class BrandFitService {
    */
   private static async extractSocialMessage(brandData: BrandData): Promise<string> {
     try {
-      const response = await perplexityAPI.search(
-        `What does ${brandData.name} say on their social media profiles? What is their social media positioning?`
-      )
+      const response = await perplexityAPI.getIndustryInsights({
+        query: `What does ${brandData.name} say on their social media profiles? What is their social media positioning?`,
+        context: { industry: brandData.industry },
+        max_results: 3,
+      })
 
-      return response
+      return response.insights.join('\n')
     } catch (error) {
       console.error('[BrandFitService] Social extraction failed:', error)
       return 'Unable to extract social message'
@@ -164,11 +173,13 @@ export class BrandFitService {
    */
   private static async extractReviewsMessage(brandData: BrandData): Promise<string> {
     try {
-      const response = await perplexityAPI.search(
-        `How do customers describe ${brandData.name} in reviews? What do they say the business is known for?`
-      )
+      const response = await perplexityAPI.getIndustryInsights({
+        query: `How do customers describe ${brandData.name} in reviews? What do they say the business is known for?`,
+        context: { industry: brandData.industry },
+        max_results: 3,
+      })
 
-      return response
+      return response.insights.join('\n')
     } catch (error) {
       console.error('[BrandFitService] Reviews extraction failed:', error)
       return 'Unable to extract review message'
@@ -209,10 +220,13 @@ Return ONLY valid JSON:
 }`
 
     try {
-      const response = await openRouterAI.generateResponse(prompt, {
-        temperature: 0.3,
-        maxTokens: 1000,
-      })
+      const response = await chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.3,
+          maxTokens: 1000,
+        }
+      )
 
       const parsed = JSON.parse(response)
       return parsed
@@ -264,10 +278,13 @@ Return ONLY a JSON object:
 {"score": 65, "reasoning": "Brief explanation"}`
 
     try {
-      const response = await openRouterAI.generateResponse(prompt, {
-        temperature: 0.4,
-        maxTokens: 500,
-      })
+      const response = await chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.4,
+          maxTokens: 500,
+        }
+      )
 
       const parsed = JSON.parse(response)
       return parsed.score || 50
@@ -336,9 +353,13 @@ Return ONLY a JSON object:
    */
   private static async collectTrustSignals(brandData: BrandData): Promise<TrustSignals> {
     try {
-      const response = await perplexityAPI.search(
-        `How many reviews does ${brandData.name} have? What is their average rating? What social proof do they display?`
-      )
+      const searchResponse = await perplexityAPI.getIndustryInsights({
+        query: `How many reviews does ${brandData.name} have? What is their average rating? What social proof do they display?`,
+        context: { industry: brandData.industry },
+        max_results: 3,
+      })
+
+      const response = searchResponse.insights.join('\n')
 
       // Parse trust signals using AI
       const prompt = `Extract trust signals from this information:
@@ -352,10 +373,13 @@ Return ONLY valid JSON:
   "social_proof": ["Award 1", "Certification 2", "Featured in Publication"]
 }`
 
-      const aiResponse = await openRouterAI.generateResponse(prompt, {
-        temperature: 0.2,
-        maxTokens: 500,
-      })
+      const aiResponse = await chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.2,
+          maxTokens: 500,
+        }
+      )
 
       return JSON.parse(aiResponse)
     } catch (error) {

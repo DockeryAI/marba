@@ -10,8 +10,11 @@ import {
   type Competitor,
   type CompetitiveGap,
 } from '@/types/mirror-diagnostics'
-import { perplexityAPI } from '@/services/uvp-wizard/perplexity-api'
-import { openRouterAI } from '@/services/uvp-wizard/openrouter-ai'
+import { PerplexityAPI } from '@/services/uvp-wizard/perplexity-api'
+import { chat } from '@/lib/openrouter'
+
+// Initialize Perplexity API
+const perplexityAPI = new PerplexityAPI()
 
 export class MarketPositionService {
   /**
@@ -89,10 +92,17 @@ export class MarketPositionService {
         ? `top competitors in ${industry} industry in ${location}, excluding ${brandName}`
         : `top competitors in ${industry} industry, excluding ${brandName}`
 
-      const response = await perplexityAPI.search(query)
+      const response = await perplexityAPI.getIndustryInsights({
+        query,
+        context: { industry },
+        max_results: 8,
+      })
 
       // Parse response to extract competitors
-      const competitors = await this.parseCompetitorsFromSearch(response, industry)
+      const competitors = await this.parseCompetitorsFromSearch(
+        response.insights.join('\n'),
+        industry
+      )
 
       return competitors.slice(0, 8) // Return top 8
     } catch (error) {
@@ -122,10 +132,13 @@ Return ONLY valid JSON array with this structure:
 [{"name":"Company","positioning":"What they claim","strengths":["Strength 1","Strength 2"]}]`
 
     try {
-      const response = await openRouterAI.generateResponse(prompt, {
-        temperature: 0.3,
-        maxTokens: 1000,
-      })
+      const response = await chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.3,
+          maxTokens: 1000,
+        }
+      )
 
       const parsed = JSON.parse(response)
       return Array.isArray(parsed) ? parsed : []
@@ -193,10 +206,13 @@ Return ONLY valid JSON array:
 [{"gap":"What's missing","impact":"Why it matters","competitors_doing":["Competitor 1","Competitor 2"]}]`
 
     try {
-      const response = await openRouterAI.generateResponse(prompt, {
-        temperature: 0.4,
-        maxTokens: 800,
-      })
+      const response = await chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.4,
+          maxTokens: 800,
+        }
+      )
 
       const parsed = JSON.parse(response)
       return Array.isArray(parsed) ? parsed.slice(0, 5) : []

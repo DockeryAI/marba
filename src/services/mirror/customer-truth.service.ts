@@ -10,8 +10,11 @@ import {
   type WhyTheyChose,
   type BuyerJourneyGap,
 } from '@/types/mirror-diagnostics'
-import { openRouterAI } from '@/services/uvp-wizard/openrouter-ai'
-import { perplexityAPI } from '@/services/uvp-wizard/perplexity-api'
+import { chat } from '@/lib/openrouter'
+import { PerplexityAPI } from '@/services/uvp-wizard/perplexity-api'
+
+// Initialize Perplexity API
+const perplexityAPI = new PerplexityAPI()
 
 export class CustomerTruthService {
   /**
@@ -93,9 +96,13 @@ export class CustomerTruthService {
   }> {
     try {
       // Search for reviews using Perplexity
-      const reviewsSearch = await perplexityAPI.search(
-        `customer reviews for ${brandName} ${industry}, what customers say about choosing them`
-      )
+      const reviewsResponse = await perplexityAPI.getIndustryInsights({
+        query: `customer reviews for ${brandName} ${industry}, what customers say about choosing them`,
+        context: { industry },
+        max_results: 5,
+      })
+
+      const reviewsSearch = reviewsResponse.insights.join('\n')
 
       // Extract patterns using AI
       const prompt = `Analyze these customer reviews and extract:
@@ -113,10 +120,13 @@ Return ONLY valid JSON:
   "objections": ["Objection 1", "Objection 2"]
 }`
 
-      const response = await openRouterAI.generateResponse(prompt, {
-        temperature: 0.3,
-        maxTokens: 1000,
-      })
+      const response = await chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.3,
+          maxTokens: 1000,
+        }
+      )
 
       const parsed = JSON.parse(response)
 
@@ -212,10 +222,13 @@ Return ONLY valid JSON array:
 [{"stage":"awareness","gap":"What's missing","impact":"Why it matters"}]`
 
     try {
-      const response = await openRouterAI.generateResponse(prompt, {
-        temperature: 0.4,
-        maxTokens: 800,
-      })
+      const response = await chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.4,
+          maxTokens: 800,
+        }
+      )
 
       const parsed = JSON.parse(response)
       return Array.isArray(parsed) ? parsed : []

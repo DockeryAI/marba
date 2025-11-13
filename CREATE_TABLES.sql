@@ -57,6 +57,10 @@ ALTER TABLE brand_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE brand_uvps ENABLE ROW LEVEL SECURITY;
 
 -- Policies (allow all for now - tighten in production)
-CREATE POLICY IF NOT EXISTS "Allow all operations on mirror_diagnostics" ON mirror_diagnostics FOR ALL USING (true);
-CREATE POLICY IF NOT EXISTS "Allow all operations on brand_sessions" ON brand_sessions FOR ALL USING (true);
-CREATE POLICY IF NOT EXISTS "Allow all operations on brand_uvps" ON brand_uvps FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all operations on mirror_diagnostics" ON mirror_diagnostics;
+DROP POLICY IF EXISTS "Allow all operations on brand_sessions" ON brand_sessions;
+DROP POLICY IF EXISTS "Allow all operations on brand_uvps" ON brand_uvps;
+
+CREATE POLICY "Allow all operations on mirror_diagnostics" ON mirror_diagnostics FOR ALL USING (true);
+CREATE POLICY "Allow all operations on brand_sessions" ON brand_sessions FOR ALL USING (true);
+CREATE POLICY "Allow all operations on brand_uvps" ON brand_uvps FOR ALL USING (true);
