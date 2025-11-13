@@ -13,6 +13,7 @@ import { ApiAdminSection } from '@/components/admin/api'
 import { BackgroundJobsMonitor } from '@/components/admin/BackgroundJobsMonitor'
 import { useBrand } from '@/contexts/BrandContext'
 import { SessionService, BrandSession } from '@/services/session/session.service'
+import { supabase } from '@/lib/supabase'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -36,7 +37,7 @@ import { formatDistanceToNow } from 'date-fns'
 
 export const AdminPage: React.FC = () => {
   const navigate = useNavigate()
-  const { currentBrand } = useBrand()
+  const { currentBrand, setCurrentBrand } = useBrand()
   // Mock brand ID - in production this would come from auth/context
   const brandId = 'demo-brand-001'
   const [activeTab, setActiveTab] = useState('sessions')
@@ -67,10 +68,30 @@ export const AdminPage: React.FC = () => {
 
   const handleResumeSession = async (session: BrandSession) => {
     try {
+      // First load the brand for this session
+      const { data: brand, error: brandError } = await supabase
+        .from('brands')
+        .select('*')
+        .eq('id', session.brand_id)
+        .maybeSingle()
+
+      if (brandError || !brand) {
+        console.error('Failed to load brand for session:', brandError)
+        alert('Unable to resume session: Brand not found')
+        return
+      }
+
+      // Set the brand in context
+      setCurrentBrand(brand)
+
+      // Update session timestamp
       await SessionService.setActiveSession(session.id)
+
+      // Navigate to mirror page
       navigate('/mirror')
     } catch (error) {
       console.error('Failed to resume session:', error)
+      alert('Failed to resume session. Please try again.')
     }
   }
 
