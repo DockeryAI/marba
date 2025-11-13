@@ -144,6 +144,54 @@ export class SessionService {
   }
 
   /**
+   * Get recent sessions across all brands
+   */
+  static async getRecentSessions(limit: number = 5): Promise<BrandSession[]> {
+    try {
+      const { data, error } = await supabase
+        .from('brand_sessions')
+        .select('*')
+        .eq('is_active', true)
+        .order('last_saved_at', { ascending: false })
+        .limit(limit)
+
+      if (error) {
+        console.error('[SessionService] Failed to get recent sessions:', error)
+        return []
+      }
+
+      return (data as BrandSession[]) || []
+    } catch (err) {
+      console.error('[SessionService] Exception getting recent sessions:', err)
+      return []
+    }
+  }
+
+  /**
+   * Set active session (for resuming work)
+   */
+  static async setActiveSession(sessionId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Update last_accessed_at timestamp
+      const { error } = await supabase
+        .from('brand_sessions')
+        .update({ last_saved_at: new Date().toISOString() })
+        .eq('id', sessionId)
+
+      if (error) {
+        console.error('[SessionService] Failed to set active session:', error)
+        return { success: false, error: error.message }
+      }
+
+      console.log('[SessionService] Active session set:', sessionId)
+      return { success: true }
+    } catch (err) {
+      console.error('[SessionService] Exception setting active session:', err)
+      return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
+    }
+  }
+
+  /**
    * Delete session (soft delete by marking inactive)
    */
   static async deleteSession(sessionId: string): Promise<{ success: boolean; error?: string }> {

@@ -14,19 +14,21 @@ interface AppLayoutProps {
   showBreadcrumbs?: boolean
   showFooter?: boolean
   fullWidth?: boolean
+  showNav?: boolean
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
   children,
   showBreadcrumbs = true,
   showFooter = true,
-  fullWidth = false
+  fullWidth = false,
+  showNav = true
 }) => {
   return (
     <MarbsContextProvider>
       <div className="min-h-screen flex flex-col bg-background">
         {/* Navigation */}
-        <MainNav />
+        {showNav && <MainNav />}
 
         {/* Breadcrumbs */}
         {showBreadcrumbs && <Breadcrumbs />}

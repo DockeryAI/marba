@@ -38,7 +38,7 @@ export const HomePage: React.FC = () => {
   }
 
   return (
-    <AppLayout showBreadcrumbs={false}>
+    <AppLayout showBreadcrumbs={false} showNav={false}>
       <div className="space-y-16">
       {/* Hero */}
       <section className="text-center py-12">

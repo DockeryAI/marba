@@ -86,7 +86,7 @@ export const ApiCostByApi: React.FC<ApiCostByApiProps> = ({
     <div className={className}>
       <div className="space-y-4">
         {/* Pie Chart Visualization */}
-        {showChart && data.length > 0 && (
+        {showChart && data && data.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Cost Distribution by API</CardTitle>
@@ -139,7 +139,7 @@ export const ApiCostByApi: React.FC<ApiCostByApiProps> = ({
             <CardTitle>API Cost Breakdown</CardTitle>
           </CardHeader>
           <CardContent>
-            {data.length === 0 ? (
+            {!data || data.length === 0 ? (
               <div className="py-12 text-center text-muted-foreground">
                 No API cost data available
               </div>
@@ -217,7 +217,7 @@ export const ApiCostByApi: React.FC<ApiCostByApiProps> = ({
             )}
 
             {/* Summary */}
-            {data.length > 0 && (
+            {data && data.length > 0 && (
               <div className="mt-4 space-y-2 border-t pt-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium">Total Requests:</span>

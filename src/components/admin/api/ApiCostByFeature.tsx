@@ -73,7 +73,7 @@ export const ApiCostByFeature: React.FC<ApiCostByFeatureProps> = ({
     <div className={className}>
       <div className="space-y-4">
         {/* Pie Chart Visualization */}
-        {showChart && data.length > 0 && (
+        {showChart && data && data.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Cost Distribution by Feature</CardTitle>
@@ -123,7 +123,7 @@ export const ApiCostByFeature: React.FC<ApiCostByFeatureProps> = ({
             <CardTitle>Feature Cost Breakdown</CardTitle>
           </CardHeader>
           <CardContent>
-            {data.length === 0 ? (
+            {!data || data.length === 0 ? (
               <div className="py-12 text-center text-muted-foreground">
                 No feature cost data available
               </div>
@@ -247,7 +247,7 @@ export const ApiCostByFeature: React.FC<ApiCostByFeatureProps> = ({
             )}
 
             {/* Summary */}
-            {data.length > 0 && (
+            {data && data.length > 0 && (
               <div className="mt-4 flex items-center justify-between border-t pt-4 text-sm">
                 <span className="font-medium">Total:</span>
                 <span className="font-mono font-medium">${totalCost.toFixed(2)}</span>
