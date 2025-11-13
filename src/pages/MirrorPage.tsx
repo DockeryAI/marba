@@ -32,8 +32,11 @@ export const MirrorPage: React.FC = () => {
       founded: currentBrand.founded,
       size: currentBrand.size,
       competitors: currentBrand.competitors || [],
+      website: currentBrand.website,
+      location: currentBrand.location,
+      target_audience: currentBrand.target_audience,
     }
-  }, [currentBrand?.name, currentBrand?.industry, currentBrand?.founded, currentBrand?.size, currentBrand?.competitors])
+  }, [currentBrand?.name, currentBrand?.industry, currentBrand?.founded, currentBrand?.size, currentBrand?.competitors, currentBrand?.website, currentBrand?.location, currentBrand?.target_audience])
 
   const [activeSection, setActiveSection] = React.useState('mirror')
   const [hasCompletedUVP, setHasCompletedUVP] = React.useState(false)
@@ -206,7 +209,7 @@ export const MirrorPage: React.FC = () => {
         <div id="mirror">
           <MeasureSection
             brandId={brandId}
-            brandData={state.measure}
+            brandData={brandData}
             onDataUpdate={updateMeasure}
           />
         </div>

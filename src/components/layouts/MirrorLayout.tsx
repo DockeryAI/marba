@@ -41,7 +41,7 @@ export const MirrorLayout: React.FC<MirrorLayoutProps> = ({
   sidebarCollapsible = true,
   sidebarCTA,
 }) => {
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(true)
 
   const currentSectionData = sections.find(s => s.id === currentSection)
 
