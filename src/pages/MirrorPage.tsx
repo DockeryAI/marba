@@ -19,15 +19,20 @@ export const MirrorPage: React.FC = () => {
   const { state, updateMeasure, updateIntend, updateReimagine, updateReach, updateOptimize, updateReflect, loading, error } = useMirror()
 
   const brandId = currentBrand?.id
-  const brandData = currentBrand ? {
-    name: currentBrand.name,
-    industry: currentBrand.industry,
-    founded: currentBrand.founded,
-    size: currentBrand.size,
-    competitors: currentBrand.competitors || [],
-  } : null
 
-  const [activeSection, setActiveSection] = React.useState('measure')
+  // Memoize brandData to prevent infinite re-renders
+  const brandData = React.useMemo(() => {
+    if (!currentBrand) return null
+    return {
+      name: currentBrand.name,
+      industry: currentBrand.industry,
+      founded: currentBrand.founded,
+      size: currentBrand.size,
+      competitors: currentBrand.competitors || [],
+    }
+  }, [currentBrand?.name, currentBrand?.industry, currentBrand?.founded, currentBrand?.size, currentBrand?.competitors])
+
+  const [activeSection, setActiveSection] = React.useState('mirror')
   const [hasCompletedUVP, setHasCompletedUVP] = React.useState(false)
 
   // Check if UVP is completed
@@ -40,7 +45,7 @@ export const MirrorPage: React.FC = () => {
         .select('id, is_primary')
         .eq('brand_id', brandId)
         .eq('is_primary', true)
-        .single()
+        .maybeSingle()
 
       setHasCompletedUVP(!error && !!data)
     }
@@ -85,8 +90,11 @@ export const MirrorPage: React.FC = () => {
 
   const sections = [
     {
-      id: 'measure',
-      label: 'Measure',
+      id: 'mirror',
+      label: 'Mirror',
+      tooltip: 'See where you are — your audience, market, and message today',
+      color: 'blue',
+      locked: false, // Always unlocked
       subsections: [
         { id: 'brand-health', label: 'Brand Health' },
         { id: 'market-position', label: 'Market Position' },
@@ -95,8 +103,11 @@ export const MirrorPage: React.FC = () => {
       ],
     },
     {
-      id: 'intend',
-      label: 'Intend',
+      id: 'align',
+      label: 'Align',
+      tooltip: 'Set your direction — goals, results, and what success looks like',
+      color: 'purple',
+      locked: !hasCompletedUVP, // Locked until UVP complete
       subsections: [
         { id: 'uvp-flow', label: 'Value Proposition' },
         { id: 'wwh-framework', label: 'Why, What, How' },
@@ -105,55 +116,52 @@ export const MirrorPage: React.FC = () => {
       ],
     },
     {
-      id: 'reimagine',
-      label: 'Reimagine',
-      locked: !hasCompletedUVP,
+      id: 'roadmap',
+      label: 'Roadmap',
+      tooltip: 'Plan how to get there — the channels, audience, and strategy',
+      color: 'green',
+      locked: !hasCompletedUVP, // Locked until UVP complete
       subsections: [
-        { id: 'brand', label: 'Brand' },
-        { id: 'audience', label: 'Audience' },
-        { id: 'content', label: 'Content' },
-        { id: 'competitive', label: 'Competitive' },
-      ],
-    },
-    {
-      id: 'reach',
-      label: 'Reach',
-      locked: !hasCompletedUVP,
-      subsections: [
+        { id: 'strategy', label: 'Strategy' },
         { id: 'channels', label: 'Channels' },
         { id: 'campaigns', label: 'Campaigns' },
+        { id: 'content-pillars', label: 'Content Pillars' },
       ],
     },
     {
-      id: 'optimize',
-      label: 'Optimize',
-      locked: !hasCompletedUVP,
+      id: 'broadcast',
+      label: 'Broadcast',
+      tooltip: 'Create and launch — your content, campaigns, and offers',
+      color: 'orange',
+      locked: !hasCompletedUVP, // Locked until UVP complete
       subsections: [
-        { id: 'board', label: 'Action Board' },
-        { id: 'timeline', label: 'Timeline' },
-        { id: 'priority', label: 'By Priority' },
+        { id: 'calendar', label: 'Content Calendar' },
+        { id: 'campaigns', label: 'Campaign Manager' },
+        { id: 'publishing', label: 'Publishing' },
       ],
     },
     {
-      id: 'reflect',
-      label: 'Reflect',
-      locked: !hasCompletedUVP,
+      id: 'assess',
+      label: 'Assess',
+      tooltip: 'Reflect on results — measure, learn, and refine what works',
+      color: 'teal',
+      locked: !hasCompletedUVP, // Locked until UVP complete
       subsections: [
-        { id: 'kpis', label: 'KPI Dashboard' },
-        { id: 'insights', label: 'Performance Insights' },
-        { id: 'report', label: 'Reflection Report' },
+        { id: 'dashboard', label: 'Performance Dashboard' },
+        { id: 'insights', label: 'Insights' },
+        { id: 'optimization', label: 'Optimization' },
+        { id: 'retrospective', label: 'Retrospective' },
       ],
     },
   ]
 
-  // Calculate section completion
+  // Calculate section completion (MARBA framework)
   const sectionCompletion = React.useMemo(() => ({
-    measure: Object.keys(state.measure).length > 0,
-    intend: hasCompletedUVP, // Intend is complete when UVP is done
-    reimagine: Object.keys(state.reimagine).length > 0 && hasCompletedUVP,
-    reach: Object.keys(state.reach).length > 0 && hasCompletedUVP,
-    optimize: Object.keys(state.optimize).length > 0 && hasCompletedUVP,
-    reflect: Object.keys(state.reflect).length > 0 && hasCompletedUVP
+    mirror: Object.keys(state.measure).length > 0,
+    align: hasCompletedUVP, // Align is complete when UVP is done
+    roadmap: (Object.keys(state.reimagine).length > 0 || Object.keys(state.reach).length > 0) && hasCompletedUVP,
+    broadcast: false, // Placeholder - will implement later
+    assess: (Object.keys(state.optimize).length > 0 || Object.keys(state.reflect).length > 0) && hasCompletedUVP
   }), [state, hasCompletedUVP])
 
   const completedCount = Object.values(sectionCompletion).filter(Boolean).length
@@ -167,16 +175,16 @@ export const MirrorPage: React.FC = () => {
         !hasCompletedUVP ? (
           <button
             onClick={() => {
-              setActiveSection('intend')
+              setActiveSection('align')
               setTimeout(() => {
                 const uvpSection = document.getElementById('uvp-flow')
                 uvpSection?.scrollIntoView({ behavior: 'smooth', block: 'center' })
               }, 100)
             }}
-            className="w-full relative overflow-hidden rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 p-4 text-white shadow-lg transition-all hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+            className="w-full relative overflow-hidden rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 p-4 text-white shadow-lg transition-all hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
           >
             {/* Glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 animate-pulse" />
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-indigo-400 opacity-0 animate-pulse" />
 
             <div className="relative z-10">
               <div className="flex items-center justify-center gap-2 mb-1">
@@ -197,14 +205,13 @@ export const MirrorPage: React.FC = () => {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Progress:</span>
-              <Badge variant="outline">{completedCount}/6 Sections</Badge>
+              <Badge variant="outline">{completedCount}/5 Sections</Badge>
             </div>
-            {sectionCompletion.measure && <Badge variant="secondary">Measure</Badge>}
-            {sectionCompletion.intend && <Badge variant="secondary">Intend</Badge>}
-            {sectionCompletion.reimagine && <Badge variant="secondary">Reimagine</Badge>}
-            {sectionCompletion.reach && <Badge variant="secondary">Reach</Badge>}
-            {sectionCompletion.optimize && <Badge variant="secondary">Optimize</Badge>}
-            {sectionCompletion.reflect && <Badge variant="secondary">Reflect</Badge>}
+            {sectionCompletion.mirror && <Badge variant="secondary">Mirror</Badge>}
+            {sectionCompletion.align && <Badge variant="secondary">Align</Badge>}
+            {sectionCompletion.roadmap && <Badge variant="secondary">Roadmap</Badge>}
+            {sectionCompletion.broadcast && <Badge variant="secondary">Broadcast</Badge>}
+            {sectionCompletion.assess && <Badge variant="secondary">Assess</Badge>}
           </div>
 
           <div className="flex items-center gap-2">
@@ -236,8 +243,8 @@ export const MirrorPage: React.FC = () => {
       </div>
 
       <div className="space-y-12">
-        {/* Measure Phase */}
-        <div id="measure">
+        {/* MIRROR - See where you are */}
+        <div id="mirror">
           <MeasureSection
             brandId={brandId}
             brandData={state.measure}
@@ -245,8 +252,9 @@ export const MirrorPage: React.FC = () => {
           />
         </div>
 
-        {/* Intend Phase */}
-        <div id="intend">
+        {/* ALIGN - Set your direction */}
+        <div id="align" className="relative">
+          {/* Align section is always accessible since it contains the UVP wizard */}
           <IntendSection
             brandId={brandId}
             situationData={measureData}
@@ -254,8 +262,8 @@ export const MirrorPage: React.FC = () => {
           />
         </div>
 
-        {/* Reimagine Phase - LOCKED UNTIL UVP COMPLETE */}
-        <div id="reimagine" className="relative">
+        {/* ROADMAP - Plan how to get there (combines Reimagine + Reach) */}
+        <div id="roadmap" className="relative">
           {!hasCompletedUVP && (
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
               <div className="text-center p-8 max-w-md">
@@ -264,7 +272,7 @@ export const MirrorPage: React.FC = () => {
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Complete Your Value Proposition First</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Your UVP is the foundation for everything that follows. Scroll up to the Intend section to define it now.
+                  Your UVP is the foundation for everything that follows. Scroll up to the Align section to define it now.
                 </p>
                 <Button onClick={() => {
                   const uvpSection = document.getElementById('uvp-flow')
@@ -277,18 +285,30 @@ export const MirrorPage: React.FC = () => {
             </div>
           )}
           <div className={cn(!hasCompletedUVP && "pointer-events-none opacity-50")}>
-            <ReimagineSection
-              brandId={brandId}
-              brandData={state.reimagine}
-              objectives={objectives}
-              situationAnalysis={measureData}
-              competitors={brandData?.competitors || []}
-            />
+            <div className="space-y-12">
+              {/* Strategy & Content Planning */}
+              <ReimagineSection
+                brandId={brandId}
+                brandData={state.reimagine}
+                objectives={objectives}
+                situationAnalysis={measureData}
+                competitors={brandData?.competitors || []}
+              />
+
+              {/* Channel & Campaign Planning */}
+              <ReachSection
+                brandId={brandId}
+                strategy={strategy}
+                objectives={objectives}
+                budget={0}
+                teamSize={0}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Reach Phase - LOCKED UNTIL UVP COMPLETE */}
-        <div id="reach" className="relative">
+        {/* BROADCAST - Create and launch (Placeholder) */}
+        <div id="broadcast" className="relative">
           {!hasCompletedUVP && (
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
               <div className="text-center p-8 max-w-md">
@@ -299,18 +319,26 @@ export const MirrorPage: React.FC = () => {
             </div>
           )}
           <div className={cn(!hasCompletedUVP && "pointer-events-none opacity-50")}>
-            <ReachSection
-              brandId={brandId}
-              strategy={strategy}
-              objectives={objectives}
-              budget={0}
-              teamSize={0}
-            />
+            <div className="bg-card border rounded-lg p-12">
+              <div className="text-center max-w-2xl mx-auto">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 dark:bg-orange-900/20 mb-4">
+                  <span className="text-3xl">📡</span>
+                </div>
+                <h2 className="text-2xl font-bold mb-2">Broadcast</h2>
+                <p className="text-muted-foreground mb-4">
+                  Create and launch — your content, campaigns, and offers
+                </p>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-100 dark:bg-orange-900/20 text-orange-900 dark:text-orange-100 rounded-full text-sm font-medium">
+                  <span>🚧</span>
+                  <span>Coming Soon - Content Calendar & Publishing Workflow</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Optimize Phase - LOCKED UNTIL UVP COMPLETE */}
-        <div id="optimize" className="relative">
+        {/* ASSESS - Reflect on results (combines Optimize + Reflect) */}
+        <div id="assess" className="relative">
           {!hasCompletedUVP && (
             <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
               <div className="text-center p-8 max-w-md">
@@ -321,34 +349,24 @@ export const MirrorPage: React.FC = () => {
             </div>
           )}
           <div className={cn(!hasCompletedUVP && "pointer-events-none opacity-50")}>
-            <OptimizeSection
-              brandId={brandId}
-              userId={brandId}
-              tactics={tactics}
-              pillars={[]}
-              industry={state.measure?.industry}
-              brandData={state.measure}
-            />
-          </div>
-        </div>
+            <div className="space-y-12">
+              {/* Action Board & Optimization */}
+              <OptimizeSection
+                brandId={brandId}
+                userId={brandId}
+                tactics={tactics}
+                pillars={[]}
+                industry={state.measure?.industry}
+                brandData={state.measure}
+              />
 
-        {/* Reflect Phase - LOCKED UNTIL UVP COMPLETE */}
-        <div id="reflect" className="relative">
-          {!hasCompletedUVP && (
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
-              <div className="text-center p-8 max-w-md">
-                <Lock className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">Locked</h3>
-                <p className="text-sm text-muted-foreground">Complete your Value Proposition to unlock</p>
-              </div>
+              {/* Performance & Insights */}
+              <ReflectSection
+                objectives={objectives}
+                brandId={brandId}
+                brandHealth={state.measure.brandHealth}
+              />
             </div>
-          )}
-          <div className={cn(!hasCompletedUVP && "pointer-events-none opacity-50")}>
-            <ReflectSection
-              objectives={objectives}
-              brandId={brandId}
-              brandHealth={state.measure.brandHealth}
-            />
           </div>
         </div>
       </div>

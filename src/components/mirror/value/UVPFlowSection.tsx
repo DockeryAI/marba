@@ -10,6 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { UVPProvider, useUVP } from '@/contexts/UVPContext'
+import { UVPWizardProvider } from '@/contexts/UVPWizardContext'
+import { UVPWizard } from '@/components/uvp-wizard/UVPWizard'
 import { WWHEnhancementFlow } from './WWHEnhancementFlow'
 import {
   Sparkles,
@@ -28,7 +30,8 @@ interface UVPFlowSectionProps {
   className?: string
 }
 
-const UVPFlowSectionContent: React.FC<Omit<UVPFlowSectionProps, 'brandId'>> = ({
+const UVPFlowSectionContent: React.FC<UVPFlowSectionProps> = ({
+  brandId,
   brandData,
   className,
 }) => {
@@ -134,7 +137,10 @@ const UVPFlowSectionContent: React.FC<Omit<UVPFlowSectionProps, 'brandId'>> = ({
         </div>
 
         {/* Main Tabs */}
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => {
+          console.log('[UVPFlowSection] Tab changed to:', value)
+          setActiveTab(value as any)
+        }} className="w-full" defaultValue="builder">
           <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="builder" className="flex items-center gap-2">
               <Lightbulb className="h-4 w-4" />
@@ -166,14 +172,19 @@ const UVPFlowSectionContent: React.FC<Omit<UVPFlowSectionProps, 'brandId'>> = ({
             </TabsTrigger>
           </TabsList>
 
-          {/* Builder Tab - Main UVP Creation with WWH Enhancement */}
-          <TabsContent value="builder" className="mt-6 space-y-6">
-            <WWHEnhancementFlow
-              brandData={brandData}
-              onComplete={handleWWHFlowComplete}
-            />
+          {/* Builder Tab - Main UVP Creation with Interactive Wizard */}
+          <TabsContent value="builder" className="mt-6 space-y-6" data-uvp-section>
+            <div className="min-h-[600px]">
+              <UVPWizard
+                brandName={brandData?.name}
+                industry={brandData?.industry}
+                onComplete={() => {
+                  // Refresh statements and switch to library tab
+                  setActiveTab('library')
+                }}
+              />
+            </div>
           </TabsContent>
-
           {/* Formulas Tab - Pre-built UVP Formulas */}
           <TabsContent value="formulas" className="mt-6 space-y-6">
             <div className="text-center py-12">
@@ -292,14 +303,18 @@ const UVPFlowSectionContent: React.FC<Omit<UVPFlowSectionProps, 'brandId'>> = ({
 }
 
 // Wrapper component that provides UVP Context
-export const UVPFlowSection: React.FC<UVPFlowSectionProps> = ({
+export const UVPFlowSection: React.FC<UVPFlowSectionProps> = React.memo(({
   brandId,
   brandData,
   className,
 }) => {
+  console.log('[UVPFlowSection] Wrapper rendering with brandId:', brandId)
+
   return (
     <UVPProvider brandId={brandId}>
-      <UVPFlowSectionContent brandData={brandData} className={className} />
+      <UVPWizardProvider brandId={brandId} brandData={brandData}>
+        <UVPFlowSectionContent brandId={brandId} brandData={brandData} className={className} />
+      </UVPWizardProvider>
     </UVPProvider>
   )
-}
+})
