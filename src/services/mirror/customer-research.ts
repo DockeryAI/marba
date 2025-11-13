@@ -109,13 +109,15 @@ export class CustomerResearchService {
    */
   private static async getBrandockData(industry: string): Promise<any> {
     try {
-      const { BrandockService } = await import('../intelligence/brandock-api')
-      const industryProfile = await BrandockService.getIndustryProfile(industry)
+      // TODO: Implement Brandock data retrieval from Supabase industry_profiles table
+      // const { BrandockService } = await import('../intelligence/brandock-api')
+      // const industryProfile = await BrandockService.getIndustryProfile(industry)
 
+      // Returning empty data for now - brandock-api service doesn't exist yet
       return {
-        customerTriggers: industryProfile?.customerTriggers || [],
-        transformations: industryProfile?.transformations || [],
-        emotionalDrivers: industryProfile?.emotionalDrivers || {},
+        customerTriggers: [],
+        transformations: [],
+        emotionalDrivers: {},
       }
     } catch (error) {
       console.error('[CustomerResearchService] Brandock data fetch failed:', error)
