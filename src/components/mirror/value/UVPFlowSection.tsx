@@ -101,12 +101,6 @@ const UVPFlowSectionContent: React.FC<UVPFlowSectionProps> = ({
             )}
           </div>
         }
-        actions={
-          <Button size="sm" disabled={isGenerating}>
-            <Sparkles className="h-4 w-4 mr-2" />
-            Ask Marbs
-          </Button>
-        }
       />
 
       <div className="container py-6 px-6">

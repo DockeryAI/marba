@@ -229,8 +229,8 @@ export const KeywordRankingTable: React.FC<KeywordRankingTableProps> = ({
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredKeywords.map((keyword) => (
-                  <TableRow key={keyword.keyword}>
+                filteredKeywords.map((keyword, index) => (
+                  <TableRow key={`${keyword.keyword}-${keyword.position}-${index}`}>
                     {/* Keyword */}
                     <TableCell className="font-medium">
                       <div className="space-y-1">

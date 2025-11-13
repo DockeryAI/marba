@@ -56,8 +56,13 @@ export const GoalProgressTracker: React.FC<GoalProgressTrackerProps> = ({
       const progressMap: Record<string, GoalProgress> = {}
 
       for (const objective of objectives) {
-        const progress = await AnalyticsService.calculateGoalProgress(objective.id)
-        progressMap[objective.id] = progress
+        try {
+          const progress = await AnalyticsService.calculateGoalProgress(objective.id)
+          progressMap[objective.id] = progress
+        } catch (error) {
+          // Skip objectives that don't have progress data yet
+          console.warn(`[GoalProgressTracker] Skipping objective ${objective.id}:`, error)
+        }
       }
 
       setProgressData(progressMap)

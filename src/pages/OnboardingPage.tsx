@@ -40,36 +40,48 @@ const OnboardingPage: React.FC = () => {
   const [fuse, setFuse] = useState<Fuse<NAICSCode> | null>(null)
 
   const inputRef = useRef<HTMLInputElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const { setCurrentBrand } = useBrand()
 
   // Load all NAICS codes from database on mount
   useEffect(() => {
     async function loadIndustries() {
       try {
+        // Load from the new industry_search_index table which has better search keywords
         const { data, error } = await supabase
-          .from('industry_profiles')
-          .select('naics_code, title, description, keywords')
-          .order('naics_code')
+          .from('industry_search_index')
+          .select('naics_code, display_name, category, keywords')
+          .order('popularity', { ascending: false })
 
         if (error) throw error
 
-        const industries: NAICSCode[] = (data || []).map(profile => ({
-          code: profile.naics_code,
-          title: profile.title,
-          description: profile.description || '',
-          keywords: profile.keywords || [],
-          level: profile.naics_code.length === 2 ? 2 : profile.naics_code.length === 3 ? 3 : profile.naics_code.length
-        }))
+        // Create unique industry entries (group by naics_code, take the most popular)
+        const uniqueIndustries = new Map<string, NAICSCode>()
 
+        ;(data || []).forEach(entry => {
+          // If we haven't seen this code yet, or this entry is more popular, use it
+          if (!uniqueIndustries.has(entry.naics_code)) {
+            uniqueIndustries.set(entry.naics_code, {
+              code: entry.naics_code,
+              title: entry.display_name,
+              description: entry.category || '',
+              keywords: entry.keywords || [],
+              level: entry.naics_code.length === 2 ? 2 : entry.naics_code.length === 3 ? 3 : entry.naics_code.length
+            })
+          }
+        })
+
+        const industries = Array.from(uniqueIndustries.values())
         setAllIndustries(industries)
 
         // Initialize Fuse.js with comprehensive fuzzy matching
+        // Increase weight on keywords since we now have proper search terms
         const fuseInstance = new Fuse(industries, {
           keys: [
             { name: 'title', weight: 2 },
-            { name: 'description', weight: 1.5 },
-            { name: 'keywords', weight: 1.2 },
-            { name: 'code', weight: 0.8 }
+            { name: 'keywords', weight: 1.8 }, // Increased weight for keywords
+            { name: 'description', weight: 1 },
+            { name: 'code', weight: 0.5 }
           ],
           threshold: 0.4, // More lenient matching (0 = exact, 1 = match anything)
           distance: 100,
@@ -98,6 +110,25 @@ const OnboardingPage: React.FC = () => {
     return results.slice(0, 10).map(result => result.item)
   }, [industrySearch, fuse])
 
+  // Reset highlighted index when filtered results change
+  React.useEffect(() => {
+    setHighlightedIndex(-1)
+  }, [filteredIndustries.length])
+
+  // Auto-scroll to keep highlighted item visible
+  React.useEffect(() => {
+    if (highlightedIndex >= 0 && dropdownRef.current) {
+      const items = dropdownRef.current.querySelectorAll('button')
+      const highlightedItem = items[highlightedIndex]
+      if (highlightedItem) {
+        highlightedItem.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest'
+        })
+      }
+    }
+  }, [highlightedIndex])
+
   // Validate domain
   const isValidDomain = React.useMemo(() => {
     if (!domain.trim()) return false
@@ -121,12 +152,20 @@ const OnboardingPage: React.FC = () => {
 
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setHighlightedIndex(prev =>
-        prev < filteredIndustries.length - 1 ? prev + 1 : prev
-      )
+      setHighlightedIndex(prev => {
+        // If nothing is selected yet, select the first item
+        if (prev === -1) return 0
+        // Otherwise move down if not at the end
+        return prev < filteredIndustries.length - 1 ? prev + 1 : prev
+      })
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      setHighlightedIndex(prev => prev > 0 ? prev - 1 : 0)
+      setHighlightedIndex(prev => {
+        // If nothing is selected yet, select the last item
+        if (prev === -1) return filteredIndustries.length - 1
+        // Otherwise move up if not at the beginning
+        return prev > 0 ? prev - 1 : 0
+      })
     } else if (e.key === 'Enter') {
       e.preventDefault()
       if (highlightedIndex >= 0 && filteredIndustries[highlightedIndex]) {
@@ -134,6 +173,7 @@ const OnboardingPage: React.FC = () => {
       }
     } else if (e.key === 'Escape') {
       setShowDropdown(false)
+      setHighlightedIndex(-1)
     }
   }
 
@@ -281,7 +321,7 @@ const OnboardingPage: React.FC = () => {
                   {isLoadingIndustries ? (
                     'Loading industries...'
                   ) : (
-                    `Type to search ${allIndustries.length} industries (NAICS codes)`
+                    <>Type to search {allIndustries.length} industries • Use ↑↓ to navigate • Enter to select</>
                   )}
                 </p>
 
@@ -289,6 +329,7 @@ const OnboardingPage: React.FC = () => {
                 <AnimatePresence>
                   {showDropdown && filteredIndustries.length > 0 && (
                     <motion.div
+                      ref={dropdownRef}
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
@@ -298,8 +339,10 @@ const OnboardingPage: React.FC = () => {
                         <button
                           key={naics.code}
                           onClick={() => handleSelectIndustry(naics)}
-                          className={`w-full text-left px-4 py-3 hover:bg-accent transition-colors border-b last:border-b-0 ${
-                            index === highlightedIndex ? 'bg-accent' : ''
+                          className={`w-full text-left px-4 py-3 transition-colors border-b last:border-b-0 ${
+                            index === highlightedIndex
+                              ? 'bg-primary text-primary-foreground'
+                              : 'hover:bg-accent'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-3">

@@ -7,6 +7,7 @@
 
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { motion } from 'framer-motion'
 import {
   Sparkles,
   Target,
@@ -40,6 +41,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   industry,
   className,
 }) => {
+  const [isStarting, setIsStarting] = React.useState(false)
+
+  const handleStart = () => {
+    setIsStarting(true)
+    onStart()
+  }
   const steps = [
     {
       icon: <Target className="h-5 w-5" />,
@@ -193,13 +200,52 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
       {/* CTA */}
       <div className="text-center">
-        <Button size="lg" onClick={onStart} className="px-8">
-          Get Started
-          <ArrowRight className="h-4 w-4 ml-2" />
-        </Button>
-        <p className="text-xs text-muted-foreground mt-3">
-          No credit card required • Your progress saves automatically
-        </p>
+        {isStarting ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+            className="py-8"
+          >
+            <div className="relative inline-block">
+              <Sparkles className="h-12 w-12 text-primary" />
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0"
+              >
+                <div className="absolute inset-0 rounded-full border-2 border-primary/20" />
+                <div className="absolute inset-0 rounded-full border-t-2 border-primary" />
+              </motion.div>
+            </div>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-sm text-muted-foreground mt-4"
+            >
+              Analyzing your website and industry data...
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="text-xs text-muted-foreground mt-2"
+            >
+              Preparing personalized suggestions
+            </motion.p>
+          </motion.div>
+        ) : (
+          <>
+            <Button size="lg" onClick={handleStart} className="px-8">
+              Complete Your UVP
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+            <p className="text-xs text-muted-foreground mt-3">
+              No credit card required • Your progress saves automatically
+            </p>
+          </>
+        )}
       </div>
     </div>
   )

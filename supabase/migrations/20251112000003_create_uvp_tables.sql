@@ -44,10 +44,7 @@ CREATE TABLE IF NOT EXISTS value_statements (
 
   -- Metadata
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-
-  -- Constraints
-  CONSTRAINT unique_primary_per_brand UNIQUE (brand_id, is_primary) WHERE is_primary = true
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Indexes for performance
@@ -56,6 +53,9 @@ CREATE INDEX idx_value_statements_status ON value_statements(status);
 CREATE INDEX idx_value_statements_primary ON value_statements(brand_id, is_primary) WHERE is_primary = true;
 CREATE INDEX idx_value_statements_context ON value_statements(context);
 CREATE INDEX idx_value_statements_ab_test ON value_statements(ab_test_id) WHERE ab_test_id IS NOT NULL;
+
+-- Partial unique constraint: only one primary UVP per brand
+CREATE UNIQUE INDEX unique_primary_per_brand ON value_statements(brand_id) WHERE is_primary = true;
 
 -- Updated at trigger
 CREATE TRIGGER update_value_statements_updated_at
@@ -277,4 +277,4 @@ COMMENT ON COLUMN value_statements.is_primary IS 'Only one primary UVP per brand
 COMMENT ON COLUMN value_statements.context IS 'Deployment context: website_hero, email_signature, linkedin_about, pitch_deck, etc.';
 
 COMMENT ON COLUMN uvp_ab_tests.prediction_confidence IS 'AI confidence level (0-100) in predicted winner based on psychology analysis';
-COMMENT ON COLUMN uvp_ab_tests.predicted_ctr IS 'Predicted click-through rate % based on emotional triggers and clarity score';
+COMMENT ON COLUMN uvp_ab_tests.variant_a_predicted_ctr IS 'Predicted click-through rate % based on emotional triggers and clarity score';

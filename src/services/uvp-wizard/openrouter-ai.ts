@@ -108,28 +108,36 @@ Business location: ${context.brandName ? 'This is a local business - avoid geogr
 
 For this specific customer segment: "${targetCustomer}"
 
-Generate 5 deep, JTBD-focused emotional desires and aspirations. Each should:`
+Generate 5 deep, JTBD-focused problems. Each should:`
 
         // Adjust based on emotional quotient
         if (eq.emotional_weight > 70) {
+          // High emotional industries (Fashion, Bars, Restaurants, etc) - balance pain and pleasure
           prompt += `
-- Focus on the emotional ASPIRATION - what they want to FEEL or BECOME
-- Describe the transformation they're seeking in their identity or status
-- Use "wanting", "yearning", "craving", "desiring" language to show aspirations
-- Focus on emotional end-states: confidence, peace of mind, pride, control, freedom
+- Mix BOTH pain points AND pleasure/aspiration motivations
+- Include 2-3 pleasure-based motivations: what they WANT to feel, experience, or become
+- Include 2-3 pain-based frustrations: what's holding them back from their ideal state
+- For pleasure: Use "wanting", "yearning", "craving", "desiring" language
+- For pain: Use "struggling", "frustrated by", "held back by" language
+- Focus on emotional end-states: confidence, joy, connection, freedom, excitement
+- Examples for ${industry}:
+  * Pleasure: "Wanting to feel amazing and confident in every outfit"
+  * Pain: "Feeling stuck in a style rut with nothing exciting to wear"
 - Avoid specific scenarios - keep it conceptual and universally applicable
 - NO geographic specifics, numbers, or situational details`
         } else if (eq.emotional_weight > 40) {
           prompt += `
 - Balance emotional frustration with practical challenges
+- Include BOTH problems to solve AND aspirations to achieve
 - Show both personal impact and operational difficulties (without specific numbers)
 - Reveal the underlying job they're trying to get done
-- Include both feelings and general impacts
+- Mix negative (problems) with positive (desires) framing
 - Connect to their goals and aspirations
 - AVOID specific metrics - use concepts like "significant time lost", "unnecessary costs", "missed opportunities"`
         } else {
           prompt += `
 - Focus on operational challenges and inefficiencies
+- Include some aspiration for better outcomes
 - Describe the TYPE of impact (time constraints, resource waste, process bottlenecks)
 - Show clear cause-and-effect relationships
 - Use precise language about problems without invented metrics
@@ -225,23 +233,64 @@ Format your response as a JSON array of exactly 5 conceptual solutions.`
     solution: string
   ): Promise<DraggableSuggestion[]> {
     const industry = context.industry || 'Real Estate'
+    const eq = await getIndustryEQ(industry)
 
     try {
       if (this.apiKey) {
-        const prompt = `You are a marketing strategist helping ${context.brandName || 'a business'} in the ${industry} industry.
+        let prompt = `You are a marketing strategist helping ${context.brandName || 'a business'} in the ${industry} industry.
+
+Industry emotional profile: ${eq.emotional_weight}% emotional (${eq.jtbd_focus} focus)
+Customer mindset: ${eq.purchase_mindset}
 
 For this solution: "${solution}"
 
-Generate 5 key benefit TEMPLATES that customers will experience. Each should:
-- Include placeholders for metrics (use <enter number>%, <specify timeframe>, <amount>, etc.)
-- Focus on OUTCOMES and TRANSFORMATIONS, not specific numbers
-- Be relevant to ${industry} industry success factors
-- Let the business owner fill in their actual metrics
+Generate 5 key benefit TEMPLATES that customers will experience. Each should:`
+
+        // Adjust benefits based on emotional quotient
+        if (eq.emotional_weight > 70) {
+          // High emotional industries - focus on feelings and experiences
+          prompt += `
+- Focus on EMOTIONAL outcomes and personal transformations
+- Use feeling-based language: confidence, joy, peace, excitement, pride
+- Avoid ROI/time/money metrics unless secondary
+- Include identity and social benefits
+
+Example formats for ${industry}:
+- "Feel <enter emotion> every time you <experience>"
+- "Transform your <aspect> into <desired state>"
+- "Experience <positive feeling> with <percentage>% more <quality>"
+- "Become the person who <aspirational identity>"
+- "Enjoy <experience> that makes you feel <emotion>"
+
+DO NOT use ROI, time savings, or cost reduction as primary benefits for ${industry}!`
+        } else if (eq.emotional_weight > 40) {
+          prompt += `
+- Balance emotional satisfaction with practical outcomes
+- Include both feeling-based and result-based benefits
+- Mix transformation language with achievement language
+
+Example formats:
+- "Feel <emotion> while achieving <result>"
+- "Experience <percentage>% improvement in <area>"
+- "Transform <current state> into <desired outcome>"
+- "Gain <benefit> in just <timeframe>"`
+        } else {
+          // Low emotional industries - focus on metrics
+          prompt += `
+- Focus on measurable business outcomes
+- Use ROI, efficiency, and performance language
+- Include specific metric placeholders
 
 Example formats:
 - "Save <enter amount> in <specify area> costs per <timeframe>"
 - "Reduce <enter metric> by <percentage>% within <timeframe>"
 - "Achieve <enter result> <percentage>% faster than traditional methods"
+- "Increase <metric> by <percentage>% in <timeframe>"`
+        }
+
+        prompt += `
+
+Remember: Benefits should match how ${industry} customers actually make decisions.
 
 Format your response as a JSON array of exactly 5 template strings with placeholders.`
 

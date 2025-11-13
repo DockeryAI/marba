@@ -139,6 +139,132 @@ export const INDUSTRY_EQ_MAP: Record<string, IndustryEQ> = {
     purchase_mindset: 'Investing in potential and opening doors to opportunity'
   },
 
+  'Fashion': {
+    industry: 'Fashion',
+    emotional_weight: 90,
+    decision_drivers: {
+      fear: 5,       // Fear of looking bad
+      aspiration: 45, // Self-expression, looking good
+      trust: 10,     // Brand authenticity
+      urgency: 15,   // Trends, seasons
+      logic: 5       // Price considerations
+    },
+    jtbd_focus: 'social',
+    purchase_mindset: 'Expressing who I am and feeling confident in how I look'
+  },
+
+  'Clothing': {
+    industry: 'Clothing',
+    emotional_weight: 85,
+    decision_drivers: {
+      fear: 5,       // Fashion mistakes
+      aspiration: 40, // Looking good, feeling good
+      trust: 15,     // Quality, brand trust
+      urgency: 10,   // Seasonal needs
+      logic: 10      // Practicality, durability
+    },
+    jtbd_focus: 'social',
+    purchase_mindset: 'Looking good, feeling confident, and expressing personal style'
+  },
+
+  'Apparel': {
+    industry: 'Apparel',
+    emotional_weight: 85,
+    decision_drivers: {
+      fear: 5,       // Fashion faux pas
+      aspiration: 40, // Style goals, confidence
+      trust: 15,     // Brand loyalty
+      urgency: 10,   // Seasonal, events
+      logic: 10      // Value, versatility
+    },
+    jtbd_focus: 'social',
+    purchase_mindset: 'Curating a wardrobe that makes me feel amazing'
+  },
+
+  'Restaurants': {
+    industry: 'Restaurants',
+    emotional_weight: 80,
+    decision_drivers: {
+      fear: 5,       // Bad experience
+      aspiration: 35, // Experience, enjoyment
+      trust: 20,     // Reviews, reputation
+      urgency: 15,   // Hunger, occasion
+      logic: 5       // Price/value
+    },
+    jtbd_focus: 'emotional',
+    purchase_mindset: 'Creating memorable experiences and enjoying life\'s pleasures'
+  },
+
+  'Food & Beverage': {
+    industry: 'Food & Beverage',
+    emotional_weight: 75,
+    decision_drivers: {
+      fear: 10,      // Health concerns
+      aspiration: 30, // Enjoyment, indulgence
+      trust: 20,     // Quality, safety
+      urgency: 20,   // Cravings, convenience
+      logic: 10      // Nutrition, value
+    },
+    jtbd_focus: 'emotional',
+    purchase_mindset: 'Satisfying cravings and enjoying life\'s simple pleasures'
+  },
+
+  'Bars & Nightlife': {
+    industry: 'Bars & Nightlife',
+    emotional_weight: 90,
+    decision_drivers: {
+      fear: 5,       // Missing out
+      aspiration: 45, // Fun, social connection
+      trust: 10,     // Venue reputation
+      urgency: 20,   // Weekend, events
+      logic: 5       // Cover charge, drink prices
+    },
+    jtbd_focus: 'social',
+    purchase_mindset: 'Escaping routine, connecting with friends, and creating memories'
+  },
+
+  'Entertainment': {
+    industry: 'Entertainment',
+    emotional_weight: 85,
+    decision_drivers: {
+      fear: 10,      // Missing out, boredom
+      aspiration: 40, // Enjoyment, escape
+      trust: 15,     // Reviews, recommendations
+      urgency: 20,   // Limited time, events
+      logic: 5       // Ticket price
+    },
+    jtbd_focus: 'emotional',
+    purchase_mindset: 'Escaping reality and experiencing joy'
+  },
+
+  'Beauty & Cosmetics': {
+    industry: 'Beauty & Cosmetics',
+    emotional_weight: 85,
+    decision_drivers: {
+      fear: 10,      // Skin problems, aging
+      aspiration: 40, // Looking beautiful, confidence
+      trust: 20,     // Ingredients, brand
+      urgency: 10,   // Events, occasions
+      logic: 10      // Results, value
+    },
+    jtbd_focus: 'social',
+    purchase_mindset: 'Enhancing natural beauty and feeling confident'
+  },
+
+  'Wellness & Spa': {
+    industry: 'Wellness & Spa',
+    emotional_weight: 85,
+    decision_drivers: {
+      fear: 15,      // Stress, burnout
+      aspiration: 35, // Relaxation, self-care
+      trust: 25,     // Practitioner expertise
+      urgency: 10,   // Stress relief needed
+      logic: 5       // Treatment benefits
+    },
+    jtbd_focus: 'emotional',
+    purchase_mindset: 'Investing in self-care and finding peace'
+  },
+
   'default': {
     industry: 'General',
     emotional_weight: 50,

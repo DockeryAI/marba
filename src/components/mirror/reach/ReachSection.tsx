@@ -47,7 +47,7 @@ export const ReachSection: React.FC<ReachSectionProps> = ({
         .from('tactical_plans')
         .select('*')
         .eq('brand_id', brandId)
-        .single()
+        .maybeSingle()
 
       if (!error && data) {
         setChannels(data.channels)
@@ -157,9 +157,9 @@ export const ReachSection: React.FC<ReachSectionProps> = ({
   return (
     <div className={className}>
       <MirrorSectionHeader
-        title="Reach"
-        description="Executable marketing tactics and campaign plans"
-        badge={<span className="text-xs">MIRROR Analysis</span>}
+        title="Roadmap"
+        description="Channels & campaigns — executable marketing tactics"
+        badge={<span className="text-xs">MARBA Analysis | Campaigns</span>}
         actions={
           <Button size="sm" onClick={generateTactics} disabled={isGenerating}>
             <Sparkles className="h-4 w-4 mr-2" />

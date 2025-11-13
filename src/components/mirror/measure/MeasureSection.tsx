@@ -209,9 +209,9 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
   return (
     <div className={className}>
       <MirrorSectionHeader
-        title="Measure"
-        description="Current brand health, market position, and competitive landscape"
-        badge={<span className="text-xs">MIRROR Analysis</span>}
+        title="Mirror"
+        description="See where you are — your audience, market, and message today"
+        badge={<span className="text-xs">MARBA Analysis</span>}
         actions={
           <>
             <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>

@@ -211,7 +211,16 @@ export const UVPWizardProvider: React.FC<UVPWizardProviderProps> = ({
    */
   const updateField = React.useCallback(
     (field: keyof UVP, value: any) => {
-      setUVP((prev) => ({ ...prev, [field]: value }))
+      setUVP((prev) => {
+        const updated = { ...prev, [field]: value }
+
+        // Auto-populate differentiation with unique_solution since they're combined
+        if (field === 'unique_solution' && !updated.differentiation) {
+          updated.differentiation = value
+        }
+
+        return updated
+      })
 
       // Auto-save after a delay
       const saveTimer = setTimeout(() => {
@@ -233,7 +242,7 @@ export const UVPWizardProvider: React.FC<UVPWizardProviderProps> = ({
   /**
    * Go to next step
    */
-  const goNext = React.useCallback(() => {
+  const goNext = React.useCallback(async () => {
     console.log('[UVPWizardContext] goNext called, currentStep:', currentStep)
     const currentIndex = WIZARD_STEPS.indexOf(currentStep)
     console.log('[UVPWizardContext] Current index:', currentIndex, 'of', WIZARD_STEPS.length)
@@ -245,6 +254,48 @@ export const UVPWizardProvider: React.FC<UVPWizardProviderProps> = ({
       // Mark current step as completed
       if (!completedSteps.includes(currentStep)) {
         setCompletedSteps((prev) => [...prev, currentStep])
+      }
+
+      // If moving from welcome to first step, trigger deep website scan
+      if (currentStep === 'welcome' && nextStep === 'target-customer') {
+        console.log('[UVPWizardContext] Starting wizard - triggering deep website scan')
+        setIsLoading(true)
+
+        // Perform deep website analysis immediately
+        if (brandData?.website && brandData?.id) {
+          console.log('[UVPWizardContext] Performing initial deep website scan...')
+          try {
+            const deepAnalysis = await websiteAnalyzer.analyzeWebsite(brandData.website, brandData.id)
+            console.log('[UVPWizardContext] Initial deep analysis complete:', deepAnalysis)
+
+            // Store the analysis for use in suggestions
+            const enhancedWebsiteData = {
+              ...(brandData?.website_analysis || brandData?.websiteData || {}),
+              ...(deepAnalysis || {}),
+              services: [
+                ...(brandData?.services || []),
+                ...(deepAnalysis?.services || [])
+              ].filter((s, i, arr) => arr.indexOf(s) === i),
+              products: [
+                ...(brandData?.products || []),
+                ...(deepAnalysis?.products || [])
+              ].filter((p, i, arr) => arr.indexOf(p) === i),
+              benefits: deepAnalysis?.benefits || [],
+              differentiators: deepAnalysis?.differentiators || [],
+              target_audience: deepAnalysis?.target_audience || [],
+              problems_solved: deepAnalysis?.problems_solved || []
+            }
+
+            // Update brand data with enhanced website analysis
+            if (brandData) {
+              brandData.website_analysis = enhancedWebsiteData
+            }
+          } catch (error) {
+            console.error('[UVPWizardContext] Deep website scan failed:', error)
+          }
+        }
+
+        setIsLoading(false)
       }
 
       // Update step WITHOUT any scrolling
@@ -261,7 +312,7 @@ export const UVPWizardProvider: React.FC<UVPWizardProviderProps> = ({
     } else {
       console.log('[UVPWizardContext] Already at last step')
     }
-  }, [currentStep, completedSteps])
+  }, [currentStep, completedSteps, brandData])
 
   /**
    * Go to previous step

@@ -1,11 +1,20 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 
 interface MirrorSection {
   id: string
   label: string
+  tooltip?: string
+  color?: 'blue' | 'purple' | 'green' | 'orange' | 'teal'
+  locked?: boolean
   icon?: React.ReactNode
   subsections?: {
     id: string
@@ -36,67 +45,116 @@ export const MirrorLayout: React.FC<MirrorLayoutProps> = ({
 
   const currentSectionData = sections.find(s => s.id === currentSection)
 
+  // Color mapping for MARBA sections
+  const colorClasses = {
+    blue: 'text-blue-600 dark:text-blue-400',
+    purple: 'text-purple-600 dark:text-purple-400',
+    green: 'text-green-600 dark:text-green-400',
+    orange: 'text-orange-600 dark:text-orange-400',
+    teal: 'text-teal-600 dark:text-teal-400',
+  }
+
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          'border-r bg-muted/10 transition-all duration-300 flex flex-col',
-          sidebarCollapsed ? 'w-16' : 'w-64'
-        )}
-      >
-        {/* Section Navigation */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-          {sections.map((section) => {
-            const isActive = section.id === currentSection
-            return (
-              <div key={section.id}>
+    <TooltipProvider>
+      <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+        {/* Sidebar */}
+        <aside
+          className={cn(
+            'border-r bg-muted/10 transition-all duration-300 flex flex-col',
+            sidebarCollapsed ? 'w-16' : 'w-64'
+          )}
+        >
+          {/* Section Navigation */}
+          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+            {sections.map((section) => {
+              const isActive = section.id === currentSection
+              const colorClass = section.color ? colorClasses[section.color] : colorClasses.blue
+
+              const buttonContent = (
                 <Button
                   variant={isActive ? 'secondary' : 'ghost'}
                   className={cn(
-                    'w-full justify-start gap-2',
-                    sidebarCollapsed && 'justify-center px-0'
+                    'w-full justify-start gap-2 relative',
+                    sidebarCollapsed && 'justify-center px-0',
+                    section.locked && 'opacity-60'
                   )}
-                  onClick={() => onSectionChange(section.id)}
+                  onClick={() => !section.locked && onSectionChange(section.id)}
+                  disabled={section.locked}
                 >
                   {section.icon && (
                     <span className="shrink-0">{section.icon}</span>
                   )}
                   {!sidebarCollapsed && (
-                    <span className="truncate">
-                      <span className="text-blue-600 font-semibold">{section.label[0]}</span>
-                      {section.label.slice(1)}
+                    <span className="truncate flex items-center gap-2">
+                      <span>
+                        <span className={cn('text-2xl font-bold', colorClass)}>
+                          {section.label[0]}
+                        </span>
+                        <span className="text-base">
+                          {section.label.slice(1)}
+                        </span>
+                      </span>
+                      {section.locked && (
+                        <Lock className="h-3 w-3 text-muted-foreground ml-auto" />
+                      )}
+                    </span>
+                  )}
+                  {sidebarCollapsed && (
+                    <span className={cn('text-xl font-bold', colorClass)}>
+                      {section.label[0]}
                     </span>
                   )}
                 </Button>
+              )
 
-                {/* Subsections */}
-                {!sidebarCollapsed &&
-                  isActive &&
-                  section.subsections &&
-                  section.subsections.length > 0 && (
-                    <div className="mt-1 ml-4 space-y-1">
-                      {section.subsections.map((sub) => (
-                        <Button
-                          key={sub.id}
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-start text-xs"
-                          onClick={() => {
-                            // Scroll to subsection
-                            const element = document.getElementById(sub.id)
-                            element?.scrollIntoView({ behavior: 'smooth' })
-                          }}
-                        >
-                          {sub.label}
-                        </Button>
-                      ))}
-                    </div>
+              return (
+                <div key={section.id}>
+                  {section.tooltip ? (
+                    <Tooltip delayDuration={300}>
+                      <TooltipTrigger asChild>
+                        {buttonContent}
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="right"
+                        align="start"
+                        sideOffset={8}
+                        className="max-w-xs ml-2"
+                      >
+                        <p className="font-semibold">{section.label}</p>
+                        <p className="text-sm text-muted-foreground">{section.tooltip}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    buttonContent
                   )}
-              </div>
-            )
-          })}
-        </nav>
+
+                  {/* Subsections */}
+                  {!sidebarCollapsed &&
+                    isActive &&
+                    section.subsections &&
+                    section.subsections.length > 0 && (
+                      <div className="mt-1 ml-4 space-y-1">
+                        {section.subsections.map((sub) => (
+                          <Button
+                            key={sub.id}
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-xs"
+                            onClick={() => {
+                              // Scroll to subsection
+                              const element = document.getElementById(sub.id)
+                              element?.scrollIntoView({ behavior: 'smooth' })
+                            }}
+                          >
+                            {sub.label}
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+                </div>
+              )
+            })}
+          </nav>
 
         {/* Sidebar CTA (e.g., UVP prompt) */}
         {!sidebarCollapsed && sidebarCTA && (
@@ -129,6 +187,7 @@ export const MirrorLayout: React.FC<MirrorLayoutProps> = ({
         {children}
       </main>
     </div>
+    </TooltipProvider>
   )
 }
 

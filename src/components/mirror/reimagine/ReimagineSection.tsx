@@ -52,7 +52,7 @@ export const ReimagineSection: React.FC<ReimagineSectionProps> = ({
         .from('marketing_strategies')
         .select('*')
         .eq('brand_id', brandId)
-        .single()
+        .maybeSingle()
 
       if (!error && data) {
         setStrategy(data.strategy_data)
@@ -196,9 +196,9 @@ export const ReimagineSection: React.FC<ReimagineSectionProps> = ({
   return (
     <div className={className}>
       <MirrorSectionHeader
-        title="Reimagine"
-        description="Define your positioning, audience, content, and competitive approach"
-        badge={<span className="text-xs">MIRROR Analysis</span>}
+        title="Roadmap"
+        description="Plan how to get there — the channels, audience, and strategy"
+        badge={<span className="text-xs">MARBA Analysis | Strategy</span>}
         actions={
           <Button size="sm" onClick={generateFullStrategy} disabled={isLoading}>
             <Sparkles className="h-4 w-4 mr-2" />

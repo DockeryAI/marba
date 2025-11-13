@@ -8,7 +8,7 @@ import { OpportunityDashboard } from './OpportunityDashboard'
 import { ConnectionDiscovery } from './ConnectionDiscovery'
 import { ActionItem, ActionPlanner, ActionTimeline } from '@/services/mirror/action-planner'
 import { TrendingUp, Users, Calendar, AlertTriangle, Target } from 'lucide-react'
-import { ContentCalendarHub } from '@/components/content-calendar'
+// import { ContentCalendarHub } from '@/components/content-calendar' // Temporarily disabled due to errors
 
 interface OptimizeSectionProps {
   brandId: string
@@ -134,11 +134,15 @@ export const OptimizeSection: React.FC<OptimizeSectionProps> = ({
 
         {/* Content Calendar View */}
         {activeView === 'calendar' && (
-          <ContentCalendarHub
-            brandId={brandId}
-            userId={userId}
-            pillars={pillars}
-          />
+          <div className="flex items-center justify-center py-12 bg-muted/50 rounded-lg">
+            <div className="text-center">
+              <Calendar className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Content Calendar Temporarily Disabled</h3>
+              <p className="text-sm text-muted-foreground">
+                Calendar component is being updated to fix performance issues
+              </p>
+            </div>
+          </div>
         )}
 
         {/* Action Board View */}

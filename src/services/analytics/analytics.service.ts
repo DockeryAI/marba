@@ -48,9 +48,10 @@ export class AnalyticsService {
         .from('mirror_intend_objectives')
         .select('*')
         .eq('id', objectiveId)
-        .single()
+        .maybeSingle()
 
       if (objError) throw objError
+      if (!objective) throw new Error('Objective not found')
 
       // Fetch latest analytics for this objective
       const { data: analytics, error: analyticsError } = await supabase

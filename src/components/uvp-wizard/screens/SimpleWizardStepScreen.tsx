@@ -56,7 +56,7 @@ export const SimpleWizardStepScreen: React.FC<SimpleWizardStepScreenProps> = ({
   })
   const [mode, setMode] = React.useState<'suggestions' | 'custom'>('suggestions')
   const [selectedSuggestions, setSelectedSuggestions] = React.useState<DraggableSuggestion[]>([])
-  const [customValue, setCustomValue] = React.useState(value)
+  const [customValue, setCustomValue] = React.useState('')  // Start with blank text
   const [customAdditions, setCustomAdditions] = React.useState<string[]>([])
   const [newCustom, setNewCustom] = React.useState('')
 
@@ -84,10 +84,7 @@ export const SimpleWizardStepScreen: React.FC<SimpleWizardStepScreenProps> = ({
     }
   }, [])
 
-  // Update custom value when value changes externally
-  React.useEffect(() => {
-    setCustomValue(value)
-  }, [value])
+  // Don't auto-populate custom value - keep it blank for user input
 
   const handleSelectSuggestion = (suggestion: DraggableSuggestion) => {
     const isSelected = selectedSuggestions.some(s => s.id === suggestion.id)
