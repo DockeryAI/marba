@@ -7,24 +7,37 @@ import React from 'react'
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { AlertCircle, ExternalLink, TrendingUp, Target } from 'lucide-react'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+import { AlertCircle, Target, Info, Database } from 'lucide-react'
 import { type MarketPositionData } from '@/types/mirror-diagnostics'
+import { KeywordDetailTable } from './KeywordDetailTable'
 
 interface MarketPositionSectionProps {
   data: MarketPositionData
   hasCompletedUVP: boolean
+  score: number // Added to show score calculation
 }
 
 export const MarketPositionSection: React.FC<MarketPositionSectionProps> = ({
   data,
-  hasCompletedUVP,
+  score,
 }) => {
+  // Calculate scoring breakdown for transparency
+  const avgKeywordRank = Object.values(data.keyword_rankings).reduce((sum, rank) => sum + rank, 0) / Object.keys(data.keyword_rankings).length
+  const keywordPenalty = avgKeywordRank > 10 ? 30 : avgKeywordRank > 5 ? 15 : 0
+  const gapsPenalty = data.competitive_gaps.length * 5
+  const rankPenalty = data.current_rank > 5 ? 20 : data.current_rank > 3 ? 10 : 0
+  const calculatedScore = Math.max(0, Math.min(100, 100 - keywordPenalty - gapsPenalty - rankPenalty))
+
   return (
     <div className="space-y-4">{/* Compact spacing */}
 
@@ -49,15 +62,174 @@ export const MarketPositionSection: React.FC<MarketPositionSectionProps> = ({
         </div>
       </div>
 
-      {/* Grid Layout for Rankings and Competitors */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Keyword Rankings */}
+      {/* Score Calculation Breakdown */}
+      <Accordion type="single" collapsible className="border rounded-lg">
+        <AccordionItem value="score-calc" className="border-none">
+          <AccordionTrigger className="px-4 hover:no-underline">
+            <div className="flex items-center gap-2">
+              <Info className="h-4 w-4 text-blue-600" />
+              <span className="font-semibold text-sm">How This Score Was Calculated</span>
+              <Badge variant="outline" className="ml-2">{score}/100</Badge>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <div className="space-y-4 text-sm">
+              {/* Formula Explanation */}
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="font-semibold mb-2 flex items-center gap-2">
+                  <Target className="h-4 w-4 text-blue-600" />
+                  Scoring Formula
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Market Position Score starts at 100 and deducts points for various issues:
+                </p>
+                <div className="font-mono text-xs bg-white p-2 rounded border">
+                  Score = 100 - Keyword Penalty - Gaps Penalty - Rank Penalty
+                </div>
+              </div>
+
+              {/* Detailed Breakdown */}
+              <div className="space-y-3">
+                <div className="flex items-start justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Starting Score</div>
+                    <div className="text-xs text-muted-foreground mt-1">Base score before penalties</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-green-600">100</div>
+                  </div>
+                </div>
+
+                {/* Keyword Rankings Penalty */}
+                <div className="flex items-start justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Keyword Rankings</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Average rank: {avgKeywordRank.toFixed(1)}
+                      {avgKeywordRank > 10 && ' (Poor - penalty: -30 points)'}
+                      {avgKeywordRank > 5 && avgKeywordRank <= 10 && ' (Needs work - penalty: -15 points)'}
+                      {avgKeywordRank <= 5 && ' (Good - no penalty)'}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Database className="h-3 w-3" />
+                      Source: SEMrush API (keyword rankings)
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${keywordPenalty > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {keywordPenalty > 0 ? '-' : ''}{keywordPenalty}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Competitive Gaps Penalty */}
+                <div className="flex items-start justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Competitive Gaps</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {data.competitive_gaps.length} opportunities identified (-5 points each)
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Database className="h-3 w-3" />
+                      Source: Perplexity Web Search + OpenRouter AI Analysis
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${gapsPenalty > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {gapsPenalty > 0 ? '-' : ''}{gapsPenalty}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Market Rank Penalty */}
+                <div className="flex items-start justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Market Rank Position</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Rank #{data.current_rank} of {data.total_competitors}
+                      {data.current_rank > 5 && ' (Low visibility - penalty: -20 points)'}
+                      {data.current_rank > 3 && data.current_rank <= 5 && ' (Middle tier - penalty: -10 points)'}
+                      {data.current_rank <= 3 && ' (Top tier - no penalty)'}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Database className="h-3 w-3" />
+                      Source: Perplexity competitor analysis + estimated position
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${rankPenalty > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {rankPenalty > 0 ? '-' : ''}{rankPenalty}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Final Score */}
+                <div className="flex items-start justify-between p-3 border-2 border-primary rounded-lg bg-primary/5">
+                  <div className="flex-1">
+                    <div className="font-bold text-base">Final Market Position Score</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      100 - {keywordPenalty} - {gapsPenalty} - {rankPenalty} = {calculatedScore}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-primary">{score}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Data Sources Summary */}
+              <div className="p-3 bg-gray-50 border rounded-lg">
+                <div className="font-semibold mb-2 text-xs">Data Sources Used</div>
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">SEMrush</Badge>
+                    <span>Keyword rankings and search volume data</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">Perplexity</Badge>
+                    <span>Real-time web search for competitors</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">OpenRouter (Claude)</Badge>
+                    <span>AI analysis of competitive positioning</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
+      {/* Keyword Rankings - Full Width Detailed Table */}
+      {data.keyword_rankings_detailed && data.keyword_rankings_detailed.length > 0 ? (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Keyword Rankings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <KeywordDetailTable
+              keywords={data.keyword_rankings_detailed.map(kw => ({
+                keyword: kw.keyword,
+                position: kw.position,
+                searchVolume: kw.searchVolume || 0,
+                difficulty: kw.difficulty || 0,
+                traffic: kw.traffic || 0,
+                url: '',
+                isBranded: false,
+                trend: kw.trend,
+              }))}
+              maxRows={10}
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        /* Fallback to simple grid layout if detailed data not available */
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Keyword Rankings</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {Object.entries(data.keyword_rankings).slice(0, 5).map(([keyword, rank]) => (
+            {Object.entries(data.keyword_rankings).slice(0, 10).map(([keyword, rank]) => (
               <div key={keyword} className="flex items-center justify-between text-sm">
                 <span className="truncate flex-1">{keyword}</span>
                 <Badge variant={rank <= 3 ? 'default' : rank <= 10 ? 'secondary' : 'outline'} className="ml-2">
@@ -72,12 +244,13 @@ export const MarketPositionSection: React.FC<MarketPositionSectionProps> = ({
             )}
           </CardContent>
         </Card>
+      )}
 
-        {/* Top Competitors - Compact */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Top Competitors</CardTitle>
-          </CardHeader>
+      {/* Top Competitors - Separate Card Below */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Top Competitors</CardTitle>
+        </CardHeader>
           <CardContent className="space-y-3">
             {data.top_competitors.slice(0, 3).map((competitor, index) => (
               <div key={competitor.name} className="border rounded p-2 space-y-1">
@@ -102,7 +275,6 @@ export const MarketPositionSection: React.FC<MarketPositionSectionProps> = ({
             )}
           </CardContent>
         </Card>
-      </div>
 
       {/* Competitive Gaps - Compact */}
       {data.competitive_gaps.length > 0 && (

@@ -172,12 +172,10 @@ export const MirrorPage: React.FC = () => {
   const completedCount = Object.values(sectionCompletion).filter(Boolean).length
 
   return (
-    <MirrorLayout
-      sections={sections}
-      currentSection={activeSection}
-      onSectionChange={setActiveSection}
-      sidebarCTA={
-        !hasCompletedUVP ? (
+    <>
+      {/* Floating UVP Button - Top Right */}
+      {!hasCompletedUVP && (
+        <div className="fixed top-6 right-6 z-50 animate-in fade-in slide-in-from-top-5 duration-500">
           <button
             onClick={() => {
               setActiveSection('roadmap')
@@ -186,24 +184,30 @@ export const MirrorPage: React.FC = () => {
                 uvpSection?.scrollIntoView({ behavior: 'smooth', block: 'center' })
               }, 100)
             }}
-            className="w-full relative overflow-hidden rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 p-4 text-white shadow-lg transition-all hover:shadow-xl hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
+            className="relative overflow-hidden rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-3 text-white shadow-2xl transition-all hover:shadow-purple-500/50 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2"
           >
-            {/* Glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-indigo-400 opacity-0 animate-pulse" />
+            {/* Animated glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-indigo-400 opacity-0 group-hover:opacity-20 animate-pulse" />
 
-            <div className="relative z-10">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <Zap className="h-5 w-5 animate-pulse" />
-                <span className="font-bold text-sm">Complete Your UVP</span>
+            <div className="relative z-10 flex items-center gap-2">
+              <Zap className="h-5 w-5 animate-pulse" />
+              <div className="text-left">
+                <div className="font-bold text-sm leading-tight">Complete Your UVP</div>
+                <div className="text-xs opacity-90">5 mins • Unlocks everything</div>
               </div>
-              <p className="text-xs opacity-90 text-center">
-                Takes 5 minutes • Unlocks everything
-              </p>
             </div>
+
+            {/* Pulse ring */}
+            <div className="absolute inset-0 rounded-lg animate-ping opacity-20 bg-purple-400" style={{ animationDuration: '2s' }} />
           </button>
-        ) : null
-      }
-    >
+        </div>
+      )}
+
+      <MirrorLayout
+        sections={sections}
+        currentSection={activeSection}
+        onSectionChange={setActiveSection}
+      >
       <div className="space-y-12">
         {/* MIRROR - See where you are */}
         <div id="mirror">
@@ -314,5 +318,6 @@ export const MirrorPage: React.FC = () => {
       {/* Action Center Widget - Persistent across all sections */}
       <ActionCenterWidget />
     </MirrorLayout>
+    </>
   )
 }

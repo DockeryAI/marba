@@ -40,15 +40,16 @@ export class MirrorOrchestratorService {
         brandFitAnalysis.score
       )
 
-      // Identify top 3 critical gaps
+      // Check if brand has completed UVP
+      const hasCompletedUVP = await this.checkUVPCompletion(brandId)
+
+      // Identify top 3 critical gaps (only after UVP for strategic gaps)
       const criticalGaps = await this.identifyCriticalGaps(
         marketPositionAnalysis.data,
         customerTruthAnalysis.data,
-        brandFitAnalysis.data
+        brandFitAnalysis.data,
+        hasCompletedUVP
       )
-
-      // Check if brand has completed UVP
-      const hasCompletedUVP = await this.checkUVPCompletion(brandId)
 
       // Build complete diagnostic
       const diagnostic: Omit<MirrorDiagnostic, 'id' | 'created_at' | 'updated_at'> = {
@@ -80,60 +81,20 @@ export class MirrorOrchestratorService {
 
   /**
    * Identify top 3 critical gaps from all analyses
+   * Pre-UVP: Only show universal issues (market position, messaging)
+   * Post-UVP: Show strategic gaps (targeting, positioning vs execution)
    */
   private static async identifyCriticalGaps(
     marketData: any,
     customerData: any,
-    brandData: any
+    brandData: any,
+    hasCompletedUVP: boolean
   ): Promise<CriticalGap[]> {
     const gaps: CriticalGap[] = []
 
-    // Gap 1: Price-based competition (from customer truth)
-    if (customerData.price_vs_value_perception.includes('cheapest')) {
-      gaps.push({
-        priority: 1,
-        gap: "You're competing on price, not value",
-        impact:
-          'Losing margin and attracting price-sensitive customers who switch to cheaper alternatives',
-        fix: 'Define and communicate clear value proposition',
-        fix_action_link: '/roadmap#uvp-flow',
-      })
-    }
+    // PRE-UVP GAPS: Universal issues that exist regardless of strategy
 
-    // Gap 2: Demographic mismatch (from customer truth)
-    if (customerData.match_percentage < 50) {
-      gaps.push({
-        priority: gaps.length === 0 ? 1 : 2,
-        gap: 'Targeting wrong customer demographic',
-        impact: `Only ${customerData.match_percentage}% match between expected and actual customers`,
-        fix: 'Realign targeting strategy or pivot positioning to actual audience',
-        fix_action_link: '/align#target-audience',
-      })
-    }
-
-    // Gap 3: Messaging inconsistency (from brand fit)
-    if (brandData.messaging_consistency < 60) {
-      gaps.push({
-        priority: gaps.length === 0 ? 1 : gaps.length === 1 ? 2 : 3,
-        gap: 'Inconsistent messaging across customer touchpoints',
-        impact: `${brandData.messaging_consistency}% consistency score - customers confused about what you do`,
-        fix: 'Unify messaging with strategic framework',
-        fix_action_link: '/align#messaging',
-      })
-    }
-
-    // Gap 4: Weak differentiation (from brand fit)
-    if (brandData.differentiation_score < 50) {
-      gaps.push({
-        priority: gaps.length === 0 ? 1 : gaps.length === 1 ? 2 : 3,
-        gap: 'No clear differentiation from competitors',
-        impact: `${brandData.differentiation_score}% differentiation - blending in with competition`,
-        fix: 'Identify and own unique market position',
-        fix_action_link: '/align#positioning',
-      })
-    }
-
-    // Gap 5: Poor market position (from market position)
+    // Gap: Poor market position (always relevant)
     if (marketData.current_rank > 5) {
       gaps.push({
         priority: gaps.length === 0 ? 1 : gaps.length === 1 ? 2 : 3,
@@ -144,16 +105,53 @@ export class MirrorOrchestratorService {
       })
     }
 
-    // Gap 6: Competitive gaps
-    if (marketData.competitive_gaps.length > 0) {
-      const topGap = marketData.competitive_gaps[0]
-      gaps.push({
-        priority: gaps.length === 0 ? 1 : gaps.length === 1 ? 2 : 3,
-        gap: topGap.gap,
-        impact: topGap.impact,
-        fix: 'Address competitive weaknesses',
-        fix_action_link: '/roadmap',
-      })
+    // POST-UVP GAPS: Strategic alignment issues (only after they define strategy)
+
+    if (hasCompletedUVP) {
+      // Gap: Price-based competition (only matters after they define value prop)
+      if (customerData.price_vs_value_perception.includes('cheapest')) {
+        gaps.push({
+          priority: gaps.length === 0 ? 1 : 2,
+          gap: "You're competing on price, not value",
+          impact:
+            'Losing margin and attracting price-sensitive customers who switch to cheaper alternatives',
+          fix: 'Strengthen value communication in customer touchpoints',
+          fix_action_link: '/roadmap#messaging',
+        })
+      }
+
+      // Gap: Demographic mismatch (only relevant after they define target)
+      if (customerData.match_percentage < 50) {
+        gaps.push({
+          priority: gaps.length === 0 ? 1 : 2,
+          gap: 'Target audience misalignment',
+          impact: `Only ${customerData.match_percentage}% match between your defined target and actual customers`,
+          fix: 'Either adjust messaging to reach target audience or update target definition',
+          fix_action_link: '/align#target-audience',
+        })
+      }
+
+      // Gap: Messaging inconsistency (matters more post-UVP when they have clear message)
+      if (brandData.messaging_consistency < 60) {
+        gaps.push({
+          priority: gaps.length === 0 ? 1 : gaps.length === 1 ? 2 : 3,
+          gap: 'Inconsistent messaging across touchpoints',
+          impact: `${brandData.messaging_consistency}% consistency score - your UVP isn't landing everywhere`,
+          fix: 'Align all touchpoints with your defined value proposition',
+          fix_action_link: '/align#messaging',
+        })
+      }
+
+      // Gap: Weak differentiation (post-UVP issue)
+      if (brandData.differentiation_score < 50) {
+        gaps.push({
+          priority: gaps.length === 0 ? 1 : gaps.length === 1 ? 2 : 3,
+          gap: 'Weak differentiation from competitors',
+          impact: `${brandData.differentiation_score}% differentiation - not standing out in market`,
+          fix: 'Refine positioning to own unique market position',
+          fix_action_link: '/align#positioning',
+        })
+      }
     }
 
     // Return top 3 by priority

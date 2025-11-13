@@ -7,7 +7,14 @@ import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { AlertCircle, TrendingUp, TrendingDown, Minus, ArrowRight } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+import { ArrowRight, Info, Target } from 'lucide-react'
 import { type MirrorDiagnostic, getScoreStatus } from '@/types/mirror-diagnostics'
 
 interface MirrorHealthDashboardProps {
@@ -23,6 +30,12 @@ export const MirrorHealthDashboard: React.FC<MirrorHealthDashboardProps> = ({
   const customerStatus = getScoreStatus(diagnostic.customer_match_score)
   const brandStatus = getScoreStatus(diagnostic.brand_clarity_score)
   const overallStatus = getScoreStatus(diagnostic.overall_health_score)
+
+  // Calculate overall score for transparency
+  const marketContribution = Math.round(diagnostic.market_position_score * 0.3)
+  const customerContribution = Math.round(diagnostic.customer_match_score * 0.4)
+  const brandContribution = Math.round(diagnostic.brand_clarity_score * 0.3)
+  const calculatedTotal = marketContribution + customerContribution + brandContribution
 
   return (
     <div className="space-y-4 max-w-full">
@@ -46,8 +59,90 @@ export const MirrorHealthDashboard: React.FC<MirrorHealthDashboardProps> = ({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent className="pt-0 space-y-3">
           <Progress value={diagnostic.overall_health_score} className="h-2" />
+
+          {/* Overall Score Calculation Breakdown */}
+          <Accordion type="single" collapsible className="border rounded-lg">
+            <AccordionItem value="overall-calc" className="border-none">
+              <AccordionTrigger className="px-3 py-2 hover:no-underline">
+                <div className="flex items-center gap-2">
+                  <Info className="h-3 w-3 text-blue-600" />
+                  <span className="font-semibold text-xs">How Overall Score is Calculated</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-3 pb-3">
+                <div className="space-y-3 text-xs">
+                  {/* Formula Explanation */}
+                  <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="font-semibold mb-1 flex items-center gap-2">
+                      <Target className="h-3 w-3 text-blue-600" />
+                      Weighted Average Formula
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Overall Health is a weighted average of the three core diagnostics:
+                    </p>
+                    <div className="font-mono text-xs bg-white p-2 rounded border">
+                      Overall = (Market × 30%) + (Customer × 40%) + (Brand × 30%)
+                    </div>
+                  </div>
+
+                  {/* Score Breakdown */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-2 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="font-medium">Market Position</div>
+                        <div className="text-xs text-muted-foreground">
+                          {diagnostic.market_position_score} × 30% = {marketContribution}
+                        </div>
+                      </div>
+                      <Badge variant="secondary">{marketContribution} pts</Badge>
+                    </div>
+
+                    <div className="flex items-center justify-between p-2 border rounded-lg bg-primary/5">
+                      <div className="flex-1">
+                        <div className="font-medium">Customer Match</div>
+                        <div className="text-xs text-muted-foreground">
+                          {diagnostic.customer_match_score} × 40% = {customerContribution}
+                        </div>
+                      </div>
+                      <Badge variant="secondary">{customerContribution} pts</Badge>
+                    </div>
+
+                    <div className="flex items-center justify-between p-2 border rounded-lg">
+                      <div className="flex-1">
+                        <div className="font-medium">Brand Clarity</div>
+                        <div className="text-xs text-muted-foreground">
+                          {diagnostic.brand_clarity_score} × 30% = {brandContribution}
+                        </div>
+                      </div>
+                      <Badge variant="secondary">{brandContribution} pts</Badge>
+                    </div>
+
+                    <div className="flex items-center justify-between p-2 border-2 border-primary rounded-lg bg-primary/10">
+                      <div className="flex-1">
+                        <div className="font-bold">Overall Health Score</div>
+                        <div className="text-xs text-muted-foreground">
+                          {marketContribution} + {customerContribution} + {brandContribution} = {calculatedTotal}
+                        </div>
+                      </div>
+                      <Badge className="text-sm font-bold">{diagnostic.overall_health_score}</Badge>
+                    </div>
+                  </div>
+
+                  {/* Why This Weighting */}
+                  <div className="p-2 bg-gray-50 border rounded-lg">
+                    <div className="font-semibold mb-1">Why This Weighting?</div>
+                    <ul className="space-y-1 text-xs text-muted-foreground">
+                      <li>• <strong>Customer (40%)</strong> - Most important: buying behavior drives revenue</li>
+                      <li>• <strong>Market (30%)</strong> - Important: visibility brings opportunities</li>
+                      <li>• <strong>Brand (30%)</strong> - Important: clarity converts prospects to customers</li>
+                    </ul>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
 

@@ -72,12 +72,7 @@ export class BrandFitService {
       return { score, data }
     } catch (error) {
       console.error('[BrandFitService] Analysis failed:', error)
-
-      // Return fallback data
-      return {
-        score: 50,
-        data: this.getFallbackData(brandData),
-      }
+      throw new Error(`Brand Fit analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -105,7 +100,7 @@ export class BrandFitService {
       return consistencyAnalysis
     } catch (error) {
       console.error('[BrandFitService] Touchpoint analysis failed:', error)
-      return this.getMockTouchpointAnalysis(brandData.industry)
+      throw new Error(`Failed to analyze touchpoints: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 

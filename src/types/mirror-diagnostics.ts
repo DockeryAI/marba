@@ -4,14 +4,34 @@
  */
 
 // ============================================================================
+// Business Model Detection Types
+// ============================================================================
+
+export type BusinessModel =
+  | 'solo-practitioner'  // One person operation
+  | 'small-local'        // 2-10 employees, single location
+  | 'multi-location'     // Multiple physical locations, regional presence
+  | 'regional'           // Regional presence, established brand
+  | 'national'           // National presence, multiple states
+  | 'enterprise'         // Large corporation, international presence
+
+export interface BusinessModelDetection {
+  model: BusinessModel
+  confidence: number // 0-100
+  signals: string[] // What indicated this classification
+}
+
+// ============================================================================
 // Market Position Types
 // ============================================================================
 
 export interface Competitor {
   name: string
-  url: string
+  url?: string
   positioning: string
   strengths: string[]
+  business_model?: BusinessModel
+  size_indicator?: string // e.g., "National chain", "Local business"
 }
 
 export interface CompetitiveGap {
@@ -25,11 +45,21 @@ export interface PricingPosition {
   vs_market: string
 }
 
+export interface KeywordRankingSimple {
+  keyword: string
+  position: number
+  searchVolume?: number
+  difficulty?: number
+  traffic?: number
+  trend?: 'rising' | 'stable' | 'declining'
+}
+
 export interface MarketPositionData {
   current_rank: number
   total_competitors: number
   top_competitors: Competitor[]
-  keyword_rankings: Record<string, number> // keyword -> rank
+  keyword_rankings: Record<string, number> // keyword -> rank (legacy, simple format)
+  keyword_rankings_detailed?: KeywordRankingSimple[] // New: detailed format with volume/difficulty/trend
   competitive_gaps: CompetitiveGap[]
   pricing_position: PricingPosition
 }
@@ -190,6 +220,8 @@ export interface BrandData {
   website?: string
   competitors?: string[]
   target_audience?: string
+  size?: string // e.g., "1-10 employees"
+  founded?: string
 }
 
 export interface MarketPositionAnalysis {

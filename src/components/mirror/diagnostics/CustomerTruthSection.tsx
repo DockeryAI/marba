@@ -13,21 +13,35 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { AlertCircle, Users, DollarSign, MapPin, TrendingUp } from 'lucide-react'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+import { AlertCircle, Users, DollarSign, TrendingUp, Info, Database, Target } from 'lucide-react'
 import { type CustomerTruthData } from '@/types/mirror-diagnostics'
 
 interface CustomerTruthSectionProps {
   data: CustomerTruthData
   hasCompletedUVP: boolean
+  score: number // Added to show score calculation
 }
 
 export const CustomerTruthSection: React.FC<CustomerTruthSectionProps> = ({
   data,
   hasCompletedUVP,
+  score,
 }) => {
   const isGoodMatch = data.match_percentage >= 70
   const isModerateMatch = data.match_percentage >= 50 && data.match_percentage < 70
   const isPoorMatch = data.match_percentage < 50
+
+  // Calculate scoring breakdown for transparency
+  const demographicPenalty = data.match_percentage < 50 ? 30 : data.match_percentage < 70 ? 15 : 0
+  const pricePenalty = data.price_vs_value_perception.includes('cheapest') ? 20 : 0
+  const journeyGapsPenalty = data.buyer_journey_gaps.length * 5
+  const calculatedScore = Math.max(0, Math.min(100, 100 - demographicPenalty - pricePenalty - journeyGapsPenalty))
 
   return (
     <div className="space-y-6">
@@ -41,6 +55,143 @@ export const CustomerTruthSection: React.FC<CustomerTruthSectionProps> = ({
         </p>
       </div>
 
+      {/* Score Calculation Breakdown */}
+      <Accordion type="single" collapsible className="border rounded-lg">
+        <AccordionItem value="score-calc" className="border-none">
+          <AccordionTrigger className="px-4 hover:no-underline">
+            <div className="flex items-center gap-2">
+              <Info className="h-4 w-4 text-blue-600" />
+              <span className="font-semibold text-sm">How This Score Was Calculated</span>
+              <Badge variant="outline" className="ml-2">{score}/100</Badge>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <div className="space-y-4 text-sm">
+              {/* Formula Explanation */}
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="font-semibold mb-2 flex items-center gap-2">
+                  <Target className="h-4 w-4 text-blue-600" />
+                  Scoring Formula
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Customer Match Score starts at 100 and deducts points for misalignment:
+                </p>
+                <div className="font-mono text-xs bg-white p-2 rounded border">
+                  Score = 100 - Demographic Penalty - Price Penalty - Journey Gaps Penalty
+                </div>
+              </div>
+
+              {/* Detailed Breakdown */}
+              <div className="space-y-3">
+                <div className="flex items-start justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Starting Score</div>
+                    <div className="text-xs text-muted-foreground mt-1">Base score before penalties</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-green-600">100</div>
+                  </div>
+                </div>
+
+                {/* Demographic Mismatch Penalty */}
+                <div className="flex items-start justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Demographic Match</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Match: {data.match_percentage}%
+                      {data.match_percentage < 50 && ' (Poor alignment - penalty: -30 points)'}
+                      {data.match_percentage >= 50 && data.match_percentage < 70 && ' (Partial alignment - penalty: -15 points)'}
+                      {data.match_percentage >= 70 && ' (Good alignment - no penalty)'}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Database className="h-3 w-3" />
+                      Source: Google Analytics demographics + brand target definition
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${demographicPenalty > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {demographicPenalty > 0 ? '-' : ''}{demographicPenalty}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Price Competition Penalty */}
+                <div className="flex items-start justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Price vs Value Positioning</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {data.price_vs_value_perception}
+                      {pricePenalty > 0 && ' (Competing on price - penalty: -20 points)'}
+                      {pricePenalty === 0 && ' (Value-based - no penalty)'}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Database className="h-3 w-3" />
+                      Source: Perplexity review mining + OpenRouter AI analysis
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${pricePenalty > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {pricePenalty > 0 ? '-' : ''}{pricePenalty}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Journey Gaps Penalty */}
+                <div className="flex items-start justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Buyer Journey Gaps</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {data.buyer_journey_gaps.length} drop-off points identified (-5 points each)
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Database className="h-3 w-3" />
+                      Source: OpenRouter AI analysis of customer feedback
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${journeyGapsPenalty > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {journeyGapsPenalty > 0 ? '-' : ''}{journeyGapsPenalty}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Final Score */}
+                <div className="flex items-start justify-between p-3 border-2 border-primary rounded-lg bg-primary/5">
+                  <div className="flex-1">
+                    <div className="font-bold text-base">Final Customer Match Score</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      100 - {demographicPenalty} - {pricePenalty} - {journeyGapsPenalty} = {calculatedScore}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-primary">{score}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Data Sources Summary */}
+              <div className="p-3 bg-gray-50 border rounded-lg">
+                <div className="font-semibold mb-2 text-xs">Data Sources Used</div>
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">Google Analytics</Badge>
+                    <span>Actual customer demographics and behavior</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">Perplexity</Badge>
+                    <span>Customer review mining and sentiment analysis</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">OpenRouter (Claude)</Badge>
+                    <span>AI analysis of buying patterns and objections</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
       {/* Expected vs Actual Demographics */}
       <Card>
         <CardHeader>
@@ -48,6 +199,10 @@ export const CustomerTruthSection: React.FC<CustomerTruthSectionProps> = ({
           <CardDescription>
             Alignment between your target audience and actual customers
           </CardDescription>
+          {/* Note about inferred data */}
+          <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+            <strong>Note:</strong> Demographics shown are inferred from location and industry data. Connect Google Analytics for precise customer demographics.
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Match Score */}

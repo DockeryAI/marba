@@ -9,11 +9,14 @@ import {
   type MarketPositionData,
   type Competitor,
   type CompetitiveGap,
+  type BusinessModelDetection,
 } from '@/types/mirror-diagnostics'
 import { PerplexityAPI } from '@/services/uvp-wizard/perplexity-api'
 import { chat } from '@/lib/openrouter'
+import { SemrushAPI } from '@/services/intelligence/semrush-api'
+import { BusinessModelDetectorService } from './business-model-detector.service'
 
-// Initialize Perplexity API
+// Initialize APIs
 const perplexityAPI = new PerplexityAPI()
 
 export class MarketPositionService {
@@ -27,37 +30,84 @@ export class MarketPositionService {
     console.log('[MarketPositionService] Starting analysis for:', brandData.name)
 
     try {
+      // Detect brand's business model
+      const brandModel = await BusinessModelDetectorService.detectBusinessModel(brandData)
+      console.log('[MarketPosition] Brand classified as:', brandModel.model)
+
       // Discover real competitors
-      const competitors = await this.discoverCompetitors(
+      let competitors = await this.discoverCompetitors(
         brandData.industry,
         brandData.location || '',
         brandData.name
       )
 
-      // Get keyword rankings (mock for now, would integrate with SEO API)
-      const keywordRankings = await this.getKeywordRankings(
-        brandData.name,
-        brandData.industry
+      // Classify each competitor's business model
+      console.log('[MarketPosition] Classifying', competitors.length, 'competitors...')
+      const classifiedCompetitors = await Promise.all(
+        competitors.map(async (competitor) => {
+          try {
+            const competitorModel = await BusinessModelDetectorService.classifyCompetitor(
+              competitor.name,
+              brandData.industry
+            )
+            return {
+              ...competitor,
+              business_model: competitorModel.model,
+              size_indicator: competitorModel.signals[0] || 'Unknown size',
+            }
+          } catch (error) {
+            console.error('[MarketPosition] Failed to classify:', competitor.name)
+            return competitor
+          }
+        })
       )
 
-      // Find competitive gaps
+      // Filter to only relevant competitors (same size category)
+      const relevantCompetitors = BusinessModelDetectorService.filterRelevantCompetitors(
+        brandModel.model,
+        classifiedCompetitors
+      )
+
+      console.log(
+        '[MarketPosition] Filtered from',
+        classifiedCompetitors.length,
+        'to',
+        relevantCompetitors.length,
+        'relevant competitors'
+      )
+
+      // Get detailed keyword rankings from Semrush
+      const keywordRankingsDetailed = await this.getDetailedKeywordRankings(
+        brandData.name,
+        brandData.website
+      )
+
+      // Create legacy format for backwards compatibility
+      const keywordRankings: Record<string, number> = {}
+      keywordRankingsDetailed.forEach((kw) => {
+        keywordRankings[kw.keyword] = kw.position
+      })
+
+      // Find SMB-actionable competitive gaps
       const competitiveGaps = await this.findCompetitiveGaps(
         brandData,
-        competitors
+        relevantCompetitors,
+        brandModel.model
       )
 
       // Analyze pricing position
       const pricingPosition = await this.analyzePricingPosition(
         brandData,
-        competitors
+        relevantCompetitors
       )
 
       // Build complete market position data
       const data: MarketPositionData = {
-        current_rank: this.estimateRank(competitors, brandData.name),
-        total_competitors: competitors.length,
-        top_competitors: competitors.slice(0, 3),
+        current_rank: this.estimateRank(relevantCompetitors, brandData.name),
+        total_competitors: relevantCompetitors.length,
+        top_competitors: relevantCompetitors.slice(0, 3),
         keyword_rankings: keywordRankings,
+        keyword_rankings_detailed: keywordRankingsDetailed,
         competitive_gaps: competitiveGaps,
         pricing_position: pricingPosition,
       }
@@ -70,12 +120,7 @@ export class MarketPositionService {
       return { score, data }
     } catch (error) {
       console.error('[MarketPositionService] Analysis failed:', error)
-
-      // Return fallback data
-      return {
-        score: 50,
-        data: this.getFallbackData(brandData),
-      }
+      throw new Error(`Market Position analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -107,7 +152,7 @@ export class MarketPositionService {
       return competitors.slice(0, 8) // Return top 8
     } catch (error) {
       console.error('[MarketPositionService] Competitor discovery failed:', error)
-      return this.getMockCompetitors(industry)
+      throw new Error(`Failed to discover competitors: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -149,68 +194,120 @@ Return ONLY valid JSON array with this structure:
   }
 
   /**
-   * Get keyword rankings (mock implementation)
-   * TODO: Integrate with SEO API (SEMrush, Ahrefs, etc.)
+   * Get detailed keyword rankings with volume, difficulty, and trend
    */
-  private static async getKeywordRankings(
+  private static async getDetailedKeywordRankings(
     brandName: string,
-    industry: string
-  ): Promise<Record<string, number>> {
-    // Mock data for now
-    const industryKeywords = {
-      plumbing: [
-        `${industry} near me`,
-        `best ${industry}`,
-        `affordable ${industry}`,
-        `${industry} services`,
-      ],
-      default: [
-        `${industry} company`,
-        `${industry} services`,
-        `best ${industry}`,
-        `${industry} near me`,
-      ],
+    brandWebsite?: string
+  ): Promise<import('@/types/mirror-diagnostics').KeywordRankingSimple[]> {
+    if (!brandWebsite) {
+      throw new Error('Website/domain is required to fetch keyword rankings from Semrush')
     }
 
-    const keywords =
-      industryKeywords[industry as keyof typeof industryKeywords] ||
-      industryKeywords.default
+    try {
+      // Extract domain from URL
+      const domain = brandWebsite.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]
 
-    // Mock rankings (would come from real SEO API)
-    return keywords.reduce(
-      (acc, keyword) => ({
-        ...acc,
-        [keyword]: Math.floor(Math.random() * 20) + 1,
-      }),
-      {}
-    )
+      console.log('[MarketPosition] Fetching detailed keyword rankings for domain:', domain)
+
+      // Get detailed rankings from Semrush (filters out branded keywords)
+      const rankings = await SemrushAPI.getDetailedKeywordMetrics(domain, brandName, 20)
+
+      if (rankings.length === 0) {
+        throw new Error(`No keyword ranking data available for domain: ${domain}`)
+      }
+
+      // Convert to simple format for storage
+      const simpleRankings = rankings.map((ranking) => ({
+        keyword: ranking.keyword,
+        position: ranking.position,
+        searchVolume: ranking.searchVolume,
+        difficulty: ranking.difficulty,
+        traffic: ranking.traffic,
+        trend: ranking.trend,
+      }))
+
+      console.log('[MarketPosition] Found', simpleRankings.length, 'detailed keyword rankings')
+      return simpleRankings
+    } catch (error) {
+      console.error('[MarketPosition] Failed to fetch keyword rankings:', error)
+      throw new Error(`Failed to fetch keyword rankings from Semrush: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
   }
 
   /**
-   * Find competitive gaps
+   * Get keyword rankings from Semrush API (legacy format)
+   * @deprecated Use getDetailedKeywordRankings instead
+   */
+  private static async getKeywordRankings(
+    brandName: string,
+    brandWebsite?: string
+  ): Promise<Record<string, number>> {
+    if (!brandWebsite) {
+      throw new Error('Website/domain is required to fetch keyword rankings from Semrush')
+    }
+
+    try {
+      // Extract domain from URL
+      const domain = brandWebsite.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0]
+
+      console.log('[MarketPosition] Fetching keyword rankings for domain:', domain)
+
+      // Get rankings from Semrush (filters out branded keywords)
+      const rankings = await SemrushAPI.getKeywordRankings(domain, brandName)
+
+      if (rankings.length === 0) {
+        throw new Error(`No keyword ranking data available for domain: ${domain}`)
+      }
+
+      // Convert to Record<keyword, position> format
+      const keywordMap: Record<string, number> = {}
+      rankings.slice(0, 20).forEach(ranking => {
+        keywordMap[ranking.keyword] = ranking.position
+      })
+
+      console.log('[MarketPosition] Found', Object.keys(keywordMap).length, 'keyword rankings')
+      return keywordMap
+    } catch (error) {
+      console.error('[MarketPosition] Failed to fetch keyword rankings:', error)
+      throw new Error(`Failed to fetch keyword rankings from Semrush: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  /**
+   * Find SMB-actionable competitive gaps
    */
   private static async findCompetitiveGaps(
     brandData: BrandData,
-    competitors: Competitor[]
+    competitors: Competitor[],
+    businessModel: string
   ): Promise<CompetitiveGap[]> {
     if (competitors.length === 0) return []
 
-    const prompt = `Analyze competitive gaps for "${brandData.name}" in the ${brandData.industry} industry.
+    // Define SMB-actionable gap categories based on business model
+    const smbFocusAreas = this.getSMBFocusAreas(businessModel)
 
-Competitors and their strengths:
-${competitors.map((c) => `- ${c.name}: ${c.strengths.join(', ')}`).join('\n')}
+    const prompt = `Analyze competitive gaps for "${brandData.name}", a ${businessModel} business in the ${brandData.industry} industry.
 
-Identify the top 3-5 things that multiple competitors are doing that ${brandData.name} should consider.
+Competitors (similar size businesses):
+${competitors.map((c) => `- ${c.name} (${c.size_indicator || 'similar size'}): ${c.strengths.join(', ')}`).join('\n')}
+
+Focus on SMB-ACTIONABLE gaps that a ${businessModel} can realistically implement:
+${smbFocusAreas.map(area => `- ${area}`).join('\n')}
+
+Avoid suggesting things that require enterprise resources (massive budgets, large teams, complex software platforms).
+
+Identify the top 3-5 actionable gaps that multiple similar-sized competitors are exploiting.
 
 Return ONLY valid JSON array:
-[{"gap":"What's missing","impact":"Why it matters","competitors_doing":["Competitor 1","Competitor 2"]}]`
+[{"gap":"Specific actionable thing missing","impact":"Business impact for SMB","competitors_doing":["Competitor 1","Competitor 2"]}]`
 
     try {
       const response = await chat(
         [{ role: 'user', content: prompt }],
         {
           temperature: 0.4,
-          maxTokens: 800,
+          maxTokens: 1000,
         }
       )
 
@@ -223,16 +320,61 @@ Return ONLY valid JSON array:
   }
 
   /**
+   * Get SMB-focused areas based on business model
+   */
+  private static getSMBFocusAreas(businessModel: string): string[] {
+    const commonAreas = [
+      'Online booking/scheduling',
+      'Weekend/evening hours',
+      'Specialized services/niches',
+      'Response time commitments',
+      'Service guarantees',
+      'Local community presence',
+      'Review generation systems',
+      'Referral programs',
+      'Content marketing (blog, videos)',
+      'Local SEO optimization',
+    ]
+
+    if (businessModel === 'solo-practitioner' || businessModel === 'small-local') {
+      return [
+        'Faster response times (same-day, 24hr)',
+        'Niche specialization',
+        'Flexible hours (evenings, weekends)',
+        'Personal touch/white glove service',
+        'Active social media presence',
+        'Google My Business optimization',
+        'Local partnerships',
+        'Free consultations/assessments',
+        ...commonAreas.slice(0, 5),
+      ]
+    }
+
+    if (businessModel === 'multi-location' || businessModel === 'regional') {
+      return [
+        'Consistent service across locations',
+        'Franchise/multi-location management',
+        'Brand consistency',
+        'Employee training programs',
+        'Regional marketing campaigns',
+        ...commonAreas,
+      ]
+    }
+
+    return commonAreas
+  }
+
+  /**
    * Analyze pricing position
    */
   private static async analyzePricingPosition(
     brandData: BrandData,
     competitors: Competitor[]
-  ): Promise<{ tier: string; vs_market: string }> {
+  ): Promise<{ tier: 'budget' | 'mid-market' | 'premium' | 'luxury'; vs_market: string }> {
     // For now, return estimated tier
     // TODO: Scrape actual pricing from websites
     return {
-      tier: 'mid-market',
+      tier: 'mid-market' as const,
       vs_market: 'Positioned in middle tier - not cheapest, not premium',
     }
   }

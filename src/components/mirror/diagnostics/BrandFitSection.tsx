@@ -13,15 +13,22 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { AlertCircle, MessageSquare, Star, CheckCircle, XCircle } from 'lucide-react'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+import { AlertCircle, MessageSquare, Star, CheckCircle, XCircle, Info, Database, Target } from 'lucide-react'
 import { type BrandFitData } from '@/types/mirror-diagnostics'
 
 interface BrandFitSectionProps {
   data: BrandFitData
   hasCompletedUVP: boolean
+  score: number // Added to show score calculation
 }
 
-export const BrandFitSection: React.FC<BrandFitSectionProps> = ({ data, hasCompletedUVP }) => {
+export const BrandFitSection: React.FC<BrandFitSectionProps> = ({ data, hasCompletedUVP, score }) => {
   const isHighConsistency = data.messaging_consistency >= 80
   const isMediumConsistency =
     data.messaging_consistency >= 60 && data.messaging_consistency < 80
@@ -29,6 +36,14 @@ export const BrandFitSection: React.FC<BrandFitSectionProps> = ({ data, hasCompl
 
   const isStrongDifferentiation = data.differentiation_score >= 70
   const isWeakDifferentiation = data.differentiation_score < 50
+
+  // Calculate scoring breakdown for transparency
+  const messagingPenalty = data.messaging_consistency < 50 ? 30 : data.messaging_consistency < 70 ? 15 : 0
+  const differentiationPenalty = data.differentiation_score < 40 ? 25 : data.differentiation_score < 60 ? 10 : 0
+  const clarityIssuesPenalty = data.clarity_issues.length * 5
+  const reviewsPenalty = data.trust_signals.reviews_count < 10 ? 15 : data.trust_signals.reviews_count < 50 ? 5 : 0
+  const ratingPenalty = data.trust_signals.average_rating < 3.5 ? 10 : data.trust_signals.average_rating < 4.0 ? 5 : 0
+  const calculatedScore = Math.max(0, Math.min(100, 100 - messagingPenalty - differentiationPenalty - clarityIssuesPenalty - reviewsPenalty - ratingPenalty))
 
   return (
     <div className="space-y-6">
@@ -41,6 +56,184 @@ export const BrandFitSection: React.FC<BrandFitSectionProps> = ({ data, hasCompl
             : 'What you say vs what customers hear'}
         </p>
       </div>
+
+      {/* Score Calculation Breakdown */}
+      <Accordion type="single" collapsible className="border rounded-lg">
+        <AccordionItem value="score-calc" className="border-none">
+          <AccordionTrigger className="px-4 hover:no-underline">
+            <div className="flex items-center gap-2">
+              <Info className="h-4 w-4 text-blue-600" />
+              <span className="font-semibold text-sm">How This Score Was Calculated</span>
+              <Badge variant="outline" className="ml-2">{score}/100</Badge>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+            <div className="space-y-4 text-sm">
+              {/* Formula Explanation */}
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="font-semibold mb-2 flex items-center gap-2">
+                  <Target className="h-4 w-4 text-blue-600" />
+                  Scoring Formula
+                </div>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Brand Clarity Score starts at 100 and deducts points for consistency and trust issues:
+                </p>
+                <div className="font-mono text-xs bg-white p-2 rounded border">
+                  Score = 100 - Messaging - Differentiation - Issues - Reviews - Rating
+                </div>
+              </div>
+
+              {/* Detailed Breakdown */}
+              <div className="space-y-3">
+                <div className="flex items-start justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Starting Score</div>
+                    <div className="text-xs text-muted-foreground mt-1">Base score before penalties</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-green-600">100</div>
+                  </div>
+                </div>
+
+                {/* Messaging Consistency Penalty */}
+                <div className="flex items-start justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Messaging Consistency</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Consistency: {data.messaging_consistency}%
+                      {data.messaging_consistency < 50 && ' (Very inconsistent - penalty: -30 points)'}
+                      {data.messaging_consistency >= 50 && data.messaging_consistency < 70 && ' (Somewhat inconsistent - penalty: -15 points)'}
+                      {data.messaging_consistency >= 70 && ' (Good consistency - no penalty)'}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Database className="h-3 w-3" />
+                      Source: Perplexity touchpoint analysis + OpenRouter AI comparison
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${messagingPenalty > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {messagingPenalty > 0 ? '-' : ''}{messagingPenalty}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Differentiation Penalty */}
+                <div className="flex items-start justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Differentiation Strength</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Score: {data.differentiation_score}%
+                      {data.differentiation_score < 40 && ' (Generic messaging - penalty: -25 points)'}
+                      {data.differentiation_score >= 40 && data.differentiation_score < 60 && ' (Weak uniqueness - penalty: -10 points)'}
+                      {data.differentiation_score >= 60 && ' (Clear differentiation - no penalty)'}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Database className="h-3 w-3" />
+                      Source: OpenRouter AI analysis of competitive positioning
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${differentiationPenalty > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {differentiationPenalty > 0 ? '-' : ''}{differentiationPenalty}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Clarity Issues Penalty */}
+                <div className="flex items-start justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Clarity Issues</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {data.clarity_issues.length} issues found (-5 points each)
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Database className="h-3 w-3" />
+                      Source: OpenRouter AI touchpoint analysis
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${clarityIssuesPenalty > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {clarityIssuesPenalty > 0 ? '-' : ''}{clarityIssuesPenalty}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reviews Count Penalty */}
+                <div className="flex items-start justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Reviews Volume</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {data.trust_signals.reviews_count} reviews
+                      {data.trust_signals.reviews_count < 10 && ' (Very few - penalty: -15 points)'}
+                      {data.trust_signals.reviews_count >= 10 && data.trust_signals.reviews_count < 50 && ' (Limited social proof - penalty: -5 points)'}
+                      {data.trust_signals.reviews_count >= 50 && ' (Good volume - no penalty)'}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Database className="h-3 w-3" />
+                      Source: Perplexity review aggregation
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${reviewsPenalty > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {reviewsPenalty > 0 ? '-' : ''}{reviewsPenalty}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Rating Penalty */}
+                <div className="flex items-start justify-between p-3 border rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Average Rating</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {data.trust_signals.average_rating} stars
+                      {data.trust_signals.average_rating < 3.5 && ' (Poor rating - penalty: -10 points)'}
+                      {data.trust_signals.average_rating >= 3.5 && data.trust_signals.average_rating < 4.0 && ' (Below average - penalty: -5 points)'}
+                      {data.trust_signals.average_rating >= 4.0 && ' (Good rating - no penalty)'}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Database className="h-3 w-3" />
+                      Source: Perplexity review aggregation
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${ratingPenalty > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {ratingPenalty > 0 ? '-' : ''}{ratingPenalty}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Final Score */}
+                <div className="flex items-start justify-between p-3 border-2 border-primary rounded-lg bg-primary/5">
+                  <div className="flex-1">
+                    <div className="font-bold text-base">Final Brand Clarity Score</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      100 - {messagingPenalty} - {differentiationPenalty} - {clarityIssuesPenalty} - {reviewsPenalty} - {ratingPenalty} = {calculatedScore}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-primary">{score}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Data Sources Summary */}
+              <div className="p-3 bg-gray-50 border rounded-lg">
+                <div className="font-semibold mb-2 text-xs">Data Sources Used</div>
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">Perplexity</Badge>
+                    <span>Website, Google Business, social media, and review analysis</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">OpenRouter (Claude)</Badge>
+                    <span>AI comparison of messaging consistency and differentiation</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       {/* Overall Messaging Consistency */}
       <Card>

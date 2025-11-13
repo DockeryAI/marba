@@ -7,7 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { ChevronLeft, ChevronRight, Lock } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown, Lock } from 'lucide-react'
 
 interface MirrorSection {
   id: string
@@ -42,6 +42,7 @@ export const MirrorLayout: React.FC<MirrorLayoutProps> = ({
   sidebarCTA,
 }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(true)
+  const [mirrorSubsectionsExpanded, setMirrorSubsectionsExpanded] = React.useState(false)
 
   const currentSectionData = sections.find(s => s.id === currentSection)
 
@@ -78,21 +79,40 @@ export const MirrorLayout: React.FC<MirrorLayoutProps> = ({
                     sidebarCollapsed && 'justify-center px-0',
                     section.locked && 'opacity-60'
                   )}
-                  onClick={() => !section.locked && onSectionChange(section.id)}
+                  onClick={() => {
+                    if (!section.locked) {
+                      // If Mirror is already active and has subsections, toggle them
+                      if (section.id === 'mirror' && isActive && section.subsections && section.subsections.length > 0) {
+                        setMirrorSubsectionsExpanded(!mirrorSubsectionsExpanded)
+                      } else {
+                        onSectionChange(section.id)
+                      }
+                    }
+                  }}
                   disabled={section.locked}
                 >
                   {section.icon && (
                     <span className="shrink-0">{section.icon}</span>
                   )}
                   {!sidebarCollapsed && (
-                    <span className="truncate flex items-center gap-2">
-                      <span>
-                        <span className={cn('text-2xl font-bold', colorClass)}>
-                          {section.label[0]}
+                    <span className="truncate flex items-center gap-2 w-full">
+                      <span className="flex items-center gap-2">
+                        <span>
+                          <span className={cn('text-2xl font-bold', colorClass)}>
+                            {section.label[0]}
+                          </span>
+                          <span className="text-base">
+                            {section.label.slice(1)}
+                          </span>
                         </span>
-                        <span className="text-base">
-                          {section.label.slice(1)}
-                        </span>
+                        {/* Show chevron for Mirror when it has subsections and is active */}
+                        {section.id === 'mirror' && isActive && section.subsections && section.subsections.length > 0 && (
+                          mirrorSubsectionsExpanded ? (
+                            <ChevronDown className="h-4 w-4 ml-1" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 ml-1" />
+                          )
+                        )}
                       </span>
                       {section.locked && (
                         <Lock className="h-3 w-3 text-muted-foreground ml-auto" />
@@ -132,7 +152,8 @@ export const MirrorLayout: React.FC<MirrorLayoutProps> = ({
                   {!sidebarCollapsed &&
                     isActive &&
                     section.subsections &&
-                    section.subsections.length > 0 && (
+                    section.subsections.length > 0 &&
+                    (section.id !== 'mirror' || mirrorSubsectionsExpanded) && (
                       <div className="mt-1 ml-4 space-y-1">
                         {section.subsections.map((sub) => (
                           <Button
@@ -164,10 +185,18 @@ export const MirrorLayout: React.FC<MirrorLayoutProps> = ({
             })}
           </nav>
 
-        {/* Sidebar CTA (e.g., UVP prompt) */}
-        {!sidebarCollapsed && sidebarCTA && (
-          <div className="p-4 border-t">
-            {sidebarCTA}
+        {/* Sidebar CTA (e.g., UVP prompt) - always visible */}
+        {sidebarCTA && (
+          <div className={cn(
+            "border-t transition-all",
+            sidebarCollapsed ? "p-2" : "p-4"
+          )}>
+            {/* Render CTA with appropriate styling based on collapsed state */}
+            <div className={cn(
+              sidebarCollapsed && "flex items-center justify-center"
+            )}>
+              {sidebarCTA}
+            </div>
           </div>
         )}
 

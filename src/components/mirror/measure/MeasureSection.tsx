@@ -44,12 +44,16 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
   const [error, setError] = React.useState<string | null>(null)
   const [activeSection, setActiveSection] = React.useState<string | undefined>(undefined)
 
-  // Auto-analyze on mount or when brandData changes
+  // Auto-analyze ONLY if no existing diagnostic is found
+  const [hasCheckedExisting, setHasCheckedExisting] = React.useState(false)
+
   React.useEffect(() => {
-    if (brandData?.name && brandData?.industry && !diagnostic && !isAnalyzing) {
-      runDiagnostic()
+    // Only auto-run if we have brand data, no diagnostic yet, and haven't checked for existing data
+    if (brandData?.name && brandData?.industry && !diagnostic && !isAnalyzing && !hasCheckedExisting) {
+      // Don't auto-run - user must manually trigger first analysis
+      setHasCheckedExisting(true)
     }
-  }, [brandData?.name, brandData?.industry])
+  }, [brandData?.name, brandData?.industry, hasCheckedExisting])
 
   // Try to load existing diagnostic on mount
   React.useEffect(() => {
@@ -62,11 +66,15 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
     try {
       const existing = await MirrorOrchestratorService.loadLatestDiagnostic(brandId)
       if (existing) {
-        console.log('[MeasureSection] Loaded existing diagnostic')
+        console.log('[MeasureSection] Loaded existing diagnostic from:', existing.analyzed_at)
         setDiagnostic(existing)
+        setHasCheckedExisting(true)
+        return true
       }
+      return false
     } catch (err) {
       console.error('[MeasureSection] Failed to load existing diagnostic:', err)
+      return false
     }
   }
 
@@ -202,13 +210,28 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
           </Card>
         )}
 
-        {/* No Data State - automatically triggers analysis */}
-        {!diagnostic && !isAnalyzing && !error && (
+        {/* No Data State - manual trigger required */}
+        {!diagnostic && !isAnalyzing && !error && brandData?.name && (
+          <Card>
+            <CardContent className="text-center py-12">
+              <div className="text-lg font-semibold mb-2">Ready to Analyze Your Brand</div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Run your first Mirror diagnostic to discover your competitive position, customer truth, and brand clarity.
+              </p>
+              <Button onClick={runDiagnostic} size="lg">
+                Run Brand Diagnostic
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Waiting for brand data */}
+        {!diagnostic && !isAnalyzing && !error && !brandData?.name && (
           <Card>
             <CardContent className="text-center py-12">
               <div className="text-lg font-semibold mb-2">Waiting for Brand Information</div>
               <p className="text-sm text-muted-foreground">
-                Analysis will start automatically once you provide your domain and URL in the onboarding.
+                Please provide your brand name and industry in the onboarding to continue.
               </p>
             </CardContent>
           </Card>
@@ -242,6 +265,7 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
                 <AccordionContent className="pt-6 pb-4">
                   <MarketPositionSection
                     data={diagnostic.market_position_data}
+                    score={diagnostic.market_position_score}
                     hasCompletedUVP={diagnostic.has_completed_uvp}
                   />
                 </AccordionContent>
@@ -261,6 +285,7 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
                 <AccordionContent className="pt-6 pb-4">
                   <CustomerTruthSection
                     data={diagnostic.customer_truth_data}
+                    score={diagnostic.customer_match_score}
                     hasCompletedUVP={diagnostic.has_completed_uvp}
                   />
                 </AccordionContent>
@@ -280,6 +305,7 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
                 <AccordionContent className="pt-6 pb-4">
                   <BrandFitSection
                     data={diagnostic.brand_fit_data}
+                    score={diagnostic.brand_clarity_score}
                     hasCompletedUVP={diagnostic.has_completed_uvp}
                   />
                 </AccordionContent>

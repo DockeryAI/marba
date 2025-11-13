@@ -23,6 +23,11 @@ export interface KeywordRanking {
   traffic: number
   url: string
   isBranded: boolean // New: flag for brand name keywords
+  trend?: 'rising' | 'stable' | 'declining' // Trend indicator
+  trendData?: {
+    direction: 'up' | 'down' | 'stable'
+    changePercent?: number
+  }
 }
 
 export interface KeywordOpportunity {
@@ -120,14 +125,24 @@ class SemrushAPIService {
             ? keyword.toLowerCase().includes(brandName.toLowerCase())
             : false
 
+          const position = parseInt(row.Po || row.Position || '0')
+          const searchVolume = parseInt(row.Nq || row['Search Volume'] || '0')
+          const difficulty = this.estimateDifficulty(searchVolume)
+          const traffic = parseInt(row.Tr || row.Traffic || '0')
+
+          // Estimate trend based on position performance
+          const trend = this.estimateTrend(position, searchVolume, difficulty)
+
           return {
             keyword,
-            position: parseInt(row.Po || row.Position || '0'),
-            searchVolume: parseInt(row.Nq || row['Search Volume'] || '0'),
-            difficulty: this.estimateDifficulty(parseInt(row.Nq || '0')),
-            traffic: parseInt(row.Tr || row.Traffic || '0'),
+            position,
+            searchVolume,
+            difficulty,
+            traffic,
             url: row.Ur || row.URL || '',
             isBranded,
+            trend: trend.indicator,
+            trendData: trend.data,
           }
         })
         .filter((r: KeywordRanking) => r.keyword && !r.isBranded) // Exclude brand name keywords
@@ -138,6 +153,31 @@ class SemrushAPIService {
       console.error('[Semrush] Error fetching rankings:', error)
       throw new Error(`Failed to fetch keyword rankings: ${error.message}`)
     }
+  }
+
+  /**
+   * Get detailed keyword metrics for UI display
+   * Returns enriched data with volume, difficulty, trend, and context
+   */
+  async getDetailedKeywordMetrics(
+    domain: string,
+    brandName?: string,
+    limit: number = 20
+  ): Promise<KeywordRanking[]> {
+    console.log('[Semrush] Fetching detailed keyword metrics for:', domain)
+
+    const rankings = await this.getKeywordRankings(domain, brandName)
+
+    // Sort by a combination of position and traffic potential
+    const enrichedRankings = rankings
+      .map(ranking => ({
+        ...ranking,
+        score: this.calculateKeywordImportance(ranking),
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+
+    return enrichedRankings
   }
 
   /**
@@ -247,6 +287,81 @@ class SemrushAPIService {
     if (searchVolume < 5000) return 65
     if (searchVolume < 10000) return 75
     return 85
+  }
+
+  /**
+   * Estimate keyword trend based on position vs. expected performance
+   * This is a heuristic until we have historical data
+   */
+  private estimateTrend(
+    position: number,
+    searchVolume: number,
+    difficulty: number
+  ): {
+    indicator: 'rising' | 'stable' | 'declining'
+    data: { direction: 'up' | 'down' | 'stable'; changePercent?: number }
+  } {
+    // High volume, top position = stable/rising
+    if (position <= 3 && searchVolume > 1000) {
+      return {
+        indicator: 'stable',
+        data: { direction: 'stable' },
+      }
+    }
+
+    // Good position relative to difficulty = rising
+    if (position <= 10 && difficulty > 60) {
+      return {
+        indicator: 'rising',
+        data: { direction: 'up' },
+      }
+    }
+
+    // Poor position for easy keyword = declining
+    if (position > 20 && difficulty < 40) {
+      return {
+        indicator: 'declining',
+        data: { direction: 'down' },
+      }
+    }
+
+    // Default to stable
+    return {
+      indicator: 'stable',
+      data: { direction: 'stable' },
+    }
+  }
+
+  /**
+   * Calculate keyword importance score for ranking
+   * Combines position, volume, and traffic to prioritize display
+   */
+  private calculateKeywordImportance(ranking: KeywordRanking): number {
+    let score = 0
+
+    // Position score (max 40 points) - better positions get more points
+    if (ranking.position <= 3) score += 40
+    else if (ranking.position <= 10) score += 30
+    else if (ranking.position <= 20) score += 20
+    else score += 10
+
+    // Volume score (max 30 points)
+    if (ranking.searchVolume >= 10000) score += 30
+    else if (ranking.searchVolume >= 5000) score += 25
+    else if (ranking.searchVolume >= 1000) score += 20
+    else if (ranking.searchVolume >= 500) score += 15
+    else if (ranking.searchVolume >= 100) score += 10
+    else score += 5
+
+    // Traffic score (max 30 points)
+    if (ranking.traffic >= 1000) score += 30
+    else if (ranking.traffic >= 500) score += 25
+    else if (ranking.traffic >= 100) score += 20
+    else if (ranking.traffic >= 50) score += 15
+    else if (ranking.traffic >= 10) score += 10
+    else score += 5
+
+    return score
   }
 
   private calculateSEOHealth(overview: DomainOverview, rankings: KeywordRanking[]): number {
