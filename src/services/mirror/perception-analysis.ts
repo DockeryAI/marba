@@ -141,7 +141,7 @@ export class PerceptionAnalysisService {
   ): Promise<PerceptionProfile> {
     try {
       // Try Perplexity for review research
-      const { PerplexityAPI } = await import('../intelligence/perplexity-api')
+      const { PerplexityAPI } = await import('../uvp-wizard/perplexity-api')
 
       const queries = [
         `${brandName} customer reviews`,

@@ -75,7 +75,7 @@ export class CustomerResearchService {
   ): Promise<string> {
     try {
       // Try Perplexity if available
-      const { PerplexityAPI } = await import('../intelligence/perplexity-api')
+      const { PerplexityAPI } = await import('../uvp-wizard/perplexity-api')
 
       const queries = [
         `${industry} customer reviews common themes`,
