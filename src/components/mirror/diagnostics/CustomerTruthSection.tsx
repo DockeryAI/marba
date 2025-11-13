@@ -4,6 +4,7 @@
  */
 
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Card,
   CardContent,
@@ -12,6 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import {
   Accordion,
@@ -19,20 +21,25 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import { AlertCircle, Users, DollarSign, TrendingUp, Info, Database, Target } from 'lucide-react'
+import { AlertCircle, Users, DollarSign, TrendingUp, Info, Database, Target, Lock, ArrowRight } from 'lucide-react'
 import { type CustomerTruthData } from '@/types/mirror-diagnostics'
 
 interface CustomerTruthSectionProps {
   data: CustomerTruthData
   hasCompletedUVP: boolean
+  hasBuyerJourney?: boolean
+  brandId?: string
   score: number // Added to show score calculation
 }
 
 export const CustomerTruthSection: React.FC<CustomerTruthSectionProps> = ({
   data,
   hasCompletedUVP,
+  hasBuyerJourney = false,
+  brandId,
   score,
 }) => {
+  const navigate = useNavigate()
   const isGoodMatch = data.match_percentage >= 70
   const isModerateMatch = data.match_percentage >= 50 && data.match_percentage < 70
   const isPoorMatch = data.match_percentage < 50
@@ -54,6 +61,47 @@ export const CustomerTruthSection: React.FC<CustomerTruthSectionProps> = ({
             : 'The reality of who buys from you and why'}
         </p>
       </div>
+
+      {/* Buyer Journey Lock Banner */}
+      {!hasBuyerJourney && brandId && (
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-full bg-blue-100">
+                <Lock className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold mb-1">Define Your Buyer Journey First</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  To get accurate demographic insights, complete your Ideal Customer Profile (ICP)
+                  in the Buyer Journey wizard. This replaces AI inference with your actual target customer data.
+                </p>
+                <Button
+                  onClick={() => navigate(`/buyer-journey/${brandId}`)}
+                  className="gap-2"
+                >
+                  Define Buyer Journey
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ICP Source Badge */}
+      {hasBuyerJourney && (
+        <Card className="border-green-200 bg-green-50/50">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex items-center gap-2 text-sm">
+              <Badge variant="default" className="bg-green-600">ICP Defined</Badge>
+              <span className="text-muted-foreground">
+                Demographics shown below are from your defined Ideal Customer Profile
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Score Calculation Breakdown */}
       <Accordion type="single" collapsible className="border rounded-lg">

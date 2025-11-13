@@ -12,6 +12,7 @@ import {
 } from '@/types/mirror-diagnostics'
 import { chat } from '@/lib/openrouter'
 import { OutScraperAPI, type GoogleReview } from '@/services/intelligence/outscraper-api'
+import { BuyerJourneyService } from '@/services/buyer-journey.service'
 
 export class CustomerTruthService {
   /**
@@ -76,6 +77,18 @@ export class CustomerTruthService {
     } catch (error) {
       console.error('[CustomerTruthService] Analysis failed:', error)
       throw new Error(`Customer Truth analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  /**
+   * Check if buyer journey has been completed for this brand
+   */
+  static async hasBuyerJourneyCompleted(brandId: string): Promise<boolean> {
+    try {
+      return await BuyerJourneyService.checkCompletion(brandId)
+    } catch (error) {
+      console.error('[CustomerTruthService] Error checking buyer journey:', error)
+      return false
     }
   }
 
@@ -200,8 +213,23 @@ Return ONLY valid JSON:
     brandData: BrandData,
     reviews: GoogleReview[]
   ): Promise<{ age: string; income: string; location: string }> {
-    // TODO: Once Buyer Journey is completed, check for ICP data first
-    // For now, infer from review patterns
+    // Check for ICP data from Buyer Journey first
+    try {
+      const icp = await BuyerJourneyService.getICP(brandData.id)
+      if (icp && icp.demographics) {
+        console.log('[CustomerTruth] Using ICP data from Buyer Journey')
+        const demo = icp.demographics
+        return {
+          age: demo.age_range || '25-55',
+          income: demo.income_range || '$40k-$80k',
+          location: demo.location || brandData.location || 'Regional market',
+        }
+      }
+    } catch (error) {
+      console.log('[CustomerTruth] No ICP data available, will infer from reviews')
+    }
+
+    // Fall back to inferring from review patterns
     console.log('[CustomerTruth] Inferring demographics from review patterns...')
 
     try {

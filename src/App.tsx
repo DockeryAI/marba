@@ -5,6 +5,7 @@ import { MirrorProvider } from './contexts/MirrorContext'
 import { HomePage } from './pages/HomePage'
 import { OnboardingPage } from './pages/OnboardingPage'
 import { MirrorPage } from './pages/MirrorPage'
+import { BuyerJourneyPage } from './pages/BuyerJourneyPage'
 import { AdminPage } from './pages/AdminPage'
 import { ContentCalendarPage } from './pages/ContentCalendarPage'
 import { AnalyticsPage } from './pages/AnalyticsPage'
@@ -22,7 +23,9 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/onboarding" element={<OnboardingPage />} />
               <Route path="/mirror" element={<MirrorPage />} />
+              <Route path="/mirror/:brandId" element={<MirrorPage />} />
               <Route path="/marba" element={<MirrorPage />} />
+              <Route path="/buyer-journey/:brandId" element={<BuyerJourneyPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/sessions" element={<SessionManagerPage />} />
               <Route path="/content-calendar" element={<ContentCalendarPage />} />

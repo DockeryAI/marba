@@ -287,6 +287,8 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
                     data={diagnostic.customer_truth_data}
                     score={diagnostic.customer_match_score}
                     hasCompletedUVP={diagnostic.has_completed_uvp}
+                    hasBuyerJourney={(diagnostic as any).has_buyer_journey}
+                    brandId={brandId}
                   />
                 </AccordionContent>
               </AccordionItem>

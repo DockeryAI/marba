@@ -43,6 +43,9 @@ export class MirrorOrchestratorService {
       // Check if brand has completed UVP
       const hasCompletedUVP = await this.checkUVPCompletion(brandId)
 
+      // Check if brand has completed Buyer Journey
+      const hasBuyerJourney = await CustomerTruthService.hasBuyerJourneyCompleted(brandId)
+
       // Identify top 3 critical gaps (only after UVP for strategic gaps)
       const criticalGaps = await this.identifyCriticalGaps(
         marketPositionAnalysis.data,
@@ -52,7 +55,7 @@ export class MirrorOrchestratorService {
       )
 
       // Build complete diagnostic
-      const diagnostic: Omit<MirrorDiagnostic, 'id' | 'created_at' | 'updated_at'> = {
+      const diagnostic: Omit<MirrorDiagnostic, 'id' | 'created_at' | 'updated_at'> & { has_buyer_journey?: boolean } = {
         brand_id: brandId,
         market_position_score: marketPositionAnalysis.score,
         customer_match_score: customerTruthAnalysis.score,
@@ -64,6 +67,7 @@ export class MirrorOrchestratorService {
         critical_gaps: criticalGaps,
         uvp_delivery_analysis: null, // Will be populated post-UVP
         has_completed_uvp: hasCompletedUVP,
+        has_buyer_journey: hasBuyerJourney,
         analyzed_at: new Date().toISOString(),
       }
 
