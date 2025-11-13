@@ -317,16 +317,25 @@ const CompleteScreen: React.FC<CompleteScreenProps> = ({ uvp, brandName }) => {
 
   React.useEffect(() => {
     console.log('[CompleteScreen] Mounted with UVP:', uvp)
-    console.log('[CompleteScreen] Starting reveal animations')
+    console.log('[CompleteScreen] UVP fields:', {
+      target_customer: uvp.target_customer,
+      customer_problem: uvp.customer_problem,
+      unique_solution: uvp.unique_solution,
+      key_benefit: uvp.key_benefit,
+      differentiation: uvp.differentiation
+    })
+    console.log('[CompleteScreen] Starting reveal animations - showing Venn and WWH')
 
-    // Reveal animations in sequence with shorter delays
+    // Force show immediately - no delays for debugging
+    setShowVennDiagram(true)
+    setShowWWH(true)
+
+    // Keep the timers for animation effect but they're not needed for display
     const timer1 = setTimeout(() => {
-      console.log('[CompleteScreen] Showing Venn diagram')
-      setShowVennDiagram(true)
+      console.log('[CompleteScreen] Venn diagram should be visible now')
     }, 300)
     const timer2 = setTimeout(() => {
-      console.log('[CompleteScreen] Showing WWH framework')
-      setShowWWH(true)
+      console.log('[CompleteScreen] WWH framework should be visible now')
     }, 600)
 
     return () => {

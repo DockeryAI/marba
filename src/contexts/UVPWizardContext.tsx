@@ -559,18 +559,28 @@ function validateCurrentStep(step: WizardStep, uvp: Partial<UVP>): boolean {
  * Check if UVP is complete
  */
 function isUVPComplete(uvp: Partial<UVP>): boolean {
-  return !!(
+  const isComplete = !!(
     uvp.target_customer &&
     uvp.customer_problem &&
     uvp.unique_solution &&
     uvp.key_benefit &&
-    uvp.differentiation &&
     uvp.target_customer.length > 10 &&
     uvp.customer_problem.length > 10 &&
     uvp.unique_solution.length > 10 &&
-    uvp.key_benefit.length > 10 &&
-    uvp.differentiation.length > 10
+    uvp.key_benefit.length > 10
   )
+
+  // Log for debugging
+  console.log('[isUVPComplete] Checking UVP completion:', {
+    has_target_customer: !!uvp.target_customer && uvp.target_customer.length > 10,
+    has_customer_problem: !!uvp.customer_problem && uvp.customer_problem.length > 10,
+    has_unique_solution: !!uvp.unique_solution && uvp.unique_solution.length > 10,
+    has_key_benefit: !!uvp.key_benefit && uvp.key_benefit.length > 10,
+    has_differentiation: !!uvp.differentiation && uvp.differentiation.length > 10,
+    is_complete: isComplete
+  })
+
+  return isComplete
 }
 
 export { UVPWizardContext }

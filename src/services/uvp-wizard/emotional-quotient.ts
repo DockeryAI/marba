@@ -83,6 +83,34 @@ export const INDUSTRY_EQ_MAP: Record<string, IndustryEQ> = {
     purchase_mindset: 'Solving specific problems efficiently and staying competitive'
   },
 
+  'IT Services': {
+    industry: 'IT Services',
+    emotional_weight: 40,
+    decision_drivers: {
+      fear: 20,      // Fear of downtime, security breaches
+      aspiration: 10, // Digital transformation goals
+      trust: 25,     // Provider expertise critical
+      urgency: 15,   // System issues need quick resolution
+      logic: 30      // Cost-effectiveness, capabilities
+    },
+    jtbd_focus: 'functional',
+    purchase_mindset: 'Ensuring reliable technology operations and enabling business growth'
+  },
+
+  'Information Technology': {
+    industry: 'Information Technology',
+    emotional_weight: 40,
+    decision_drivers: {
+      fear: 20,      // Fear of outages, data loss
+      aspiration: 10, // Innovation goals
+      trust: 25,     // Vendor trust essential
+      urgency: 15,   // Critical systems
+      logic: 30      // Technical specs, ROI
+    },
+    jtbd_focus: 'functional',
+    purchase_mindset: 'Maintaining operational excellence and driving digital innovation'
+  },
+
   'B2B Software': {
     industry: 'B2B Software',
     emotional_weight: 25,

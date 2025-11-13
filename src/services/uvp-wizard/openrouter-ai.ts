@@ -199,19 +199,22 @@ ${servicesContext}
 ${context.competitors?.length ? `\nKey competitors: ${context.competitors.slice(0, 3).join(', ')}` : ''}
 
 CRITICAL RULES:
-1. DO NOT make up specific program names (no "Phoenix Collection", "Heritage Circle", etc.)
-2. ${hasWebsiteData ? 'Use ONLY services mentioned on their website' : 'Use GENERAL service concepts only'}
-3. Keep solutions CONCEPTUAL - describe approaches, not specific offerings
+1. DO NOT make up ANY numbers, percentages, timeframes, or metrics
+2. DO NOT invent program names, phases, or specific methodologies
+3. ${hasWebsiteData ? 'Use ONLY services mentioned on their website' : 'Use GENERAL service concepts only'}
+4. Keep solutions CONCEPTUAL - describe approaches, not specifics
+5. NO "18-month projections", "40% reduction", "5 phases", "30-minute sessions", etc.
 
 For this problem: "${problem}"
 
 Generate 5 solution CONCEPTS. Each should:
-- Describe a general approach or method (not a specific made-up program)
-- Focus on the transformation or outcome
-- Be something ANY business in this industry could realistically offer
-- NOT include made-up names or specific programs
+- Describe a general approach WITHOUT specific metrics
+- Focus on the methodology and value, not numbers
+- Use conceptual language like "regular", "comprehensive", "systematic"
+- Be based on what's actually possible, not made-up frameworks
 
-Example: "A personalized consultation process that..." NOT "Our Phoenix Collection program..."
+GOOD: "Regular strategic alignment sessions that connect technology investments to business outcomes"
+BAD: "Quarterly workshops mapping capabilities against 18-month projections with 40% risk reduction"
 
 Format your response as a JSON array of exactly 5 conceptual solutions.`
 
@@ -256,11 +259,11 @@ Generate 5 key benefit TEMPLATES that customers will experience. Each should:`
 - Include identity and social benefits
 
 Example formats for ${industry}:
-- "Feel <enter emotion> every time you <experience>"
-- "Transform your <aspect> into <desired state>"
-- "Experience <positive feeling> with <percentage>% more <quality>"
-- "Become the person who <aspirational identity>"
-- "Enjoy <experience> that makes you feel <emotion>"
+- "Feel confident and empowered in your choices"
+- "Transform your experience into something memorable"
+- "Experience the joy of achieving your vision"
+- "Become recognized for your unique approach"
+- "Enjoy peace of mind knowing you're supported"
 
 DO NOT use ROI, time savings, or cost reduction as primary benefits for ${industry}!`
         } else if (eq.emotional_weight > 40) {
@@ -268,24 +271,25 @@ DO NOT use ROI, time savings, or cost reduction as primary benefits for ${indust
 - Balance emotional satisfaction with practical outcomes
 - Include both feeling-based and result-based benefits
 - Mix transformation language with achievement language
+- Keep it conceptual - no specific numbers
 
 Example formats:
-- "Feel <emotion> while achieving <result>"
-- "Experience <percentage>% improvement in <area>"
-- "Transform <current state> into <desired outcome>"
-- "Gain <benefit> in just <timeframe>"`
+- "Feel confident while achieving better business outcomes"
+- "Experience significant improvements in operational efficiency"
+- "Transform challenges into sustainable growth"
+- "Gain clarity and control over your technology investments"`
         } else {
-          // Low emotional industries - focus on metrics
+          // Low emotional industries - focus on outcomes but no made-up metrics
           prompt += `
-- Focus on measurable business outcomes
-- Use ROI, efficiency, and performance language
-- Include specific metric placeholders
+- Focus on business outcomes without inventing metrics
+- Use efficiency and performance language conceptually
+- Let the business define their own metrics
 
 Example formats:
-- "Save <enter amount> in <specify area> costs per <timeframe>"
-- "Reduce <enter metric> by <percentage>% within <timeframe>"
-- "Achieve <enter result> <percentage>% faster than traditional methods"
-- "Increase <metric> by <percentage>% in <timeframe>"`
+- "Reduce operational complexity and associated costs"
+- "Accelerate project delivery through streamlined processes"
+- "Improve decision-making with better visibility"
+- "Enhance team productivity through systematic approaches"`
         }
 
         prompt += `
@@ -461,6 +465,20 @@ Format your response as a JSON array of exactly 5 differentiator concepts.`
         "Downsizers transitioning to smaller, more manageable homes",
         "Luxury buyers seeking premium properties and exclusive service"
       ],
+      'IT Services': [
+        "Growing businesses that have outgrown their current IT setup",
+        "Companies without internal IT staff needing reliable support",
+        "Organizations seeking to modernize aging technology infrastructure",
+        "Businesses facing compliance or security challenges",
+        "Leadership teams wanting strategic technology guidance"
+      ],
+      'Information Technology': [
+        "Non-technical executives needing to make technology decisions",
+        "Companies undergoing digital transformation initiatives",
+        "Organizations consolidating multiple technology vendors",
+        "Businesses expanding and needing scalable IT solutions",
+        "Teams struggling with remote work technology challenges"
+      ],
       'default': [
         "Small business owners with 5-20 employees seeking operational efficiency without enterprise complexity",
         "Department managers at mid-size companies looking to optimize team performance with limited budgets",
@@ -483,6 +501,20 @@ Format your response as a JSON array of exactly 5 differentiator concepts.`
         "Desiring seamless coordination where nothing falls through the cracks and every party stays informed",
         "Wanting to feel connected to your past clients, knowing you're top of mind when opportunities arise"
       ],
+      'IT Services': [
+        "Frustrated by constant fire-fighting instead of strategic technology planning",
+        "Struggling to demonstrate technology ROI to non-technical executives",
+        "Wanting to transform from a cost center to a revenue enabler",
+        "Seeking better visibility into technology investments and outcomes",
+        "Needing to align IT initiatives with business growth objectives"
+      ],
+      'Information Technology': [
+        "Overwhelmed by the complexity of managing multiple technology vendors",
+        "Struggling to keep pace with rapid technological change",
+        "Lacking the expertise to make confident technology decisions",
+        "Wanting predictable technology costs and performance",
+        "Seeking to leverage technology for competitive advantage"
+      ],
       'default': [
         "Stuck in a cycle of repetitive manual tasks that drain your energy and steal time from strategic growth",
         "The constant stress of information scattered across multiple platforms, never quite sure you have the full picture",
@@ -499,18 +531,32 @@ Format your response as a JSON array of exactly 5 differentiator concepts.`
   private getIndustrySolutions(industry: string): DraggableSuggestion[] {
     const solutions: Record<string, string[]> = {
       'Real Estate': [
-        "The only lead management system with proprietary AI that learns from your successful closings to automatically qualify and prioritize prospects better than any competitor",
-        "Exclusive virtual staging technology with patented room-scanning that creates photorealistic furnished spaces in minutes - no other platform offers this speed and quality",
-        "Our unique pricing algorithm combines MLS data with proprietary market sentiment analysis that competitors don't have access to, ensuring optimal listing prices",
-        "The first and only transaction platform with built-in compliance checking that automatically prevents delays - something no other system offers",
-        "Proprietary client relationship system that uses behavioral data to predict referral timing with uncanny accuracy - a capability exclusive to our platform"
+        "A comprehensive lead management approach that prioritizes prospects based on engagement patterns and readiness to buy",
+        "Modern virtual staging capabilities that help buyers visualize properties quickly and affordably",
+        "Data-driven pricing strategies that combine market analysis with current trends for optimal positioning",
+        "Streamlined transaction coordination that keeps all parties informed and reduces delays",
+        "Systematic client relationship management that maintains connections and encourages referrals"
+      ],
+      'IT Services': [
+        "Strategic technology consulting that aligns IT investments with business objectives",
+        "Proactive monitoring and management that prevents issues before they impact operations",
+        "Flexible service models that adapt to changing business needs without long-term commitments",
+        "Clear reporting and dashboards that demonstrate technology value to stakeholders",
+        "Experienced team that becomes an extension of your internal IT department"
+      ],
+      'Information Technology': [
+        "Comprehensive technology assessment and roadmapping services",
+        "Vendor-neutral recommendations based on your specific requirements",
+        "Managed services that provide predictable costs and reliable performance",
+        "Technology optimization that improves efficiency and reduces complexity",
+        "Strategic planning that positions technology as a competitive advantage"
       ],
       'default': [
-        "The only platform designed from the ground up for your specific industry niche, with features competitors' generic solutions can't match",
-        "Proprietary automation technology that learns from your business patterns - unlike competitors' rigid rule-based systems",
-        "Exclusive access to industry benchmarking data that competitors don't provide, giving you insights others simply can't offer",
-        "The only solution with true no-code customization that adapts to your unique processes without expensive consultants",
-        "Our patented integration method that syncs data in real-time without the delays and errors common in competitor platforms"
+        "A comprehensive solution designed specifically for your industry's unique challenges",
+        "Intelligent automation that adapts to your business patterns and workflows",
+        "Data-driven insights that help you make better business decisions",
+        "Flexible platform that can be customized to match your processes",
+        "Seamless integration with your existing tools and systems"
       ]
     }
 
@@ -526,6 +572,20 @@ Format your response as a JSON array of exactly 5 differentiator concepts.`
         "Maximize property values through strategic pricing insights and professional presentation that attracts premium buyers",
         "Build a thriving referral network by maintaining meaningful relationships with past clients long after closing",
         "Accelerate sales velocity with compelling property presentations and targeted marketing that reaches qualified buyers faster"
+      ],
+      'IT Services': [
+        "Transform technology from a cost center into a strategic business enabler",
+        "Gain clarity and confidence in technology decisions with expert guidance",
+        "Achieve predictable technology costs and eliminate surprise expenses",
+        "Improve operational efficiency through optimized technology infrastructure",
+        "Enable business growth without technology becoming a bottleneck"
+      ],
+      'Information Technology': [
+        "Reduce technology complexity while improving system reliability",
+        "Make informed technology investments that drive business value",
+        "Minimize downtime and maintain business continuity",
+        "Stay ahead of technology trends without constant learning curves",
+        "Convert technology challenges into competitive advantages"
       ],
       'default': [
         "Reclaim valuable time each week by automating repetitive tasks and streamlining workflows",
@@ -543,18 +603,32 @@ Format your response as a JSON array of exactly 5 differentiator concepts.`
   private getIndustryDifferentiators(industry: string): DraggableSuggestion[] {
     const differentiators: Record<string, string[]> = {
       'Real Estate': [
-        "The only brokerage with guaranteed rapid response times backed by our commission-reduction promise if we don't deliver",
-        "Proprietary valuation technology leveraging extensive local market data for unmatched pricing accuracy",
-        "Exclusive bridge financing program that lets clients buy their dream home before selling their current one",
-        "Dedicated transaction success team that handles all coordination and paperwork as part of our standard service",
-        "Industry-leading satisfaction guarantee that demonstrates our complete confidence in exceeding your expectations"
+        "Rapid response commitment with accountability for every client interaction",
+        "Advanced market analysis using comprehensive local data for accurate pricing",
+        "Flexible financing options that help clients move forward with confidence",
+        "Dedicated support team that handles coordination as part of standard service",
+        "Strong satisfaction guarantee that demonstrates commitment to excellence"
+      ],
+      'IT Services': [
+        "Fixed-price service models that eliminate billing surprises",
+        "Local team that understands your business and responds quickly",
+        "Vendor-neutral approach focused on your best interests",
+        "Month-to-month flexibility with no long-term contracts required",
+        "Direct access to senior technicians, not just help desk staff"
+      ],
+      'Information Technology': [
+        "Comprehensive approach that covers all technology needs in one relationship",
+        "Proactive maintenance that prevents problems before they occur",
+        "Clear documentation and knowledge transfer included",
+        "Regular business reviews to ensure alignment with goals",
+        "Flexible engagement models that adapt to your needs"
       ],
       'default': [
-        "Purpose-built solution designed exclusively for businesses in your specific situation and industry",
-        "Proprietary technology and methodology that delivers dramatically faster results than traditional approaches",
-        "Industry-leading guarantee that eliminates all risk from your decision to work with us",
-        "Direct access to our leadership team for strategic guidance and priority support",
-        "Completely transparent pricing model with no hidden fees or unexpected charges"
+        "Purpose-built solution designed for your specific industry needs",
+        "Proven methodology that delivers consistent, reliable results",
+        "Strong guarantee that demonstrates confidence in our service",
+        "Direct access to leadership team for strategic guidance",
+        "Transparent pricing model with no hidden fees"
       ]
     }
 
