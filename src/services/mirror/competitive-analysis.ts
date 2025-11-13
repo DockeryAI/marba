@@ -3,7 +3,7 @@
  * Discovers and analyzes competitors using SERP + Website Analyzer
  */
 
-import { websiteAnalyzer } from '../website-analyzer'
+import { websiteAnalyzer } from '../uvp-wizard/website-analyzer'
 
 interface CompetitorProfile {
   domain: string

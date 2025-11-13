@@ -122,7 +122,7 @@ export class ValueAnalysisService {
    */
   private static async scanWebsite(websiteUrl: string, brandId: string): Promise<any> {
     try {
-      const { websiteAnalyzer } = await import('../intelligence/website-analyzer')
+      const { websiteAnalyzer } = await import('../uvp-wizard/website-analyzer')
       const analysisResult = await websiteAnalyzer.analyzeWebsite(websiteUrl, brandId)
 
       return {
