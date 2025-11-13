@@ -11,13 +11,10 @@ import {
   type CompetitiveGap,
   type BusinessModelDetection,
 } from '@/types/mirror-diagnostics'
-import { PerplexityAPI } from '@/services/uvp-wizard/perplexity-api'
 import { chat } from '@/lib/openrouter'
 import { SemrushAPI } from '@/services/intelligence/semrush-api'
+import { OutScraperAPI } from '@/services/intelligence/outscraper-api'
 import { BusinessModelDetectorService } from './business-model-detector.service'
-
-// Initialize APIs
-const perplexityAPI = new PerplexityAPI()
 
 export class MarketPositionService {
   /**
@@ -104,7 +101,7 @@ export class MarketPositionService {
       // Build complete market position data
       const data: MarketPositionData = {
         current_rank: this.estimateRank(relevantCompetitors, brandData.name),
-        total_competitors: relevantCompetitors.length,
+        total_competitors: relevantCompetitors.length + 1, // Include the brand in total count
         top_competitors: relevantCompetitors.slice(0, 3),
         keyword_rankings: keywordRankings,
         keyword_rankings_detailed: keywordRankingsDetailed,
@@ -125,7 +122,7 @@ export class MarketPositionService {
   }
 
   /**
-   * Discover competitors using Perplexity API
+   * Discover competitors using OutScraper Google Maps API
    */
   private static async discoverCompetitors(
     industry: string,
@@ -133,23 +130,51 @@ export class MarketPositionService {
     brandName: string
   ): Promise<Competitor[]> {
     try {
-      const query = location
-        ? `top competitors in ${industry} industry in ${location}, excluding ${brandName}`
-        : `top competitors in ${industry} industry, excluding ${brandName}`
+      console.log('[MarketPosition] Discovering competitors via OutScraper Google Maps...')
 
-      const response = await perplexityAPI.getIndustryInsights({
+      // Use OutScraper to get real Google Maps business listings
+      const query = `${industry} ${location}`
+      const listings = await OutScraperAPI.getBusinessListings({
         query,
-        context: { industry },
-        max_results: 8,
+        location,
+        limit: 20, // Get more than we need for filtering
       })
 
-      // Parse response to extract competitors
-      const competitors = await this.parseCompetitorsFromSearch(
-        response.insights.join('\n'),
-        industry
+      if (listings.length === 0) {
+        throw new Error(
+          `No competitors found for "${query}".\n` +
+          `This could mean:\n` +
+          `- No businesses found in Google Maps for this search\n` +
+          `- Location is too specific or misspelled\n` +
+          `- Industry term not matching Google Maps categories\n\n` +
+          `Try adjusting the industry or location terms.`
+        )
+      }
+
+      console.log('[MarketPosition] Found', listings.length, 'businesses from Google Maps')
+
+      // Filter out the brand itself (case-insensitive partial match)
+      const competitors = listings.filter(
+        listing => !listing.name.toLowerCase().includes(brandName.toLowerCase())
       )
 
-      return competitors.slice(0, 8) // Return top 8
+      if (competitors.length === 0) {
+        throw new Error(
+          `All ${listings.length} businesses found were filtered out as they match the brand name "${brandName}".\n` +
+          `This likely means the search is too narrow. Try broadening the industry term.`
+        )
+      }
+
+      // Convert OutScraper business listings to Competitor format
+      const competitorData: Competitor[] = competitors.map(listing => ({
+        name: listing.name,
+        url: listing.website,
+        positioning: this.inferPositioning(listing),
+        strengths: this.inferStrengths(listing),
+      }))
+
+      console.log('[MarketPosition] Filtered to', competitorData.length, 'relevant competitors')
+      return competitorData.slice(0, 8) // Return top 8
     } catch (error) {
       console.error('[MarketPositionService] Competitor discovery failed:', error)
       throw new Error(`Failed to discover competitors: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -157,40 +182,98 @@ export class MarketPositionService {
   }
 
   /**
-   * Parse competitors from Perplexity search results
+   * Infer positioning from Google Maps business data
    */
-  private static async parseCompetitorsFromSearch(
-    searchResponse: string,
-    industry: string
-  ): Promise<Competitor[]> {
-    const prompt = `Extract competitor information from this search result about ${industry} companies.
+  private static inferPositioning(listing: import('@/services/intelligence/outscraper-api').BusinessListing): string {
+    const parts: string[] = []
 
-For each competitor found, provide:
-- name (company name)
-- positioning (what they claim to be best at)
-- strengths (3-5 key strengths)
-
-Search Results:
-${searchResponse}
-
-Return ONLY valid JSON array with this structure:
-[{"name":"Company","positioning":"What they claim","strengths":["Strength 1","Strength 2"]}]`
-
-    try {
-      const response = await chat(
-        [{ role: 'user', content: prompt }],
-        {
-          temperature: 0.3,
-          maxTokens: 1000,
-        }
-      )
-
-      const parsed = JSON.parse(response)
-      return Array.isArray(parsed) ? parsed : []
-    } catch (error) {
-      console.error('[MarketPositionService] Failed to parse competitors:', error)
-      return []
+    // Rating-based positioning
+    if (listing.rating >= 4.7 && listing.reviews_count > 50) {
+      parts.push('Highly rated with strong customer satisfaction')
+    } else if (listing.rating >= 4.5) {
+      parts.push('Well-reviewed by customers')
+    } else if (listing.rating >= 4.0) {
+      parts.push('Solid customer ratings')
     }
+
+    // Verification status
+    if (listing.verified) {
+      parts.push('verified business')
+    }
+
+    // Review volume
+    if (listing.reviews_count > 200) {
+      parts.push('established presence with significant customer feedback')
+    } else if (listing.reviews_count > 100) {
+      parts.push('established with good review volume')
+    }
+
+    // Categories
+    if (listing.category && listing.category.length > 0) {
+      const primaryCategory = listing.category[0]
+      parts.push(`specializing in ${primaryCategory}`)
+    }
+
+    return parts.length > 0
+      ? parts.join(', ')
+      : 'Local business in the area'
+  }
+
+  /**
+   * Infer strengths from Google Maps business data
+   */
+  private static inferStrengths(listing: import('@/services/intelligence/outscraper-api').BusinessListing): string[] {
+    const strengths: string[] = []
+
+    // Rating strength
+    if (listing.rating >= 4.7) {
+      strengths.push('Excellent customer ratings')
+    } else if (listing.rating >= 4.5) {
+      strengths.push('High customer satisfaction')
+    } else if (listing.rating >= 4.0) {
+      strengths.push('Good customer reviews')
+    }
+
+    // Review volume strength
+    if (listing.reviews_count > 200) {
+      strengths.push('Large customer base')
+    } else if (listing.reviews_count > 100) {
+      strengths.push('Established reputation')
+    } else if (listing.reviews_count > 50) {
+      strengths.push('Growing customer feedback')
+    }
+
+    // Business verification
+    if (listing.verified) {
+      strengths.push('Google verified business')
+    }
+
+    // Claimed listing
+    if (listing.claimed) {
+      strengths.push('Active online presence')
+    }
+
+    // Has website
+    if (listing.website) {
+      strengths.push('Professional website')
+    }
+
+    // Has phone
+    if (listing.phone) {
+      strengths.push('Direct contact available')
+    }
+
+    // Multiple categories (versatile)
+    if (listing.category && listing.category.length > 2) {
+      strengths.push('Multiple service offerings')
+    }
+
+    // Ensure we always return at least 3 strengths
+    if (strengths.length === 0) {
+      strengths.push('Active in local market', 'Accessible location', 'Professional service')
+    }
+
+    return strengths.slice(0, 5) // Return max 5 strengths
   }
 
   /**
@@ -383,9 +466,17 @@ Return ONLY valid JSON array:
    * Estimate brand's rank among competitors
    */
   private static estimateRank(competitors: Competitor[], brandName: string): number {
+    if (competitors.length === 0) {
+      // This should never happen due to error handling in discoverCompetitors,
+      // but provide defensive handling
+      throw new Error('Cannot estimate rank with zero competitors')
+    }
+
     // Since we're excluding the brand from competitor search,
-    // assume they're in the middle of the pack
-    return Math.ceil(competitors.length / 2) + 1
+    // the total market size is competitors.length + 1 (including the brand)
+    // Conservatively estimate brand is in the middle of the pack
+    const totalMarketSize = competitors.length + 1
+    return Math.ceil(totalMarketSize / 2)
   }
 
   /**
@@ -412,76 +503,4 @@ Return ONLY valid JSON array:
     return Math.max(0, Math.min(100, score))
   }
 
-  /**
-   * Get mock competitors for development
-   */
-  private static getMockCompetitors(industry: string): Competitor[] {
-    return [
-      {
-        name: `${industry} Pro`,
-        url: `https://${industry.toLowerCase()}pro.com`,
-        positioning: '24/7 emergency service with lifetime guarantees',
-        strengths: [
-          'Licensed and bonded',
-          'Fast response time',
-          'Money-back guarantee',
-          'Transparent pricing',
-        ],
-      },
-      {
-        name: `Quick ${industry}`,
-        url: `https://quick${industry.toLowerCase()}.com`,
-        positioning: 'Same-day service specialists',
-        strengths: [
-          'Same-day availability',
-          'Upfront pricing',
-          'Highly rated',
-          'Family owned',
-        ],
-      },
-      {
-        name: `Elite ${industry} Services`,
-        url: `https://elite${industry.toLowerCase()}.com`,
-        positioning: 'Premium service for discerning customers',
-        strengths: [
-          'Master-level expertise',
-          'White-glove service',
-          'Premium materials',
-          'Concierge support',
-        ],
-      },
-    ]
-  }
-
-  /**
-   * Fallback data for when analysis fails
-   */
-  private static getFallbackData(brandData: BrandData): MarketPositionData {
-    return {
-      current_rank: 6,
-      total_competitors: 8,
-      top_competitors: this.getMockCompetitors(brandData.industry),
-      keyword_rankings: {
-        [`${brandData.industry} near me`]: 8,
-        [`best ${brandData.industry}`]: 12,
-        [`${brandData.industry} services`]: 6,
-      },
-      competitive_gaps: [
-        {
-          gap: 'No online booking system',
-          impact: 'Losing customers who want instant scheduling',
-          competitors_doing: ['Quick Plumbing', 'Plumbing Pro'],
-        },
-        {
-          gap: 'Limited service guarantee',
-          impact: 'Customers choosing competitors with stronger guarantees',
-          competitors_doing: ['Elite Plumbing Services', 'Plumbing Pro'],
-        },
-      ],
-      pricing_position: {
-        tier: 'mid-market',
-        vs_market: 'Positioned in middle tier - competitive but not premium',
-      },
-    }
-  }
 }

@@ -11,10 +11,7 @@ import {
   type BuyerJourneyGap,
 } from '@/types/mirror-diagnostics'
 import { chat } from '@/lib/openrouter'
-import { PerplexityAPI } from '@/services/uvp-wizard/perplexity-api'
-
-// Initialize Perplexity API
-const perplexityAPI = new PerplexityAPI()
+import { OutScraperAPI, type GoogleReview } from '@/services/intelligence/outscraper-api'
 
 export class CustomerTruthService {
   /**
@@ -27,11 +24,15 @@ export class CustomerTruthService {
     console.log('[CustomerTruthService] Starting analysis for:', brandData.name)
 
     try {
-      // Mine reviews for insights
-      const reviewInsights = await this.mineReviews(brandData.name, brandData.industry)
+      // Mine reviews for insights using OutScraper
+      const reviewInsights = await this.mineReviews(
+        brandData.name,
+        brandData.industry,
+        brandData.location
+      )
 
-      // Get actual demographics (mock for now - would integrate with Analytics API)
-      const actualDemographic = await this.getActualDemographics(brandData)
+      // Get actual demographics (inferred from reviews until Buyer Journey completed)
+      const actualDemographic = await this.getActualDemographics(brandData, reviewInsights.reviews)
 
       // Compare expected vs actual
       const expectedDemographic = this.inferExpectedDemographic(brandData)
@@ -79,56 +80,106 @@ export class CustomerTruthService {
   }
 
   /**
-   * Mine reviews for customer insights using AI
+   * Mine reviews for customer insights using OutScraper + AI
    */
   private static async mineReviews(
     brandName: string,
-    industry: string
+    industry: string,
+    location?: string
   ): Promise<{
     whyTheyChose: WhyTheyChose[]
     objections: string[]
     sentiment: number
+    reviews: GoogleReview[]
   }> {
     try {
-      // Search for reviews using Perplexity
-      const reviewsResponse = await perplexityAPI.getIndustryInsights({
-        query: `customer reviews for ${brandName} ${industry}, what customers say about choosing them`,
-        context: { industry },
-        max_results: 5,
+      console.log('[CustomerTruth] Finding business on Google Maps...')
+
+      // First, find the business on Google Maps
+      const query = location ? `${brandName} ${industry} ${location}` : `${brandName} ${industry}`
+      const listings = await OutScraperAPI.getBusinessListings({
+        query,
+        location: location || '',
+        limit: 5,
       })
 
-      const reviewsSearch = reviewsResponse.insights.join('\n')
+      if (listings.length === 0) {
+        throw new Error(
+          `Business "${brandName}" not found on Google Maps.\n` +
+          `Try verifying the business name and location are correct.`
+        )
+      }
+
+      // Find the best match for the brand name
+      const businessListing = listings.find(
+        listing => listing.name.toLowerCase().includes(brandName.toLowerCase())
+      ) || listings[0]
+
+      console.log('[CustomerTruth] Found business:', businessListing.name)
+      console.log('[CustomerTruth] Scraping Google reviews...')
+
+      // Scrape reviews for this business
+      const reviews = await OutScraperAPI.scrapeGoogleReviews({
+        place_id: businessListing.place_id,
+        limit: 50, // Get more reviews for better analysis
+        sort: 'newest',
+      })
+
+      if (reviews.length === 0) {
+        throw new Error(
+          `No reviews found for "${businessListing.name}".\n` +
+          `This business may not have any Google reviews yet.`
+        )
+      }
+
+      console.log('[CustomerTruth] Found', reviews.length, 'reviews. Analyzing with AI...')
+
+      // Prepare review text for AI analysis
+      const reviewTexts = reviews
+        .slice(0, 30) // Analyze top 30 to avoid token limits
+        .map((r, i) => `Review ${i + 1} (${r.rating}⭐): ${r.text}`)
+        .join('\n\n')
 
       // Extract patterns using AI
-      const prompt = `Analyze these customer reviews and extract:
-1. Top reasons why customers chose this business (with percentages)
-2. Common objections or complaints
+      const prompt = `Analyze these REAL Google reviews for "${brandName}" and extract:
+
+1. Top 3-5 reasons why customers chose this business (estimate percentage for each)
+2. Top 3-5 common objections or complaints from negative reviews
+
+Be specific and quote actual phrases from reviews where possible.
 
 Reviews:
-${reviewsSearch}
+${reviewTexts}
 
 Return ONLY valid JSON:
 {
   "whyTheyChose": [
-    {"reason": "Reason text", "percentage": 45, "source": "reviews"}
+    {"reason": "Specific reason from reviews", "percentage": 35, "source": "reviews"}
   ],
-  "objections": ["Objection 1", "Objection 2"]
+  "objections": ["Specific complaint 1", "Specific complaint 2"]
 }`
 
       const response = await chat(
         [{ role: 'user', content: prompt }],
         {
           temperature: 0.3,
-          maxTokens: 1000,
+          maxTokens: 1500,
         }
       )
 
       const parsed = JSON.parse(response)
 
+      // Calculate actual sentiment from ratings
+      const avgRating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      const sentiment = avgRating / 5 // Convert 0-5 scale to 0-1
+
+      console.log('[CustomerTruth] Analysis complete. Avg rating:', avgRating.toFixed(2))
+
       return {
         whyTheyChose: parsed.whyTheyChose || [],
         objections: parsed.objections || [],
-        sentiment: 0.7, // Sentiment score from AI analysis
+        sentiment,
+        reviews, // Store raw reviews for potential UI display
       }
     } catch (error) {
       console.error('[CustomerTruthService] Review mining failed:', error)
@@ -137,23 +188,71 @@ Return ONLY valid JSON:
   }
 
   /**
-   * Get actual customer demographics from Google Analytics
-   * TODO: Integrate with Google Analytics API
+   * Get actual customer demographics
    *
-   * For now, we infer from review patterns and location data.
-   * This is labeled as "inferred" in the UI until GA is connected.
+   * STRATEGY:
+   * 1. If Buyer Journey completed → use defined ICP (future)
+   * 2. Otherwise → infer from review text patterns using AI
+   *
+   * NOTE: This will be enhanced once Buyer Journey module is complete
    */
   private static async getActualDemographics(
-    brandData: BrandData
+    brandData: BrandData,
+    reviews: GoogleReview[]
   ): Promise<{ age: string; income: string; location: string }> {
-    // TODO: Once Google Analytics is integrated, replace this with real API call
-    // For now, use location data and make reasonable inferences
-    console.log('[CustomerTruthService] Using inferred demographics (Google Analytics not connected)')
+    // TODO: Once Buyer Journey is completed, check for ICP data first
+    // For now, infer from review patterns
+    console.log('[CustomerTruth] Inferring demographics from review patterns...')
 
-    return {
-      age: '25-55', // Broad range until we have real data
-      income: '$40k-$80k', // Middle-income range
-      location: brandData.location || 'Regional market',
+    try {
+      // Use a sample of reviews to infer demographic patterns
+      const reviewSample = reviews
+        .slice(0, 20)
+        .map(r => r.text)
+        .join('\n')
+
+      const prompt = `Analyze these customer reviews and infer the likely demographic profile of the customer base.
+
+Reviews:
+${reviewSample}
+
+Based on language patterns, concerns mentioned, and context clues, infer:
+1. Age range (e.g., "25-40", "40-60")
+2. Income level (e.g., "$30k-$60k", "$60k-$100k", "$100k+")
+3. Location type (e.g., "Urban professionals", "Suburban families", "Rural residents")
+
+Return ONLY valid JSON:
+{
+  "age": "age range",
+  "income": "income range",
+  "location": "location description"
+}`
+
+      const response = await chat(
+        [{ role: 'user', content: prompt }],
+        {
+          temperature: 0.3,
+          maxTokens: 300,
+        }
+      )
+
+      const parsed = JSON.parse(response)
+
+      console.log('[CustomerTruth] Inferred demographics:', parsed)
+
+      return {
+        age: parsed.age || '25-55',
+        income: parsed.income || '$40k-$80k',
+        location: parsed.location || brandData.location || 'Regional market',
+      }
+    } catch (error) {
+      console.error('[CustomerTruth] Demographics inference failed:', error)
+      // Fallback to broad estimates
+      return {
+        age: '25-55',
+        income: '$40k-$80k',
+        location: brandData.location || 'Regional market',
+      }
     }
   }
 
@@ -286,73 +385,4 @@ Return ONLY valid JSON array:
     return Math.max(0, Math.min(100, score))
   }
 
-  /**
-   * Mock review insights for development
-   */
-  private static getMockReviewInsights(industry: string): {
-    whyTheyChose: WhyTheyChose[]
-    objections: string[]
-    sentiment: number
-  } {
-    return {
-      whyTheyChose: [
-        {
-          reason: 'Cheapest quote received',
-          percentage: 45,
-          source: 'reviews',
-        },
-        {
-          reason: 'Available same day',
-          percentage: 30,
-          source: 'reviews',
-        },
-        {
-          reason: 'No deposit required',
-          percentage: 25,
-          source: 'reviews',
-        },
-      ],
-      objections: [
-        'Sometimes runs late on appointments',
-        'Limited payment options',
-        'No online booking',
-      ],
-      sentiment: 0.7,
-    }
-  }
-
-  /**
-   * Fallback data for when analysis fails
-   */
-  private static getFallbackData(brandData: BrandData): CustomerTruthData {
-    return {
-      expected_demographic: {
-        age: '35-55',
-        income: '$60k-$100k',
-        location: 'Suburban homeowners',
-      },
-      actual_demographic: {
-        age: '25-35',
-        income: '$40k-$60k',
-        location: 'Urban renters',
-      },
-      match_percentage: 40,
-      why_they_choose: this.getMockReviewInsights(brandData.industry).whyTheyChose,
-      common_objections: this.getMockReviewInsights(brandData.industry).objections,
-      buyer_journey_gaps: [
-        {
-          stage: 'awareness',
-          gap: 'Not showing up in local search results',
-          impact: 'Missing potential customers actively searching',
-        },
-        {
-          stage: 'consideration',
-          gap: 'No online reviews or testimonials visible',
-          impact: 'Prospects can\'t validate your credibility',
-        },
-      ],
-      price_vs_value_perception:
-        'Competing primarily on price - customers choose you because you\'re cheapest',
-    }
-  }
 }

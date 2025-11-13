@@ -108,9 +108,9 @@ export const MirrorLayout: React.FC<MirrorLayoutProps> = ({
                         {/* Show chevron for Mirror when it has subsections and is active */}
                         {section.id === 'mirror' && isActive && section.subsections && section.subsections.length > 0 && (
                           mirrorSubsectionsExpanded ? (
-                            <ChevronDown className="h-4 w-4 ml-1" />
+                            <ChevronDown className="h-6 w-6 ml-1 hover:scale-110 transition-transform" />
                           ) : (
-                            <ChevronRight className="h-4 w-4 ml-1" />
+                            <ChevronRight className="h-6 w-6 ml-1 hover:scale-110 transition-transform" />
                           )
                         )}
                       </span>
@@ -168,10 +168,17 @@ export const MirrorLayout: React.FC<MirrorLayoutProps> = ({
                                   detail: { sectionId: sub.id },
                                 })
                               )
-                              // Scroll to subsection with delay for accordion animation
+                              // Only scroll if element is not visible - prevents viewport jumping
                               setTimeout(() => {
                                 const element = document.getElementById(sub.id)
-                                element?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                                if (element) {
+                                  const rect = element.getBoundingClientRect()
+                                  const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight
+                                  // Only scroll if not already visible
+                                  if (!isVisible) {
+                                    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                                  }
+                                }
                               }, 300)
                             }}
                           >

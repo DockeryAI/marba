@@ -249,7 +249,13 @@ export const MarketPositionSection: React.FC<MarketPositionSectionProps> = ({
       {/* Top Competitors - Separate Card Below */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Top Competitors</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Top Competitors</CardTitle>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Database className="h-3 w-3" />
+              <span>OutScraper (Google Maps)</span>
+            </div>
+          </div>
         </CardHeader>
           <CardContent className="space-y-3">
             {data.top_competitors.slice(0, 3).map((competitor, index) => (
@@ -280,10 +286,16 @@ export const MarketPositionSection: React.FC<MarketPositionSectionProps> = ({
       {data.competitive_gaps.length > 0 && (
         <Card className="border-yellow-200 bg-yellow-50/50 dark:bg-yellow-900/10">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <AlertCircle className="h-4 w-4 text-yellow-600" />
-              Competitive Gaps
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <AlertCircle className="h-4 w-4 text-yellow-600" />
+                Competitive Gaps
+              </CardTitle>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Database className="h-3 w-3" />
+                <span>AI Analysis (OutScraper + OpenRouter)</span>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-2">
             {data.competitive_gaps.map((gap, index) => (
