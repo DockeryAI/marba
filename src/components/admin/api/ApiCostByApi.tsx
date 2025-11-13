@@ -48,12 +48,12 @@ export const ApiCostByApi: React.FC<ApiCostByApiProps> = ({
   className,
 }) => {
   const totalCost = React.useMemo(
-    () => data.reduce((sum, item) => sum + item.total_cost, 0),
+    () => data?.reduce((sum, item) => sum + item.total_cost, 0) || 0,
     [data]
   )
 
   const totalRequests = React.useMemo(
-    () => data.reduce((sum, item) => sum + item.total_requests, 0),
+    () => data?.reduce((sum, item) => sum + item.total_requests, 0) || 0,
     [data]
   )
 

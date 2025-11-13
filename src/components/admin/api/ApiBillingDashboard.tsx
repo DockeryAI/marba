@@ -24,11 +24,8 @@ export const ApiBillingDashboard: React.FC<ApiBillingDashboardProps> = ({
   loading = false,
   className,
 }) => {
-  const budgetPercentage = (stats.current_month_cost / (stats.budget_utilization * stats.current_month_cost / 100)) * 100
-  const isOverBudget = stats.budget_utilization > 100
-  const isNearBudget = stats.budget_utilization > 80 && stats.budget_utilization <= 100
-
-  if (loading) {
+  // Handle undefined stats
+  if (!stats || loading) {
     return (
       <div className={className}>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -43,6 +40,10 @@ export const ApiBillingDashboard: React.FC<ApiBillingDashboardProps> = ({
       </div>
     )
   }
+
+  const budgetPercentage = (stats.current_month_cost / (stats.budget_utilization * stats.current_month_cost / 100)) * 100
+  const isOverBudget = stats.budget_utilization > 100
+  const isNearBudget = stats.budget_utilization > 80 && stats.budget_utilization <= 100
 
   return (
     <div className={className}>
