@@ -6,6 +6,7 @@ import { ReimagineSection } from '@/components/mirror/reimagine'
 import { ReachSection } from '@/components/mirror/reach'
 import { OptimizeSection } from '@/components/mirror/optimize'
 import { ReflectSection } from '@/components/mirror/reflect'
+import { ActionCenterWidget } from '@/components/action-center/ActionCenterWidget'
 import { useMirror } from '@/contexts/MirrorContext'
 import { useBrand } from '@/contexts/BrandContext'
 import { supabase } from '@/lib/supabase'
@@ -379,6 +380,9 @@ export const MirrorPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Action Center Widget - Persistent across all sections */}
+      <ActionCenterWidget />
     </MirrorLayout>
   )
 }

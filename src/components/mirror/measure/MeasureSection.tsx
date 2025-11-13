@@ -12,8 +12,10 @@ import {
   DynamicSWOTSection,
   BrandPerceptionMirrorSection,
 } from '../subsections'
+import { WWHFramework } from '../intend/WWHFramework'
 import { Button } from '@/components/ui/button'
-import { RefreshCw, Sparkles } from 'lucide-react'
+import { Card } from '@/components/ui/card'
+import { RefreshCw, Sparkles, Zap, Lock } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface MeasureSectionProps {
@@ -146,6 +148,44 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
           </>
         }
       />
+
+      {/* WWH Framework Overview */}
+      <div className="container px-6 py-4">
+        <Card className="border-2 border-primary/20">
+          <div className="p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold mb-1">Your Strategic Foundation</h3>
+                <p className="text-sm text-muted-foreground">
+                  Why, What, How — The core of your brand
+                </p>
+              </div>
+              {!hasCompletedUVP && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    const uvpSection = document.getElementById('uvp-flow')
+                    uvpSection?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }}
+                >
+                  <Zap className="h-4 w-4 mr-2" />
+                  Strengthen Your WHY
+                </Button>
+              )}
+            </div>
+            <WWHFramework brandData={brandData} />
+            {!hasCompletedUVP && (
+              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p className="text-sm text-blue-900 dark:text-blue-100">
+                  <Lock className="h-4 w-4 inline mr-1" />
+                  Complete your Value Proposition to refine and strengthen your strategic foundation
+                </p>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
 
       {/* Horizontal subsection tabs */}
       <SubsectionTabs

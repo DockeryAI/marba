@@ -5,12 +5,16 @@ import { ContentStrategy } from './ContentStrategy'
 import { CompetitiveStrategy } from './CompetitiveStrategy'
 import { ArchetypeVoiceAlignment } from './ArchetypeVoiceAlignment'
 import { BrandStoryBuilder } from './BrandStoryBuilder'
+import { CustomerAnalysisTab } from './CustomerAnalysisTab'
+import { ProductAnalysisTab } from './ProductAnalysisTab'
+import { CompetitorOpportunitiesTab } from './CompetitorOpportunitiesTab'
+import { SWOTAnalysisTab } from './SWOTAnalysisTab'
 import { MirrorSectionHeader } from '@/components/layouts/MirrorLayout'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { StrategyBuilder, MarketingStrategy } from '@/services/mirror/strategy-builder'
 import { supabase } from '@/lib/supabase'
-import { Sparkles, Target, Users, FileText, Swords } from 'lucide-react'
+import { Sparkles, Target, Users, FileText, Swords, UserCircle, Package, Zap, LayoutGrid } from 'lucide-react'
 
 interface ReimagineSectionProps {
   brandId: string
@@ -33,6 +37,25 @@ export const ReimagineSection: React.FC<ReimagineSectionProps> = ({
   const [personas, setPersonas] = React.useState<any[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
   const [activeTab, setActiveTab] = React.useState('brand')
+  const [hasCompletedUVP, setHasCompletedUVP] = React.useState(false)
+
+  // Check if UVP is completed
+  React.useEffect(() => {
+    const checkUVPCompletion = async () => {
+      if (!brandId) return
+
+      const { data, error } = await supabase
+        .from('value_statements')
+        .select('id, is_primary')
+        .eq('brand_id', brandId)
+        .eq('is_primary', true)
+        .maybeSingle()
+
+      setHasCompletedUVP(!error && !!data)
+    }
+
+    checkUVPCompletion()
+  }, [brandId])
 
   React.useEffect(() => {
     loadStrategy()
@@ -209,7 +232,7 @@ export const ReimagineSection: React.FC<ReimagineSectionProps> = ({
 
       <div className="container py-6 px-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className={`grid w-full ${hasCompletedUVP ? 'grid-cols-8' : 'grid-cols-4'}`}>
             <TabsTrigger value="brand" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
               Brand
@@ -226,6 +249,26 @@ export const ReimagineSection: React.FC<ReimagineSectionProps> = ({
               <Swords className="h-4 w-4" />
               Competitive
             </TabsTrigger>
+            {hasCompletedUVP && (
+              <>
+                <TabsTrigger value="customers" className="flex items-center gap-2">
+                  <UserCircle className="h-4 w-4" />
+                  Customers
+                </TabsTrigger>
+                <TabsTrigger value="product" className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Product
+                </TabsTrigger>
+                <TabsTrigger value="opportunities" className="flex items-center gap-2">
+                  <Zap className="h-4 w-4" />
+                  Opportunities
+                </TabsTrigger>
+                <TabsTrigger value="swot" className="flex items-center gap-2">
+                  <LayoutGrid className="h-4 w-4" />
+                  SWOT
+                </TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           <TabsContent value="brand" className="mt-6">
@@ -261,6 +304,31 @@ export const ReimagineSection: React.FC<ReimagineSectionProps> = ({
               onSave={handleSaveCompetitiveStrategy}
             />
           </TabsContent>
+
+          {/* Post-UVP Analysis Tabs */}
+          {hasCompletedUVP && (
+            <>
+              <TabsContent value="customers" className="mt-6">
+                <CustomerAnalysisTab brandId={brandId} brandData={brandData} />
+              </TabsContent>
+
+              <TabsContent value="product" className="mt-6">
+                <ProductAnalysisTab brandId={brandId} brandData={brandData} />
+              </TabsContent>
+
+              <TabsContent value="opportunities" className="mt-6">
+                <CompetitorOpportunitiesTab brandId={brandId} brandData={brandData} />
+              </TabsContent>
+
+              <TabsContent value="swot" className="mt-6">
+                <SWOTAnalysisTab
+                  brandId={brandId}
+                  brandData={brandData}
+                  hasCompletedUVP={hasCompletedUVP}
+                />
+              </TabsContent>
+            </>
+          )}
         </Tabs>
 
         {/* Brand Personality & Story - NEW */}
