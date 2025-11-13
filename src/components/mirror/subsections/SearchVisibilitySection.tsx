@@ -53,6 +53,13 @@ export const SearchVisibilitySection: React.FC<SearchVisibilitySectionProps> = (
     }
   }
 
+  // Auto-analyze when brand data is available
+  React.useEffect(() => {
+    if (brandData?.website && !analysis && !isAnalyzing && !error) {
+      handleAnalyze()
+    }
+  }, [brandData?.website])
+
   return (
     <div className={className}>
       <div className="container py-6 px-6 space-y-6">

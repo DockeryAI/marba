@@ -48,6 +48,13 @@ export const CustomerUnderstandingSection: React.FC<CustomerUnderstandingSection
     }
   }
 
+  // Auto-analyze when brand data is available
+  React.useEffect(() => {
+    if (brandData && !insights && !isAnalyzing && !error) {
+      handleAnalyze()
+    }
+  }, [brandData?.industry])
+
   return (
     <div className={className}>
       <div className="container py-6 px-6 space-y-6">

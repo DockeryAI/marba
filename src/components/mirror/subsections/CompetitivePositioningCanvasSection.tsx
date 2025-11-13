@@ -70,6 +70,13 @@ export const CompetitivePositioningCanvasSection: React.FC<CompetitivePositionin
     }
   }
 
+  // Auto-generate when UVP is completed and brand data is available
+  React.useEffect(() => {
+    if (hasCompletedUVP && brandData?.name && !canvas && !isGenerating && !error) {
+      handleGenerate()
+    }
+  }, [hasCompletedUVP, brandData?.name])
+
   if (!hasCompletedUVP) {
     return (
       <div className={className}>

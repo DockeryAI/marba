@@ -68,6 +68,13 @@ export const DynamicSWOTSection: React.FC<DynamicSWOTSectionProps> = ({
     }
   }
 
+  // Auto-generate when UVP is completed and brand data is available
+  React.useEffect(() => {
+    if (hasCompletedUVP && brandData?.website && !swot && !isGenerating && !error) {
+      handleGenerate()
+    }
+  }, [hasCompletedUVP, brandData?.website])
+
   if (!hasCompletedUVP) {
     return (
       <div className={className}>

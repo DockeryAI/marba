@@ -66,6 +66,13 @@ export const BrandPerceptionGapSection: React.FC<BrandPerceptionGapSectionProps>
     }
   }
 
+  // Auto-analyze when brand data is available
+  React.useEffect(() => {
+    if (brandData?.website && !analysis && !isAnalyzing && !error) {
+      handleAnalyze()
+    }
+  }, [brandData?.website])
+
   // Get icon for insight type
   const getInsightIcon = (type: string) => {
     switch (type) {

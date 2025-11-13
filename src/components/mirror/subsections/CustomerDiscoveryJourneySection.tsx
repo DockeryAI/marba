@@ -74,6 +74,13 @@ export const CustomerDiscoveryJourneySection: React.FC<CustomerDiscoveryJourneyS
     }
   }
 
+  // Auto-analyze when UVP is completed and brand data is available
+  React.useEffect(() => {
+    if (hasCompletedUVP && brandData?.website && !journey && !isMapping && !error) {
+      handleMap()
+    }
+  }, [hasCompletedUVP, brandData?.website])
+
   if (!hasCompletedUVP) {
     return (
       <div className={className}>

@@ -73,6 +73,13 @@ export const ValueDeliveryAnalysisSection: React.FC<ValueDeliveryAnalysisSection
     }
   }
 
+  // Auto-analyze when UVP is completed and brand data is available
+  React.useEffect(() => {
+    if (hasCompletedUVP && brandData?.website && !audit && !isAnalyzing && !error) {
+      handleAnalyze()
+    }
+  }, [hasCompletedUVP, brandData?.website])
+
   if (!hasCompletedUVP) {
     return (
       <div className={className}>

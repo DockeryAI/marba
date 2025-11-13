@@ -75,6 +75,13 @@ export const BrandPerceptionMirrorSection: React.FC<BrandPerceptionMirrorSection
     }
   }
 
+  // Auto-analyze when UVP is completed and brand data is available
+  React.useEffect(() => {
+    if (hasCompletedUVP && brandData?.website && !mirror && !isAnalyzing && !error) {
+      handleAnalyze()
+    }
+  }, [hasCompletedUVP, brandData?.website])
+
   if (!hasCompletedUVP) {
     return (
       <div className={className}>
