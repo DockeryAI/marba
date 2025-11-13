@@ -1,22 +1,30 @@
+/**
+ * Measure Section (Mirror)
+ * Redesigned with 3 core diagnostics instead of 9 subsections
+ */
+
 import * as React from 'react'
 import { MirrorSectionHeader } from '@/components/layouts/MirrorLayout'
-import { SubsectionTabs } from '../SubsectionTabs'
-import {
-  BrandPerceptionGapSection,
-  CompetitiveIntelligenceSection,
-  CustomerUnderstandingSection,
-  SearchVisibilitySection,
-  CustomerDiscoveryJourneySection,
-  ValueDeliveryAnalysisSection,
-  CompetitivePositioningCanvasSection,
-  DynamicSWOTSection,
-  BrandPerceptionMirrorSection,
-} from '../subsections'
-import { WWHFramework } from '../intend/WWHFramework'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { RefreshCw, Sparkles, Zap, Lock } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { RefreshCw, AlertCircle, Loader2 } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
+
+// New diagnostic components
+import { MirrorHealthDashboard } from '../diagnostics/MirrorHealthDashboard'
+import { MarketPositionSection } from '../diagnostics/MarketPositionSection'
+import { CustomerTruthSection } from '../diagnostics/CustomerTruthSection'
+import { BrandFitSection } from '../diagnostics/BrandFitSection'
+import { MirrorMomentSummary } from '../diagnostics/MirrorMomentSummary'
+
+// Services
+import { MirrorOrchestratorService } from '@/services/mirror/mirror-orchestrator.service'
+import { type MirrorDiagnostic, type BrandData } from '@/types/mirror-diagnostics'
 
 interface MeasureSectionProps {
   brandId: string
@@ -31,171 +39,229 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
   onDataUpdate,
   className,
 }) => {
-  const [isLoading, setIsLoading] = React.useState(false)
-  const [hasCompletedUVP, setHasCompletedUVP] = React.useState(false)
-  const [activeSubsection, setActiveSubsection] = React.useState('brand-perception-gap')
+  const [diagnostic, setDiagnostic] = React.useState<MirrorDiagnostic | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const [activeSection, setActiveSection] = React.useState<string | undefined>('dashboard')
 
-  // Check if UVP is completed
+  // Auto-analyze on mount or when brandData changes
   React.useEffect(() => {
-    const checkUVPCompletion = async () => {
-      if (!brandId) return
-
-      const { data, error } = await supabase
-        .from('value_statements')
-        .select('id, is_primary')
-        .eq('brand_id', brandId)
-        .eq('is_primary', true)
-        .maybeSingle()
-
-      setHasCompletedUVP(!error && !!data)
+    if (brandData?.name && brandData?.industry && !diagnostic && !isAnalyzing) {
+      runDiagnostic()
     }
+  }, [brandData?.name, brandData?.industry])
 
-    checkUVPCompletion()
+  // Try to load existing diagnostic on mount
+  React.useEffect(() => {
+    if (brandId && !diagnostic && !isAnalyzing) {
+      loadExistingDiagnostic()
+    }
   }, [brandId])
 
-  // Sync active subsection with URL hash
-  React.useEffect(() => {
-    const hash = window.location.hash.slice(1)
-    if (hash && hash.startsWith('mirror-')) {
-      const subsectionId = hash.replace('mirror-', '')
-      setActiveSubsection(subsectionId)
+  const loadExistingDiagnostic = async () => {
+    try {
+      const existing = await MirrorOrchestratorService.loadLatestDiagnostic(brandId)
+      if (existing) {
+        console.log('[MeasureSection] Loaded existing diagnostic')
+        setDiagnostic(existing)
+      }
+    } catch (err) {
+      console.error('[MeasureSection] Failed to load existing diagnostic:', err)
     }
-  }, [])
-
-  // Update URL hash when subsection changes
-  const handleSubsectionChange = (id: string) => {
-    setActiveSubsection(id)
-    window.history.pushState(null, '', `#mirror-${id}`)
   }
 
-  const handleRefresh = async () => {
-    setIsLoading(true)
-    // TODO: Implement refresh logic for active subsection
-    console.log('[MeasureSection] Refreshing data for subsection:', activeSubsection)
-    setTimeout(() => setIsLoading(false), 2000)
+  const runDiagnostic = async () => {
+    if (!brandData?.name || !brandData?.industry) {
+      setError('Brand name and industry are required to run diagnostic')
+      return
+    }
+
+    setIsAnalyzing(true)
+    setError(null)
+
+    try {
+      const brandDataForAnalysis: BrandData = {
+        name: brandData.name,
+        industry: brandData.industry,
+        location: brandData.location,
+        website: brandData.website,
+        competitors: brandData.competitors,
+        target_audience: brandData.target_audience,
+      }
+
+      console.log('[MeasureSection] Running full diagnostic...')
+      const result = await MirrorOrchestratorService.runFullDiagnostic(
+        brandId,
+        brandDataForAnalysis
+      )
+
+      setDiagnostic(result)
+      onDataUpdate?.(result)
+
+      console.log('[MeasureSection] Diagnostic complete:', result)
+    } catch (err) {
+      console.error('[MeasureSection] Diagnostic failed:', err)
+      setError('Failed to analyze brand. Please try again.')
+    } finally {
+      setIsAnalyzing(false)
+    }
   }
 
-  // Define subsections based on UVP completion
-  const subsections = React.useMemo(() => {
-    const preUVP = [
-      { id: 'brand-perception-gap', label: 'Brand Perception Gap' },
-      { id: 'competitive-intelligence', label: 'Competitive Intelligence' },
-      { id: 'customer-understanding', label: 'Customer Understanding' },
-      { id: 'search-visibility', label: 'Search Visibility' },
-    ]
+  const handleRefresh = () => {
+    setDiagnostic(null)
+    runDiagnostic()
+  }
 
-    const postUVP = hasCompletedUVP
-      ? [
-          { id: 'customer-discovery-journey', label: 'Customer Discovery' },
-          { id: 'value-delivery-analysis', label: 'Value Delivery' },
-          { id: 'competitive-positioning-canvas', label: 'Positioning Canvas' },
-          { id: 'dynamic-swot', label: 'SWOT Analysis' },
-          { id: 'brand-perception-mirror', label: 'Perception Mirror' },
-        ]
-      : []
-
-    return [...preUVP, ...postUVP]
-  }, [hasCompletedUVP])
-
-  // Render active subsection content
-  const renderActiveSubsection = () => {
-    const commonProps = {
-      brandId,
-      brandData,
-      className: 'mt-6',
-    }
-
-    switch (activeSubsection) {
-      case 'brand-perception-gap':
-        return <BrandPerceptionGapSection {...commonProps} hasCompletedUVP={hasCompletedUVP} />
-      case 'competitive-intelligence':
-        return <CompetitiveIntelligenceSection {...commonProps} />
-      case 'customer-understanding':
-        return <CustomerUnderstandingSection {...commonProps} />
-      case 'search-visibility':
-        return <SearchVisibilitySection {...commonProps} />
-      case 'customer-discovery-journey':
-        return <CustomerDiscoveryJourneySection {...commonProps} hasCompletedUVP={hasCompletedUVP} />
-      case 'value-delivery-analysis':
-        return <ValueDeliveryAnalysisSection {...commonProps} hasCompletedUVP={hasCompletedUVP} />
-      case 'competitive-positioning-canvas':
-        return <CompetitivePositioningCanvasSection {...commonProps} hasCompletedUVP={hasCompletedUVP} />
-      case 'dynamic-swot':
-        return <DynamicSWOTSection {...commonProps} hasCompletedUVP={hasCompletedUVP} />
-      case 'brand-perception-mirror':
-        return <BrandPerceptionMirrorSection {...commonProps} hasCompletedUVP={hasCompletedUVP} />
-      default:
-        return <BrandPerceptionGapSection {...commonProps} hasCompletedUVP={hasCompletedUVP} />
-    }
+  const handleViewSection = (section: 'market' | 'customer' | 'brand') => {
+    setActiveSection(section)
   }
 
   return (
     <div className={className}>
       <MirrorSectionHeader
         title="Mirror"
-        description="See where you are — your audience, market, and message today"
-        badge={<span className="text-xs">AI-Powered Intelligence</span>}
+        description="The honest truth about where you stand — 3 diagnostics that matter"
+        badge={<span className="text-xs">AI-Powered Reality Check</span>}
         actions={
-          <>
-            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
+          diagnostic && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isAnalyzing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isAnalyzing ? 'animate-spin' : ''}`} />
+              Refresh Analysis
             </Button>
-            <Button size="sm">
-              <Sparkles className="h-4 w-4 mr-2" />
-              Ask Marbs
-            </Button>
-          </>
+          )
         }
       />
 
-      {/* WWH Framework Overview */}
-      <div className="container px-6 py-4">
-        <Card className="border-2 border-primary/20">
-          <div className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-semibold mb-1">Your Strategic Foundation</h3>
-                <p className="text-sm text-muted-foreground">
-                  Why, What, How — The core of your brand
+      <div className="mt-6 space-y-6">
+        {/* Loading State */}
+        {isAnalyzing && (
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <div className="text-center space-y-3">
+                <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+                <div className="text-lg font-semibold">Analyzing Your Brand...</div>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  We're discovering your competitors, mining customer reviews, analyzing your
+                  market position, and checking messaging consistency across all touchpoints.
                 </p>
+                <p className="text-xs text-muted-foreground">This may take 30-60 seconds</p>
               </div>
-              {!hasCompletedUVP && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => {
-                    const uvpSection = document.getElementById('uvp-flow')
-                    uvpSection?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                  }}
-                >
-                  <Zap className="h-4 w-4 mr-2" />
-                  Strengthen Your WHY
-                </Button>
-              )}
-            </div>
-            <WWHFramework brandData={brandData} />
-            {!hasCompletedUVP && (
-              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-900 dark:text-blue-100">
-                  <Lock className="h-4 w-4 inline mr-1" />
-                  Complete your Value Proposition to refine and strengthen your strategic foundation
-                </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error State */}
+        {error && !isAnalyzing && (
+          <Card className="border-red-200 bg-red-50/50">
+            <CardContent className="flex items-start gap-3 py-6">
+              <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+              <div className="flex-1">
+                <div className="font-semibold text-red-900">Analysis Failed</div>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
               </div>
-            )}
-          </div>
-        </Card>
+              <Button variant="outline" size="sm" onClick={runDiagnostic}>
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* No Data State */}
+        {!diagnostic && !isAnalyzing && !error && (
+          <Card>
+            <CardContent className="text-center py-12">
+              <div className="text-lg font-semibold mb-2">Ready to Analyze Your Brand</div>
+              <p className="text-sm text-muted-foreground mb-4">
+                We'll discover your competitors, analyze customer reviews, check your market
+                position, and evaluate messaging consistency.
+              </p>
+              <Button onClick={runDiagnostic}>Run Brand Diagnostic</Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Diagnostic Results */}
+        {diagnostic && !isAnalyzing && (
+          <>
+            {/* Health Dashboard */}
+            <MirrorHealthDashboard diagnostic={diagnostic} onViewSection={handleViewSection} />
+
+            {/* Three Core Diagnostics */}
+            <Accordion
+              type="single"
+              collapsible
+              value={activeSection}
+              onValueChange={setActiveSection}
+              className="space-y-4"
+            >
+              <AccordionItem value="market" className="border rounded-lg px-6">
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <div className="text-left">
+                      <div className="text-lg font-semibold">Market Position Reality Check</div>
+                      <div className="text-sm text-muted-foreground">
+                        Where you stand vs competitors
+                      </div>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-6 pb-4">
+                  <MarketPositionSection
+                    data={diagnostic.market_position_data}
+                    hasCompletedUVP={diagnostic.has_completed_uvp}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="customer" className="border rounded-lg px-6">
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <div className="text-left">
+                      <div className="text-lg font-semibold">Customer Truth Assessment</div>
+                      <div className="text-sm text-muted-foreground">
+                        Who really buys and why
+                      </div>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-6 pb-4">
+                  <CustomerTruthSection
+                    data={diagnostic.customer_truth_data}
+                    hasCompletedUVP={diagnostic.has_completed_uvp}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="brand" className="border rounded-lg px-6">
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <div className="text-left">
+                      <div className="text-lg font-semibold">Brand Clarity & Fit</div>
+                      <div className="text-sm text-muted-foreground">
+                        Message consistency & clarity
+                      </div>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-6 pb-4">
+                  <BrandFitSection
+                    data={diagnostic.brand_fit_data}
+                    hasCompletedUVP={diagnostic.has_completed_uvp}
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            {/* Critical Gaps Summary */}
+            <MirrorMomentSummary gaps={diagnostic.critical_gaps} />
+          </>
+        )}
       </div>
-
-      {/* Horizontal subsection tabs */}
-      <SubsectionTabs
-        subsections={subsections}
-        activeSubsection={activeSubsection}
-        onSubsectionChange={handleSubsectionChange}
-      />
-
-      {/* Active subsection content */}
-      {renderActiveSubsection()}
     </div>
   )
 }
