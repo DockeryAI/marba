@@ -99,6 +99,22 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
       onDataUpdate?.(result)
 
       console.log('[MeasureSection] Diagnostic complete:', result)
+
+      // Auto-save session after diagnostic completes
+      if (brandData?.name) {
+        const { SessionService } = await import('@/services/session/session.service')
+        const sessionName = brandData.name
+        const urlSlug = brandData.website?.replace(/https?:\/\//, '').replace(/\//g, '-') || brandData.name.toLowerCase().replace(/\s+/g, '-')
+
+        await SessionService.saveSession({
+          brandId,
+          sessionName,
+          urlSlug,
+          mirrorState: result,
+          uvpState: null,
+        })
+        console.log('[MeasureSection] Session auto-saved:', sessionName)
+      }
     } catch (err) {
       console.error('[MeasureSection] Diagnostic failed:', err)
       setError('Failed to analyze brand. Please try again.')
