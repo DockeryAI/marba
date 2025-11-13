@@ -141,14 +141,16 @@ export class MarketPositionService {
       })
 
       if (listings.length === 0) {
-        throw new Error(
-          `No competitors found for "${query}".\n` +
-          `This could mean:\n` +
-          `- No businesses found in Google Maps for this search\n` +
-          `- Location is too specific or misspelled\n` +
-          `- Industry term not matching Google Maps categories\n\n` +
-          `Try adjusting the industry or location terms.`
-        )
+        console.warn('[MarketPosition] No competitors found on Google Maps, using fallback data')
+        // Return fallback data instead of throwing error
+        return [
+          {
+            name: 'Competitor analysis unavailable',
+            url: undefined,
+            positioning: 'Market data not available',
+            strengths: ['Unable to analyze competitors at this time'],
+          },
+        ]
       }
 
       console.log('[MarketPosition] Found', listings.length, 'businesses from Google Maps')
@@ -159,10 +161,16 @@ export class MarketPositionService {
       )
 
       if (competitors.length === 0) {
-        throw new Error(
-          `All ${listings.length} businesses found were filtered out as they match the brand name "${brandName}".\n` +
-          `This likely means the search is too narrow. Try broadening the industry term.`
-        )
+        console.warn('[MarketPosition] All competitors filtered out, using fallback data')
+        // Return fallback data instead of throwing error
+        return [
+          {
+            name: 'Competitor analysis unavailable',
+            url: undefined,
+            positioning: 'Market data not available',
+            strengths: ['Unable to analyze competitors at this time'],
+          },
+        ]
       }
 
       // Convert OutScraper business listings to Competitor format

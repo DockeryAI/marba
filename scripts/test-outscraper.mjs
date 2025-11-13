@@ -30,9 +30,34 @@ try {
   }
 
   const data = await response.json()
-  console.log('✅ Found businesses:', data.data[0]?.length || 0)
-  if (data.data[0]?.length > 0) {
-    console.log('   Example:', data.data[0][0].name)
+
+  console.log('Response keys:', Object.keys(data))
+
+  // OutScraper uses async processing - check if we need to poll for results
+  if (data.status && data.id) {
+    console.log(`⏳ Request queued with ID: ${data.id}`)
+    console.log(`   Status: ${data.status}`)
+
+    if (data.results_location) {
+      console.log('   Results will be available at:', data.results_location)
+      console.log('\n⚠️  OutScraper uses async processing.')
+      console.log('   For real-time results, use the synchronous endpoint or poll the results_location.')
+    }
+
+    console.log('\n✅ API connection successful (async mode)')
+  } else if (data.data) {
+    // Direct response with data
+    let businesses = []
+    if (Array.isArray(data.data)) {
+      businesses = data.data.flat()
+    }
+
+    console.log('✅ Found businesses:', businesses.length)
+    if (businesses.length > 0) {
+      console.log('   Example:', businesses[0]?.name || businesses[0]?.title || 'Name not found')
+    }
+  } else {
+    console.log('⚠️  Unexpected response format:', JSON.stringify(data, null, 2))
   }
 } catch (error) {
   console.log('❌ Test 1 Failed:', error.message)

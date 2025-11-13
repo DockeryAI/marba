@@ -48,10 +48,14 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
   const [hasCheckedExisting, setHasCheckedExisting] = React.useState(false)
 
   React.useEffect(() => {
-    // Only auto-run if we have brand data, no diagnostic yet, and haven't checked for existing data
+    // Auto-run if we have brand data, no diagnostic yet, and haven't checked for existing data
     if (brandData?.name && brandData?.industry && !diagnostic && !isAnalyzing && !hasCheckedExisting) {
-      // Don't auto-run - user must manually trigger first analysis
+      console.log('[MeasureSection] Auto-running diagnostic for new brand...')
       setHasCheckedExisting(true)
+      // Auto-run diagnostic after brief delay to ensure UI is ready
+      setTimeout(() => {
+        runDiagnostic()
+      }, 500)
     }
   }, [brandData?.name, brandData?.industry, hasCheckedExisting])
 
@@ -88,11 +92,12 @@ export const MeasureSection: React.FC<MeasureSectionProps> = ({
     setError(null)
 
     try {
+      // Clean up brand data - remove extra whitespace and newlines
       const brandDataForAnalysis: BrandData = {
-        name: brandData.name,
-        industry: brandData.industry,
-        location: brandData.location,
-        website: brandData.website,
+        name: brandData.name?.trim().replace(/\s+/g, ' ') || '',
+        industry: brandData.industry?.trim().replace(/\s+/g, ' ') || '',
+        location: brandData.location?.trim() || undefined,
+        website: brandData.website?.trim() || undefined,
         competitors: brandData.competitors,
         target_audience: brandData.target_audience,
       }
