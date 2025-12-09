@@ -3,6 +3,7 @@
  *
  * Provides real-time industry insights, market research, and competitive intelligence
  * using Perplexity's Sonar models with web search capabilities.
+ * Routes through Supabase edge function to hide API keys.
  *
  * This service helps generate UVP suggestions based on:
  * - Industry trends and best practices
@@ -11,6 +12,7 @@
  * - Market positioning insights
  */
 
+import { supabase } from '@/lib/supabase'
 import {
   PerplexityRequest,
   PerplexityResponse,
@@ -22,7 +24,6 @@ import {
  * Perplexity API configuration
  */
 interface PerplexityConfig {
-  apiKey: string
   model: 'sonar-pro' | 'sonar' | 'sonar-medium' | 'sonar-small'
   temperature: number
   maxTokens: number
@@ -32,7 +33,6 @@ interface PerplexityConfig {
  * Default configuration
  */
 const DEFAULT_CONFIG: PerplexityConfig = {
-  apiKey: import.meta.env.VITE_OPENROUTER_API_KEY || import.meta.env.VITE_OPENAI_API_KEY || '',
   model: 'sonar-pro', // Best for deep research
   temperature: 0.7,
   maxTokens: 2000,
@@ -43,21 +43,16 @@ const DEFAULT_CONFIG: PerplexityConfig = {
  */
 export class PerplexityAPI {
   private config: PerplexityConfig
-  private endpoint = 'https://openrouter.ai/api/v1/chat/completions'
 
   constructor(config?: Partial<PerplexityConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config }
-
-    if (!this.config.apiKey) {
-      console.warn('[PerplexityAPI] No API key provided. Set VITE_OPENROUTER_API_KEY.')
-    }
   }
 
   /**
-   * Check if API is available
+   * Check if API is available (always true when using edge function)
    */
   async isAvailable(): Promise<boolean> {
-    return !!this.config.apiKey
+    return true
   }
 
   /**
@@ -262,44 +257,37 @@ export class PerplexityAPI {
   }
 
   /**
-   * Make API request to Perplexity via OpenRouter
+   * Make API request via openai-proxy edge function
    */
   private async makeRequest(prompt: string): Promise<any> {
-    const modelName = this.mapModelName(this.config.model)
-    const referer = typeof window !== 'undefined' ? window.location.origin : 'https://marba.app'
+    const systemPrompt = 'You are a marketing intelligence AI with real-time web access. Provide current, accurate insights about industries, markets, and customer needs. Always respond with valid JSON arrays.'
 
-    const response = await fetch(this.endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.config.apiKey}`,
-        'HTTP-Referer': referer,
-        'X-Title': 'MARBA UVP Wizard',
-      },
-      body: JSON.stringify({
-        model: modelName,
+    const { data, error } = await supabase.functions.invoke('openai-proxy', {
+      body: {
+        action: 'chat',
         messages: [
-          {
-            role: 'system',
-            content:
-              'You are a marketing intelligence AI with real-time web access. Provide current, accurate insights about industries, markets, and customer needs. Always respond with valid JSON arrays.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt },
         ],
-        temperature: this.config.temperature,
-        max_tokens: this.config.maxTokens,
-      }),
+        maxTokens: this.config.maxTokens,
+      },
     })
 
-    if (!response.ok) {
-      const error = await response.text()
-      throw new Error(`Perplexity API error: ${response.status} ${error}`)
+    if (error) {
+      throw new Error(`Perplexity API error: ${error.message}`)
     }
 
-    return response.json()
+    if (!data?.success) {
+      throw new Error(`Perplexity API error: ${data?.error || 'Unknown error'}`)
+    }
+
+    // Return in format expected by parseResponse
+    return {
+      choices: [{
+        message: { content: data.content },
+        finish_reason: 'stop',
+      }],
+    }
   }
 
   /**
@@ -327,7 +315,7 @@ export class PerplexityAPI {
 
     return {
       insights,
-      sources: this.extractSources(data),
+      sources: [],
       confidence,
     }
   }
@@ -346,29 +334,6 @@ export class PerplexityAPI {
     }
 
     return 0.5
-  }
-
-  /**
-   * Extract sources from response metadata
-   */
-  private extractSources(data: any): Array<{ title: string; url: string; excerpt: string }> {
-    // OpenRouter doesn't return sources in the same format as native Perplexity
-    // Return empty array for now - could be enhanced later
-    return []
-  }
-
-  /**
-   * Map model names to OpenRouter format
-   */
-  private mapModelName(model: string): string {
-    const mapping: Record<string, string> = {
-      'sonar-pro': 'perplexity/sonar-pro',
-      sonar: 'perplexity/sonar',
-      'sonar-medium': 'perplexity/sonar-medium-online',
-      'sonar-small': 'perplexity/sonar-small-online',
-    }
-
-    return mapping[model] || model
   }
 }
 

@@ -2,7 +2,7 @@
  * Rhodes AI Service for UVP Wizard
  *
  * Wrapper around Claude (Anthropic) AI for UVP enhancement, scoring, and validation.
- * Uses OpenRouter for unified API access to Claude models.
+ * Routes through Supabase edge function to hide API keys.
  *
  * This service provides:
  * - UVP text enhancement and refinement
@@ -12,18 +12,17 @@
  * - Custom input parsing and analysis
  */
 
+import { supabase } from '@/lib/supabase'
 import {
   RhodesAIRequest,
   RhodesAIResponse,
   UVP,
-  QualityAssessment,
 } from '@/types/uvp-wizard'
 
 /**
  * Rhodes AI configuration
  */
 interface RhodesAIConfig {
-  apiKey: string
   model: 'claude-opus-4' | 'claude-sonnet-4' | 'claude-3-opus' | 'claude-3-sonnet'
   temperature: number
   maxTokens: number
@@ -33,7 +32,6 @@ interface RhodesAIConfig {
  * Default configuration
  */
 const DEFAULT_CONFIG: RhodesAIConfig = {
-  apiKey: import.meta.env.VITE_OPENROUTER_API_KEY || '',
   model: 'claude-sonnet-4', // Balance of speed and quality
   temperature: 0.7,
   maxTokens: 2000,
@@ -44,21 +42,16 @@ const DEFAULT_CONFIG: RhodesAIConfig = {
  */
 export class RhodesAI {
   private config: RhodesAIConfig
-  private endpoint = 'https://openrouter.ai/api/v1/chat/completions'
 
   constructor(config?: Partial<RhodesAIConfig>) {
     this.config = { ...DEFAULT_CONFIG, ...config }
-
-    if (!this.config.apiKey) {
-      console.warn('[RhodesAI] No API key provided. Set VITE_OPENROUTER_API_KEY.')
-    }
   }
 
   /**
-   * Check if API is available
+   * Check if API is available (always true when using edge function)
    */
   async isAvailable(): Promise<boolean> {
-    return !!this.config.apiKey
+    return true
   }
 
   /**
@@ -301,44 +294,29 @@ Extract and enhance the core message. Return JSON:
   }
 
   /**
-   * Make API request to Claude via OpenRouter
+   * Make API request to Claude via openai-proxy edge function
    */
   private async makeRequest(systemPrompt: string, userPrompt: string): Promise<string> {
-    const modelName = this.mapModelName(this.config.model)
-    const referer = typeof window !== 'undefined' ? window.location.origin : 'https://marba.app'
-
-    const response = await fetch(this.endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.config.apiKey}`,
-        'HTTP-Referer': referer,
-        'X-Title': 'MARBA UVP Wizard',
-      },
-      body: JSON.stringify({
-        model: modelName,
+    const { data, error } = await supabase.functions.invoke('openai-proxy', {
+      body: {
+        action: 'chat',
         messages: [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          {
-            role: 'user',
-            content: userPrompt,
-          },
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
         ],
-        temperature: this.config.temperature,
-        max_tokens: this.config.maxTokens,
-      }),
+        maxTokens: this.config.maxTokens,
+      },
     })
 
-    if (!response.ok) {
-      const error = await response.text()
-      throw new Error(`Rhodes AI API error: ${response.status} ${error}`)
+    if (error) {
+      throw new Error(`Rhodes AI API error: ${error.message}`)
     }
 
-    const data = await response.json()
-    return data.choices[0].message.content
+    if (!data?.success) {
+      throw new Error(`Rhodes AI API error: ${data?.error || 'Unknown error'}`)
+    }
+
+    return data.content
   }
 
   /**
@@ -364,20 +342,6 @@ Extract and enhance the core message. Return JSON:
       // If all fails, return wrapped content
       return { text: content }
     }
-  }
-
-  /**
-   * Map model names to OpenRouter format
-   */
-  private mapModelName(model: string): string {
-    const mapping: Record<string, string> = {
-      'claude-opus-4': 'anthropic/claude-opus-4',
-      'claude-sonnet-4': 'anthropic/claude-sonnet-4',
-      'claude-3-opus': 'anthropic/claude-3-opus',
-      'claude-3-sonnet': 'anthropic/claude-3-sonnet',
-    }
-
-    return mapping[model] || model
   }
 }
 
