@@ -238,8 +238,12 @@ serve(async (req) => {
           );
         }
 
+        // Convert raw placeId to Google Maps URL format for OutScraper reviews-v3 endpoint
+        // This format is required for reliable review fetching (matches apify-api.ts pattern)
+        const googleMapsUrl = `https://www.google.com/maps/place/?q=place_id:${placeId}`;
+
         const apiParams = {
-          query: placeId,
+          query: googleMapsUrl,
           reviewsLimit,
           sort,
           language,
