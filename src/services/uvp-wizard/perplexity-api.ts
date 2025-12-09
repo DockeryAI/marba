@@ -266,13 +266,14 @@ export class PerplexityAPI {
    */
   private async makeRequest(prompt: string): Promise<any> {
     const modelName = this.mapModelName(this.config.model)
+    const referer = typeof window !== 'undefined' ? window.location.origin : 'https://marba.app'
 
     const response = await fetch(this.endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.config.apiKey}`,
-        'HTTP-Referer': window.location.origin,
+        'HTTP-Referer': referer,
         'X-Title': 'MARBA UVP Wizard',
       },
       body: JSON.stringify({

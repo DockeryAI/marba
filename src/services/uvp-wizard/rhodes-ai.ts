@@ -305,13 +305,14 @@ Extract and enhance the core message. Return JSON:
    */
   private async makeRequest(systemPrompt: string, userPrompt: string): Promise<string> {
     const modelName = this.mapModelName(this.config.model)
+    const referer = typeof window !== 'undefined' ? window.location.origin : 'https://marba.app'
 
     const response = await fetch(this.endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.config.apiKey}`,
-        'HTTP-Referer': window.location.origin,
+        'HTTP-Referer': referer,
         'X-Title': 'MARBA UVP Wizard',
       },
       body: JSON.stringify({
