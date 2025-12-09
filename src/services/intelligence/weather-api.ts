@@ -1,9 +1,11 @@
 /**
  * OpenWeather API Integration
  * Real-time weather data for opportunity detection
+ * Uses Supabase Edge Function to hide API keys
  */
 
-const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY
+import { supabase } from '@/lib/supabase'
+
 const CACHE_TTL = 30 * 60 * 1000 // 30 minutes
 
 interface WeatherData {
@@ -52,28 +54,32 @@ class WeatherAPIService {
     const cached = this.getCached(cacheKey)
     if (cached) return cached
 
-    if (!WEATHER_API_KEY) {
-      throw new Error(
-        'Weather API key not configured. Add VITE_WEATHER_API_KEY to your .env file. ' +
-        'Get a free API key from https://openweathermap.org/api'
-      )
-    }
-
     try {
-      const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)}&units=imperial&appid=${WEATHER_API_KEY}`
+      const { data, error } = await supabase.functions.invoke('weather-fetch', {
+        body: { action: 'current', location, units: 'imperial' }
+      })
 
-      const response = await fetch(url)
-      if (!response.ok) throw new Error(`Weather API error: ${response.statusText}`)
+      if (error) {
+        throw new Error(error.message)
+      }
 
-      const data = await response.json()
+      if (!data) {
+        throw new Error('No response from edge function')
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Weather API request failed')
+      }
+
+      const apiData = data.data
 
       const weather: WeatherData = {
-        temperature: data.main.temp,
-        feels_like: data.main.feels_like,
-        condition: data.weather[0].main,
-        description: data.weather[0].description,
-        humidity: data.main.humidity,
-        wind_speed: data.wind.speed,
+        temperature: apiData.main.temp,
+        feels_like: apiData.main.feels_like,
+        condition: apiData.weather[0].main,
+        description: apiData.weather[0].description,
+        humidity: apiData.main.humidity,
+        wind_speed: apiData.wind.speed,
         forecast: []
       }
 
@@ -90,25 +96,29 @@ class WeatherAPIService {
     const cached = this.getCached(cacheKey)
     if (cached) return cached
 
-    if (!WEATHER_API_KEY) {
-      throw new Error(
-        'Weather API key not configured. Add VITE_WEATHER_API_KEY to your .env file. ' +
-        'Get a free API key from https://openweathermap.org/api'
-      )
-    }
-
     try {
-      const url = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(location)}&units=imperial&appid=${WEATHER_API_KEY}`
+      const { data, error } = await supabase.functions.invoke('weather-fetch', {
+        body: { action: 'forecast', location, units: 'imperial' }
+      })
 
-      const response = await fetch(url)
-      if (!response.ok) throw new Error(`Weather API error: ${response.statusText}`)
+      if (error) {
+        throw new Error(error.message)
+      }
 
-      const data = await response.json()
+      if (!data) {
+        throw new Error('No response from edge function')
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Weather API request failed')
+      }
+
+      const apiData = data.data
 
       const dailyForecasts: ForecastDay[] = []
       const grouped: Record<string, any[]> = {}
 
-      data.list.forEach((item: any) => {
+      apiData.list.forEach((item: any) => {
         const date = item.dt_txt.split(' ')[0]
         if (!grouped[date]) grouped[date] = []
         grouped[date].push(item)

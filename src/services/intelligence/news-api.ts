@@ -1,9 +1,11 @@
 /**
  * News API Integration
  * Fetches industry news and local events for opportunity detection
+ * Now proxied through Supabase Edge Function to hide API keys
  */
 
-const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY
+import { supabase } from '@/lib/supabase'
+
 const CACHE_TTL = 60 * 60 * 1000 // 1 hour
 
 interface NewsArticle {
@@ -31,43 +33,47 @@ class NewsAPIService {
     this.cache.set(key, { data, timestamp: Date.now() })
   }
 
+  clearCache(): void {
+    this.cache.clear()
+  }
+
   async getIndustryNews(industry: string, keywords: string[]): Promise<NewsArticle[]> {
     const cacheKey = `industry_${industry}_${keywords.join('_')}`
     const cached = this.getCached(cacheKey)
     if (cached) return cached
 
-    if (!NEWS_API_KEY) {
-      console.warn(
-        '[NewsAPI] News API key not configured. Add VITE_NEWS_API_KEY to your .env file. ' +
-        'Get a free API key from https://newsapi.org/register'
-      )
-      return []
-    }
-
     try {
-      const query = `${industry} ${keywords.join(' ')}`
-      const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&language=en&pageSize=20&apiKey=${NEWS_API_KEY}`
+      const { data, error } = await supabase.functions.invoke('news-fetch', {
+        body: {
+          action: 'industry',
+          industry,
+          keywords
+        }
+      })
 
-      const response = await fetch(url)
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        console.warn(
-          `[NewsAPI] News API error (${response.status}): ${errorData.message || response.statusText}. ` +
-          'Get a new API key from https://newsapi.org/register'
-        )
+      if (error) {
+        console.warn('[NewsAPI] Edge function error:', error)
         return []
       }
 
-      const data = await response.json()
+      if (!data) {
+        console.warn('[NewsAPI] No response from edge function')
+        return []
+      }
+
+      if (!data.success) {
+        console.warn('[NewsAPI] Edge function returned error:', data.error)
+        return []
+      }
+
+      if (!Array.isArray(data.articles)) {
+        console.warn('[NewsAPI] Invalid response structure from edge function')
+        return []
+      }
+
+      // Add relevance scores to articles (post-processing in frontend)
       const articles: NewsArticle[] = data.articles.map((article: any) => ({
-        title: article.title,
-        description: article.description || '',
-        url: article.url,
-        publishedAt: article.publishedAt,
-        source: article.source.name,
-        author: article.author,
-        content: article.content,
+        ...article,
         relevanceScore: this.calculateRelevance(article, keywords)
       }))
 
@@ -84,37 +90,37 @@ class NewsAPIService {
     const cached = this.getCached(cacheKey)
     if (cached) return cached
 
-    if (!NEWS_API_KEY) {
-      console.warn(
-        '[NewsAPI] News API key not configured. Add VITE_NEWS_API_KEY to your .env file. ' +
-        'Get a free API key from https://newsapi.org/register'
-      )
-      return []
-    }
-
     try {
-      const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(location)}&sortBy=publishedAt&language=en&pageSize=15&apiKey=${NEWS_API_KEY}`
+      const { data, error } = await supabase.functions.invoke('news-fetch', {
+        body: {
+          action: 'local',
+          location
+        }
+      })
 
-      const response = await fetch(url)
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        console.warn(
-          `[NewsAPI] News API error (${response.status}): ${errorData.message || response.statusText}. ` +
-          'Get a new API key from https://newsapi.org/register'
-        )
+      if (error) {
+        console.warn('[NewsAPI] Edge function error:', error)
         return []
       }
 
-      const data = await response.json()
+      if (!data) {
+        console.warn('[NewsAPI] No response from edge function')
+        return []
+      }
+
+      if (!data.success) {
+        console.warn('[NewsAPI] Edge function returned error:', data.error)
+        return []
+      }
+
+      if (!Array.isArray(data.articles)) {
+        console.warn('[NewsAPI] Invalid response structure from edge function')
+        return []
+      }
+
+      // Add relevance scores to articles (fixed score for local news)
       const articles: NewsArticle[] = data.articles.map((article: any) => ({
-        title: article.title,
-        description: article.description || '',
-        url: article.url,
-        publishedAt: article.publishedAt,
-        source: article.source.name,
-        author: article.author,
-        content: article.content,
+        ...article,
         relevanceScore: 75
       }))
 
@@ -136,11 +142,6 @@ class NewsAPIService {
 
     return Math.min(100, score)
   }
-
-  /**
-   * NO MOCK DATA - removed to enforce real API usage
-   * Configure VITE_NEWS_API_KEY to enable news features
-   */
 }
 
 export const NewsAPI = new NewsAPIService()

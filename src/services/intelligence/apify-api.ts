@@ -1,10 +1,10 @@
 /**
  * Apify API Integration
  * Web scraping and automation using Apify Actors
+ * Routes through Supabase Edge Function to hide API keys
  */
 
-const APIFY_API_KEY = import.meta.env.VITE_APIFY_API_KEY
-const APIFY_API_URL = 'https://api.apify.com/v2'
+import { supabase } from '@/lib/supabase'
 
 // Apify Actor IDs (official actors from Apify Store)
 const ACTORS = {
@@ -73,76 +73,41 @@ interface InstagramProfile {
 
 class ApifyAPIService {
   /**
-   * Run an Apify Actor and wait for results
+   * Run an Apify Actor via edge function and wait for results
    */
-  private async runActor(actorId: string, input: any, timeout: number = 120): Promise<any> {
-    if (!APIFY_API_KEY) {
-      throw new Error(
-        'Apify API key not configured. Add VITE_APIFY_API_KEY to your .env file. ' +
-        'Get a free API key from https://apify.com/'
-      )
-    }
-
+  private async runActor(
+    action: 'run-actor' | 'website-content' | 'google-maps' | 'instagram',
+    input: Record<string, unknown>,
+    actorId?: string,
+    timeout?: number
+  ): Promise<unknown[]> {
     try {
-      // Start actor run
-      const runResponse = await fetch(`${APIFY_API_URL}/acts/${actorId}/runs?token=${APIFY_API_KEY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      const { data, error } = await supabase.functions.invoke('apify-actor', {
+        body: {
+          action,
+          actorId,
+          input,
+          timeout,
         },
-        body: JSON.stringify(input)
       })
 
-      if (!runResponse.ok) {
-        throw new Error(`Failed to start Apify actor: ${runResponse.status} ${runResponse.statusText}`)
+      // Check for edge function errors
+      if (error) {
+        throw new Error(error.message || 'Edge function error')
       }
 
-      const runData = await runResponse.json()
-      const runId = runData.data.id
-
-      console.log(`[Apify] Started actor ${actorId}, run ID: ${runId}`)
-
-      // Poll for results (wait up to timeout seconds)
-      const startTime = Date.now()
-      while (Date.now() - startTime < timeout * 1000) {
-        await new Promise(resolve => setTimeout(resolve, 2000)) // Poll every 2 seconds
-
-        const statusResponse = await fetch(
-          `${APIFY_API_URL}/actor-runs/${runId}?token=${APIFY_API_KEY}`
-        )
-
-        if (!statusResponse.ok) {
-          throw new Error(`Failed to check run status: ${statusResponse.status}`)
-        }
-
-        const statusData = await statusResponse.json()
-        const status = statusData.data.status
-
-        if (status === 'SUCCEEDED') {
-          // Get dataset items
-          const datasetId = statusData.data.defaultDatasetId
-          const datasetResponse = await fetch(
-            `${APIFY_API_URL}/datasets/${datasetId}/items?token=${APIFY_API_KEY}`
-          )
-
-          if (!datasetResponse.ok) {
-            throw new Error(`Failed to get dataset: ${datasetResponse.status}`)
-          }
-
-          const results = await datasetResponse.json()
-          console.log(`[Apify] Actor completed successfully, ${results.length} results`)
-          return results
-
-        } else if (status === 'FAILED' || status === 'ABORTED' || status === 'TIMED-OUT') {
-          throw new Error(`Actor run ${status.toLowerCase()}: ${statusData.data.statusMessage || 'Unknown error'}`)
-        }
-
-        // Still running, continue polling
-        console.log(`[Apify] Run status: ${status}, waiting...`)
+      // Check for null response
+      if (!data) {
+        throw new Error('No response from edge function')
       }
 
-      throw new Error(`Actor run timed out after ${timeout} seconds`)
+      // Check for application errors
+      if (!data.success) {
+        throw new Error(data.error || 'Unknown error from edge function')
+      }
 
+      // Return results array
+      return Array.isArray(data.results) ? data.results : []
     } catch (error) {
       console.error('[Apify] Actor run error:', error)
       throw error
@@ -157,7 +122,7 @@ class ApifyAPIService {
     try {
       console.log('[Apify] Scraping website content:', url)
 
-      const results = await this.runActor(ACTORS.WEBSITE_CONTENT, {
+      const results = await this.runActor('website-content', {
         startUrls: [{ url }],
         maxCrawlPages: 1,
         crawlerType: 'cheerio'
@@ -167,7 +132,7 @@ class ApifyAPIService {
         throw new Error('No content extracted from website')
       }
 
-      const page = results[0]
+      const page = results[0] as any
 
       return {
         url: page.url || url,
@@ -202,7 +167,7 @@ class ApifyAPIService {
     try {
       console.log('[Apify] Scraping Google Maps reviews:', options)
 
-      const input: any = {
+      const input: Record<string, unknown> = {
         maxReviews: options.maxReviews || 50,
         reviewsSort: 'newest',
         language: 'en'
@@ -218,7 +183,7 @@ class ApifyAPIService {
         throw new Error('Either placeId or searchQuery must be provided')
       }
 
-      const results = await this.runActor(ACTORS.GOOGLE_MAPS, input, 180) // 3 min timeout
+      const results = await this.runActor('google-maps', input, undefined, 180) // 3 min timeout
 
       return results.map((place: any) => ({
         placeId: place.placeId || '',
@@ -257,20 +222,20 @@ class ApifyAPIService {
     try {
       console.log('[Apify] Scraping Instagram profile:', username)
 
-      const results = await this.runActor(ACTORS.INSTAGRAM, {
+      const results = await this.runActor('instagram', {
         directUrls: [`https://www.instagram.com/${username}/`],
         resultsType: 'posts',
         resultsLimit: maxPosts,
         searchType: 'user',
         searchLimit: 1
-      }, 180) // 3 min timeout
+      }, undefined, 180) // 3 min timeout
 
       if (!results || results.length === 0) {
         console.warn('[Apify] No Instagram data found for:', username)
         return null
       }
 
-      const profile = results[0]
+      const profile = results[0] as any
 
       return {
         username: profile.ownerUsername || username,

@@ -1,11 +1,10 @@
 /**
  * OutScraper API Integration
  * Real Google Maps business data and review scraping
- * API Docs: https://outscraper.com/api-docs/
+ * Migrated to Supabase Edge Functions for API key security
  */
 
-const OUTSCRAPER_API_KEY = import.meta.env.VITE_OUTSCRAPER_API_KEY
-const OUTSCRAPER_API_URL = 'https://api.app.outscraper.com'
+import { supabase } from '@/lib/supabase'
 
 // ============================================================================
 // Types & Interfaces
@@ -102,67 +101,10 @@ export interface LocalRankingData {
 // ============================================================================
 
 class OutScraperAPIService {
-  private baseUrl = OUTSCRAPER_API_URL
-
-  /**
-   * Check if API key is configured
-   */
-  private checkApiKey(): void {
-    if (!OUTSCRAPER_API_KEY) {
-      throw new Error(
-        'OutScraper API key not configured.\n' +
-        'Add VITE_OUTSCRAPER_API_KEY to your .env file.\n' +
-        'Get a free API key from: https://outscraper.com/\n' +
-        'Required for: Competitor discovery and review analysis'
-      )
-    }
-  }
-
-  /**
-   * Make API request with error handling
-   */
-  private async makeRequest<T>(endpoint: string, params: Record<string, any>): Promise<T> {
-    this.checkApiKey()
-
-    const url = new URL(`${this.baseUrl}${endpoint}`)
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        url.searchParams.append(key, String(value))
-      }
-    })
-
-    try {
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'X-API-KEY': OUTSCRAPER_API_KEY!,
-          'Content-Type': 'application/json',
-        },
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(
-          `OutScraper API error (${response.status}): ${errorText}\n` +
-          `Endpoint: ${endpoint}\n` +
-          `Check your API key and quota at: https://outscraper.com/dashboard/`
-        )
-      }
-
-      const data = await response.json()
-      return data as T
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error('[OutScraper API] Request failed:', error.message)
-        throw error
-      }
-      throw new Error(`OutScraper API request failed: ${String(error)}`)
-    }
-  }
 
   /**
    * 1. Get business listings from Google Maps
-   * API Docs: https://outscraper.com/google-maps-scraper-api/
+   * Uses edge function to hide API key
    */
   async getBusinessListings(params: {
     query: string
@@ -172,284 +114,118 @@ class OutScraperAPIService {
     region?: string
   }): Promise<BusinessListing[]> {
     console.log('[OutScraper] Fetching business listings:', params.query)
-    console.log('[OutScraper] API Key present:', !!OUTSCRAPER_API_KEY)
-
-    const endpoint = '/maps/search-v3'
-    const apiParams = {
-      query: params.location ? `${params.query} near ${params.location}` : params.query,
-      limit: params.limit || 20,
-      language: params.language || 'en',
-      region: params.region || 'US',
-      async: false, // Force synchronous mode - get results immediately, don't queue
-      fields: 'place_id,name,full_address,phone,site,category,rating,reviews,price_level,working_hours,photos_count,verified,claimed,latitude,longitude'
-    }
-
-    console.log('[OutScraper] Request params:', apiParams)
 
     try {
-      const response = await this.makeRequest<any>(endpoint, apiParams)
+      const { data, error } = await supabase.functions.invoke('outscraper-search', {
+        body: {
+          action: 'maps-search',
+          query: params.query,
+          location: params.location,
+          limit: params.limit || 20,
+          language: params.language || 'en',
+          region: params.region || 'US',
+        },
+      })
 
-      console.log('[OutScraper] Raw response:', response)
-
-      // Check if request is pending (async mode)
-      if (response.status === 'Pending') {
-        console.warn('[OutScraper] Request is async/pending. Results not immediately available.')
-        console.warn('[OutScraper] OutScraper queued the request. Would need to poll:', response.results_location)
-        console.warn('[OutScraper] Using synchronous mode would be better for real-time results.')
-        return [] // Return empty for now
+      if (error) {
+        throw new Error(error.message)
       }
 
-      // OutScraper returns array of arrays (batch results)
-      const results = response.data?.[0] || []
-      console.log('[OutScraper] Extracted results array:', results)
+      if (!data) {
+        throw new Error('No response from edge function')
+      }
 
-      const listings: BusinessListing[] = results.map((item: any) => ({
-        place_id: item.place_id || item.google_id || '',
-        name: item.name || '',
-        address: item.full_address || item.address || '',
-        phone: item.phone,
-        website: item.site || item.website,
-        category: Array.isArray(item.category) ? item.category : [item.category || 'Business'],
-        rating: parseFloat(item.rating) || 0,
-        reviews_count: parseInt(item.reviews) || 0,
-        price_level: item.price_level,
-        verified: item.verified === true || item.verified === 'true',
-        claimed: item.claimed === true || item.claimed === 'true',
-        latitude: item.latitude,
-        longitude: item.longitude,
-      }))
+      if (!data.success) {
+        throw new Error(data.error || 'Unknown error from edge function')
+      }
 
+      const listings = data.data || []
       console.log('[OutScraper] Found', listings.length, 'business listings')
       return listings
     } catch (error) {
       console.error('[OutScraper] getBusinessListings failed:', error)
-      console.error('[OutScraper] Error details:', error instanceof Error ? error.message : error)
       throw error
     }
   }
 
   /**
    * 2. Scrape Google reviews for a business
-   * API Docs: https://outscraper.com/google-reviews-scraper-api/
-   *
-   * INTELLIGENT FALLBACK:
-   * 1. Try dedicated reviews endpoint (cached data)
-   * 2. If empty, try Maps Search endpoint (includes reviews with business data)
-   * 3. Return whatever real data we find
+   * Uses edge function to hide API key
    */
   async scrapeGoogleReviews(params: {
     place_id: string
-    business_name?: string // Used for Maps Search fallback
-    industry?: string // Used to make Maps Search more specific
-    location?: string // Used to make Maps Search more specific
+    business_name?: string
+    industry?: string
+    location?: string
     limit?: number
     sort?: 'newest' | 'highest' | 'lowest'
     cutoff_date?: string
   }): Promise<GoogleReview[]> {
     console.log('[OutScraper] Scraping reviews for:', params.business_name || params.place_id)
 
-    // ATTEMPT 1: Try dedicated reviews endpoint (fastest, cached)
-    const endpoint = '/maps/reviews-v3'
-    const apiParams = {
-      query: params.place_id,
-      reviewsLimit: params.limit || 100,
-      sort: params.sort || 'newest',
-      cutoff: params.cutoff_date,
-      language: 'en',
-    }
-
     try {
-      const response = await this.makeRequest<any>(endpoint, apiParams)
+      const { data, error } = await supabase.functions.invoke('outscraper-search', {
+        body: {
+          action: 'reviews',
+          placeId: params.place_id,
+          reviewsLimit: params.limit || 100,
+          sort: params.sort || 'newest',
+          language: 'en',
+        },
+      })
 
-      const results = response.data?.[0] || []
-      const reviewsData = results.reviews_data || results.reviews || []
-
-      const reviews: GoogleReview[] = reviewsData.map((review: any) => ({
-        author_name: review.author_title || review.author_name || 'Anonymous',
-        author_photo: review.author_image || review.author_photo,
-        rating: parseInt(review.review_rating) || parseInt(review.rating) || 0,
-        text: review.review_text || review.text || '',
-        time: review.review_datetime_utc || review.time || new Date().toISOString(),
-        language: review.review_language || review.language,
-        likes: parseInt(review.review_likes) || 0,
-        author_reviews_count: parseInt(review.reviews_count) || 0,
-        response: review.owner_answer ? {
-          text: review.owner_answer,
-          time: review.owner_answer_timestamp || '',
-        } : undefined,
-      }))
-
-      if (reviews.length > 0) {
-        console.log('[OutScraper] ✅ Found', reviews.length, 'reviews from dedicated endpoint')
-        return reviews
+      if (error) {
+        throw new Error(error.message)
       }
 
-      // ATTEMPT 2: Reviews endpoint returned 0, try Maps Search (includes reviews)
-      console.log('[OutScraper] No reviews in cache, trying Maps Search endpoint...')
+      if (!data) {
+        throw new Error('No response from edge function')
+      }
 
-      // Use place_id directly for guaranteed exact match
-      return await this.getReviewsFromMapsSearch(
-        params.place_id, // searchQuery param (unused but kept for compatibility)
-        params.place_id,
-        params.limit || 50
-      )
+      if (!data.success) {
+        throw new Error(data.error || 'Unknown error from edge function')
+      }
 
+      const reviews = data.data || []
+      console.log('[OutScraper] Found', reviews.length, 'reviews')
+      return reviews
     } catch (error) {
-      console.error('[OutScraper] Reviews endpoint failed:', error)
-      // Fallback to Maps Search endpoint
-      console.log('[OutScraper] Falling back to Maps Search endpoint...')
-      try {
-        // Use place_id directly for guaranteed exact match
-        return await this.getReviewsFromMapsSearch(
-          params.place_id, // searchQuery param (unused but kept for compatibility)
-          params.place_id,
-          params.limit || 50
-        )
-      } catch (fallbackError) {
-        console.error('[OutScraper] Maps Search fallback also failed:', fallbackError)
-        // Return empty array - caller will handle
-        return []
-      }
-    }
-  }
-
-  /**
-   * Get reviews from Maps Search endpoint (includes reviews with business data)
-   * This is more reliable than dedicated reviews endpoint for uncached businesses
-   * Uses place_id directly for guaranteed exact match
-   *
-   * @param searchQuery - UNUSED (kept for backwards compatibility)
-   * @param place_id - Place ID to fetch reviews for (guaranteed exact match)
-   * @param limit - Number of reviews to fetch
-   */
-  private async getReviewsFromMapsSearch(
-    searchQuery: string,
-    place_id: string,
-    limit: number
-  ): Promise<GoogleReview[]> {
-    const endpoint = '/maps/search-v3'
-    const apiParams = {
-      query: place_id, // Use place_id directly for guaranteed exact match!
-      limit: 1,
-      reviewsLimit: limit,
-      language: 'en',
-      async: false, // CRITICAL: Force synchronous response with actual data!
-    }
-
-    console.log('[OutScraper] Maps Search using place_id:', place_id)
-    console.log('[OutScraper] API params:', apiParams)
-
-    const response = await this.makeRequest<any>(endpoint, apiParams)
-
-    console.log('[OutScraper] Full API response structure:')
-    console.log('[OutScraper] - response.data exists:', !!response.data)
-    console.log('[OutScraper] - response.data[0] exists:', !!response.data?.[0])
-    console.log('[OutScraper] - response.data[0] length:', response.data?.[0]?.length)
-
-    const results = response.data?.[0] || []
-    const business = results[0]
-
-    if (!business) {
-      console.warn('[OutScraper] No business found for place_id:', place_id)
+      console.error('[OutScraper] scrapeGoogleReviews failed:', error)
+      // Return empty array for graceful degradation
       return []
     }
-
-    console.log('[OutScraper] ✅ Found business:', business.name)
-    console.log('[OutScraper] Business object keys:', Object.keys(business))
-    console.log('[OutScraper] business.reviews value:', business.reviews)
-    console.log('[OutScraper] business.reviews type:', typeof business.reviews)
-    console.log('[OutScraper] business.reviews_data exists:', 'reviews_data' in business)
-    console.log('[OutScraper] business.reviews_data value:', business.reviews_data)
-
-    // OutScraper Maps Search response structure - need to determine correct property
-    // Possible properties: reviews_data, google_reviews, review, etc.
-    let reviewsData = business.reviews_data || business.google_reviews || []
-
-    // Defensive: Ensure reviewsData is an array
-    if (!Array.isArray(reviewsData)) {
-      console.warn('[OutScraper] Standard properties not arrays, checking alternates...')
-      console.warn('[OutScraper] Available keys:', Object.keys(business).join(', '))
-
-      // Look for any property that might contain reviews array
-      for (const key of Object.keys(business)) {
-        if (Array.isArray(business[key]) && business[key].length > 0) {
-          // Check if first element looks like a review object
-          const firstItem = business[key][0]
-          if (firstItem && (firstItem.review_text || firstItem.text || firstItem.rating || firstItem.review_rating)) {
-            console.log('[OutScraper] ✅ Found reviews in property:', key)
-            reviewsData = business[key]
-            break
-          }
-        }
-      }
-
-      if (!Array.isArray(reviewsData) || reviewsData.length === 0) {
-        console.warn('[OutScraper] No valid reviews array found in business object')
-        return []
-      }
-    }
-
-    const reviews: GoogleReview[] = reviewsData.map((review: any) => ({
-      author_name: review.author_title || review.author_name || 'Anonymous',
-      author_photo: review.author_image || review.author_photo,
-      rating: parseInt(review.review_rating) || parseInt(review.rating) || 0,
-      text: review.review_text || review.text || '',
-      time: review.review_datetime_utc || review.time || new Date().toISOString(),
-      language: review.review_language || review.language,
-      likes: parseInt(review.review_likes) || 0,
-      author_reviews_count: parseInt(review.reviews_count) || 0,
-      response: review.owner_answer ? {
-        text: review.owner_answer,
-        time: review.owner_answer_timestamp || '',
-      } : undefined,
-    }))
-
-    console.log('[OutScraper] ✅ Found', reviews.length, 'reviews from Maps Search endpoint')
-    return reviews
   }
+
 
   /**
    * 3. Get detailed business profile
+   * Uses edge function to hide API key
    */
   async getBusinessDetails(place_id: string): Promise<BusinessProfile> {
     console.log('[OutScraper] Fetching business details for:', place_id)
 
-    // Use the maps search with place_id to get full details
-    const endpoint = '/maps/search-v3'
-    const apiParams = {
-      query: place_id,
-      limit: 1,
-      language: 'en',
-    }
-
     try {
-      const response = await this.makeRequest<any>(endpoint, apiParams)
-      const results = response.data?.[0] || []
-      const item = results[0]
+      const { data, error } = await supabase.functions.invoke('outscraper-search', {
+        body: {
+          action: 'business-details',
+          placeId: place_id,
+          language: 'en',
+        },
+      })
 
-      if (!item) {
-        throw new Error(`No business found with place_id: ${place_id}`)
+      if (error) {
+        throw new Error(error.message)
       }
 
-      const profile: BusinessProfile = {
-        place_id: item.place_id || item.google_id || '',
-        name: item.name || '',
-        address: item.full_address || item.address || '',
-        phone: item.phone,
-        website: item.site || item.website,
-        category: Array.isArray(item.category) ? item.category : [item.category || 'Business'],
-        rating: parseFloat(item.rating) || 0,
-        reviews_count: parseInt(item.reviews) || 0,
-        price_level: item.price_level,
-        verified: item.verified === true,
-        claimed: item.claimed === true,
-        latitude: item.latitude,
-        longitude: item.longitude,
-        description: item.description || item.about,
-        services: item.services || [],
-        attributes: item.attributes || {},
+      if (!data) {
+        throw new Error('No response from edge function')
       }
 
+      if (!data.success) {
+        throw new Error(data.error || 'Unknown error from edge function')
+      }
+
+      const profile = data.data
       console.log('[OutScraper] Retrieved business profile for:', profile.name)
       return profile
     } catch (error) {

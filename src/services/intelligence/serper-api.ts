@@ -1,9 +1,10 @@
 /**
  * Serper API Integration (Google Search)
  * Search insights and trending queries
+ * Now proxied through Edge Function to hide API keys
  */
 
-const SERPER_API_KEY = import.meta.env.VITE_SERPER_API_KEY
+import { supabase } from '@/lib/supabase';
 
 interface SearchResult {
   title: string
@@ -70,113 +71,93 @@ interface ShoppingResult {
   inStock?: boolean
 }
 
+/**
+ * Call edge function to proxy Serper API requests
+ */
+async function callSerperEdgeFunction(
+  action: string,
+  query: string,
+  location?: string,
+  num?: number
+): Promise<any> {
+  const { data, error } = await supabase.functions.invoke('serper-search', {
+    body: { action, query, location, num }
+  });
+
+  if (error) {
+    throw new Error(error.message || 'Edge function error');
+  }
+
+  if (!data) {
+    throw new Error('No response from edge function');
+  }
+
+  if (!data.success) {
+    throw new Error(data.error || 'Unknown error from edge function');
+  }
+
+  return data.data;
+}
+
 class SerperAPIService {
   async searchGoogle(query: string): Promise<SearchResult[]> {
-    if (!SERPER_API_KEY) {
-      throw new Error(
-        'Serper API key not configured. Add VITE_SERPER_API_KEY to your .env file. ' +
-        'Get a free API key from https://serper.dev/'
-      )
-    }
-
     try {
-      const response = await fetch('https://google.serper.dev/search', {
-        method: 'POST',
-        headers: {
-          'X-API-KEY': SERPER_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ q: query })
-      })
-
-      const data = await response.json()
-      return (data.organic || []).map((result: any, index: number) => ({
+      const data = await callSerperEdgeFunction('search', query);
+      return ((data && data.organic) || []).map((result: any, index: number) => ({
         title: result.title,
         link: result.link,
         snippet: result.snippet,
         position: index + 1
-      }))
+      }));
     } catch (error) {
-      console.error('[Serper API] Error:', error)
-      throw error
+      console.error('[Serper API] Error:', error);
+      throw error;
     }
   }
 
   async getTrendingSearches(): Promise<string[]> {
-    if (!SERPER_API_KEY) {
-      throw new Error(
-        'Serper API key not configured. Add VITE_SERPER_API_KEY to your .env file. ' +
-        'Get a free API key from https://serper.dev/'
-      )
-    }
-
     // TODO: Implement real trending searches via Serper API
-    throw new Error('getTrendingSearches() not yet implemented. Use Google Trends API instead.')
+    throw new Error('getTrendingSearches() not yet implemented. Use Google Trends API instead.');
   }
 
   /**
    * Search for competitors in an industry
    */
   async searchCompetitors(query: string, excludeBrand?: string): Promise<string[]> {
-    const results = await this.searchGoogle(query)
+    const results = await this.searchGoogle(query);
 
     // Extract domains from search results
     const domains = results
       .map(result => {
         try {
-          const url = new URL(result.link)
-          return url.hostname.replace(/^www\./, '')
+          const url = new URL(result.link);
+          return url.hostname.replace(/^www\./, '');
         } catch {
-          return null
+          return null;
         }
       })
       .filter((domain): domain is string => domain !== null)
       .filter(domain => {
         // Exclude common non-competitor domains
-        const excluded = ['wikipedia.org', 'youtube.com', 'facebook.com', 'twitter.com', 'linkedin.com', 'instagram.com']
-        if (excluded.some(e => domain.includes(e))) return false
+        const excluded = ['wikipedia.org', 'youtube.com', 'facebook.com', 'twitter.com', 'linkedin.com', 'instagram.com'];
+        if (excluded.some(e => domain.includes(e))) return false;
 
         // Exclude the brand's own domain
-        if (excludeBrand && domain.toLowerCase().includes(excludeBrand.toLowerCase())) return false
+        if (excludeBrand && domain.toLowerCase().includes(excludeBrand.toLowerCase())) return false;
 
-        return true
-      })
+        return true;
+      });
 
     // Remove duplicates
-    return Array.from(new Set(domains))
+    return Array.from(new Set(domains));
   }
 
   /**
    * Get news articles for a topic with optional location filtering
    */
   async getNews(topic: string, location?: string): Promise<NewsResult[]> {
-    if (!SERPER_API_KEY) {
-      throw new Error(
-        'Serper API key not configured. Add VITE_SERPER_API_KEY to your .env file. ' +
-        'Get a free API key from https://serper.dev/'
-      )
-    }
-
     try {
-      const body: any = { q: topic }
-      if (location) {
-        body.location = location
-      }
-
-      const response = await fetch('https://google.serper.dev/news', {
-        method: 'POST',
-        headers: {
-          'X-API-KEY': SERPER_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(body)
-      })
-
-      if (!response.ok) {
-        throw new Error(`Serper News API error: ${response.status}`)
-      }
-
-      const data = await response.json()
+      const data = await callSerperEdgeFunction('news', topic, location);
 
       return (data.news || []).map((article: any) => ({
         title: article.title || '',
@@ -185,10 +166,10 @@ class SerperAPIService {
         date: article.date || new Date().toISOString(),
         source: article.source || 'Unknown',
         imageUrl: article.imageUrl
-      }))
+      }));
     } catch (error) {
-      console.error('[Serper News API] Error:', error)
-      throw error
+      console.error('[Serper News API] Error:', error);
+      throw error;
     }
   }
 
@@ -196,25 +177,18 @@ class SerperAPIService {
    * Get trending data for a keyword with timeRange support
    */
   async getTrends(keyword: string, timeRange?: string): Promise<TrendData> {
-    if (!SERPER_API_KEY) {
-      throw new Error(
-        'Serper API key not configured. Add VITE_SERPER_API_KEY to your .env file. ' +
-        'Get a free API key from https://serper.dev/'
-      )
-    }
-
     try {
       // Use regular search + autocomplete to infer trends
       const [searchResults, relatedSearches] = await Promise.all([
         this.searchGoogle(keyword),
         this.getAutocomplete(keyword)
-      ])
+      ]);
 
       // Simple trend estimation based on result count and recency
       const hasRecentResults = searchResults.some(r =>
         r.snippet.toLowerCase().includes('trending') ||
         r.snippet.toLowerCase().includes('popular')
-      )
+      );
 
       return {
         keyword,
@@ -222,10 +196,10 @@ class SerperAPIService {
         timeRange: timeRange || 'past 30 days',
         trend: hasRecentResults ? 'rising' : 'stable',
         growthPercentage: hasRecentResults ? 25 : 0
-      }
+      };
     } catch (error) {
-      console.error('[Serper Trends] Error:', error)
-      throw error
+      console.error('[Serper Trends] Error:', error);
+      throw error;
     }
   }
 
@@ -233,47 +207,24 @@ class SerperAPIService {
    * Get autocomplete suggestions for question-based content
    */
   async getAutocomplete(query: string): Promise<string[]> {
-    if (!SERPER_API_KEY) {
-      throw new Error(
-        'Serper API key not configured. Add VITE_SERPER_API_KEY to your .env file. ' +
-        'Get a free API key from https://serper.dev/'
-      )
-    }
-
     try {
-      const response = await fetch('https://google.serper.dev/search', {
-        method: 'POST',
-        headers: {
-          'X-API-KEY': SERPER_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          q: query,
-          autocorrect: true
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error(`Serper Autocomplete API error: ${response.status}`)
-      }
-
-      const data = await response.json()
+      const data = await callSerperEdgeFunction('autocomplete', query);
 
       // Extract "People also ask" and "Related searches"
-      const suggestions: string[] = []
+      const suggestions: string[] = [];
 
       if (data.peopleAlsoAsk) {
-        suggestions.push(...data.peopleAlsoAsk.map((item: any) => item.question))
+        suggestions.push(...data.peopleAlsoAsk.map((item: any) => item.question));
       }
 
       if (data.relatedSearches) {
-        suggestions.push(...data.relatedSearches.map((item: any) => item.query))
+        suggestions.push(...data.relatedSearches.map((item: any) => item.query));
       }
 
-      return suggestions.filter(Boolean).slice(0, 10)
+      return suggestions.filter(Boolean).slice(0, 10);
     } catch (error) {
-      console.error('[Serper Autocomplete] Error:', error)
-      return []
+      console.error('[Serper Autocomplete] Error:', error);
+      return [];
     }
   }
 
@@ -281,31 +232,8 @@ class SerperAPIService {
    * Get local business data from Google Places
    */
   async getPlaces(query: string, location: string): Promise<PlaceResult[]> {
-    if (!SERPER_API_KEY) {
-      throw new Error(
-        'Serper API key not configured. Add VITE_SERPER_API_KEY to your .env file. ' +
-        'Get a free API key from https://serper.dev/'
-      )
-    }
-
     try {
-      const response = await fetch('https://google.serper.dev/places', {
-        method: 'POST',
-        headers: {
-          'X-API-KEY': SERPER_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          q: query,
-          location: location
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error(`Serper Places API error: ${response.status}`)
-      }
-
-      const data = await response.json()
+      const data = await callSerperEdgeFunction('places', query, location);
 
       return (data.places || []).map((place: any) => ({
         name: place.title || place.name || '',
@@ -316,10 +244,10 @@ class SerperAPIService {
         website: place.website || undefined,
         category: place.category || place.type || undefined,
         placeId: place.placeId || undefined
-      }))
+      }));
     } catch (error) {
-      console.error('[Serper Places] Error:', error)
-      throw error
+      console.error('[Serper Places] Error:', error);
+      throw error;
     }
   }
 
@@ -327,28 +255,8 @@ class SerperAPIService {
    * Get image results for visual content analysis
    */
   async getImages(query: string): Promise<ImageResult[]> {
-    if (!SERPER_API_KEY) {
-      throw new Error(
-        'Serper API key not configured. Add VITE_SERPER_API_KEY to your .env file. ' +
-        'Get a free API key from https://serper.dev/'
-      )
-    }
-
     try {
-      const response = await fetch('https://google.serper.dev/images', {
-        method: 'POST',
-        headers: {
-          'X-API-KEY': SERPER_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ q: query })
-      })
-
-      if (!response.ok) {
-        throw new Error(`Serper Images API error: ${response.status}`)
-      }
-
-      const data = await response.json()
+      const data = await callSerperEdgeFunction('images', query);
 
       return (data.images || []).map((image: any) => ({
         title: image.title || '',
@@ -356,10 +264,10 @@ class SerperAPIService {
         link: image.link || '',
         source: image.source || '',
         thumbnail: image.thumbnailUrl || image.thumbnail || undefined
-      }))
+      }));
     } catch (error) {
-      console.error('[Serper Images] Error:', error)
-      throw error
+      console.error('[Serper Images] Error:', error);
+      throw error;
     }
   }
 
@@ -367,28 +275,8 @@ class SerperAPIService {
    * Get video results for video gap analysis
    */
   async getVideos(query: string): Promise<VideoResult[]> {
-    if (!SERPER_API_KEY) {
-      throw new Error(
-        'Serper API key not configured. Add VITE_SERPER_API_KEY to your .env file. ' +
-        'Get a free API key from https://serper.dev/'
-      )
-    }
-
     try {
-      const response = await fetch('https://google.serper.dev/videos', {
-        method: 'POST',
-        headers: {
-          'X-API-KEY': SERPER_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ q: query })
-      })
-
-      if (!response.ok) {
-        throw new Error(`Serper Videos API error: ${response.status}`)
-      }
-
-      const data = await response.json()
+      const data = await callSerperEdgeFunction('videos', query);
 
       return (data.videos || []).map((video: any) => ({
         title: video.title || '',
@@ -398,10 +286,10 @@ class SerperAPIService {
         date: video.date || new Date().toISOString(),
         duration: video.duration || undefined,
         thumbnail: video.imageUrl || video.thumbnail || undefined
-      }))
+      }));
     } catch (error) {
-      console.error('[Serper Videos] Error:', error)
-      throw error
+      console.error('[Serper Videos] Error:', error);
+      throw error;
     }
   }
 
@@ -409,28 +297,8 @@ class SerperAPIService {
    * Get shopping results for product intelligence
    */
   async getShopping(product: string): Promise<ShoppingResult[]> {
-    if (!SERPER_API_KEY) {
-      throw new Error(
-        'Serper API key not configured. Add VITE_SERPER_API_KEY to your .env file. ' +
-        'Get a free API key from https://serper.dev/'
-      )
-    }
-
     try {
-      const response = await fetch('https://google.serper.dev/shopping', {
-        method: 'POST',
-        headers: {
-          'X-API-KEY': SERPER_API_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ q: product })
-      })
-
-      if (!response.ok) {
-        throw new Error(`Serper Shopping API error: ${response.status}`)
-      }
-
-      const data = await response.json()
+      const data = await callSerperEdgeFunction('shopping', product);
 
       return (data.shopping || []).map((item: any) => ({
         title: item.title || '',
@@ -440,16 +308,16 @@ class SerperAPIService {
         rating: item.rating || undefined,
         reviewCount: item.reviews || item.ratingCount || undefined,
         imageUrl: item.imageUrl || item.thumbnail || undefined,
-        inStock: item.delivery?.includes('In stock') || undefined
-      }))
+        inStock: item.delivery ? item.delivery.includes('In stock') : undefined
+      }));
     } catch (error) {
-      console.error('[Serper Shopping] Error:', error)
-      throw error
+      console.error('[Serper Shopping] Error:', error);
+      throw error;
     }
   }
 }
 
-export const SerperAPI = new SerperAPIService()
+export const SerperAPI = new SerperAPIService();
 export type {
   SearchResult,
   NewsResult,
@@ -458,4 +326,4 @@ export type {
   ImageResult,
   VideoResult,
   ShoppingResult
-}
+};
