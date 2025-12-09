@@ -1,0 +1,50 @@
+# BR3 Governance Rules for MARBA
+# These rules are enforced by Claude Code sessions
+
+version: "1.0"
+project: MARBA
+
+# Files that must NEVER be modified by Claude
+protected_files:
+  readonly:
+    - ".buildrunner/components/vite-br-logger-plugin.ts"
+    - ".buildrunner/components/BRLogger.tsx"
+    - ".buildrunner/components/README.md"
+
+  # Files where specific sections are protected
+  partial_protection:
+    - file: "vite.config.ts"
+      protected_patterns:
+        - "brLoggerPlugin"
+        - "import.*vite-br-logger-plugin"
+    - file: "src/main.tsx"
+      protected_patterns:
+        - "BRLogger"
+        - "import.*BRLogger"
+
+# Code quality rules
+code_rules:
+  - name: "no-rls-disable"
+    description: "Never disable Row Level Security"
+    pattern: "DISABLE ROW LEVEL SECURITY"
+    action: "block"
+
+  - name: "no-hardcoded-secrets"
+    description: "No API keys or secrets in code"
+    patterns:
+      - "sk-[a-zA-Z0-9]{20,}"
+      - "password\\s*=\\s*['\"][^'\"]+['\"]"
+    action: "warn"
+
+# Branch rules
+git_rules:
+  protected_branches:
+    - main
+    - master
+  require_feature_branches: true
+
+# When violations are detected
+enforcement:
+  on_protected_file_edit: "block_and_warn"
+  on_code_rule_violation: "warn"
+  on_branch_violation: "warn"
