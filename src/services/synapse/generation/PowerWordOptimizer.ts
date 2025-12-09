@@ -17,7 +17,7 @@ import type {
 } from '@/types/synapseContent.types';
 
 // Import power words database
-import powerWordsData from '@/data/powerWords.json';
+import powerWordsData from '@/data/synapse/powerWords.json';
 
 export class PowerWordOptimizer {
   private powerWords: Map<PowerWordCategory, PowerWord[]>;

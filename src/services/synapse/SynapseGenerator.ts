@@ -482,10 +482,31 @@ function parseClaudeResponse(response: any, business: any): SynapseInsight[] {
     const jsonMatch = content.match(/\{[\s\S]*"synapses"[\s\S]*\}/);
     if (!jsonMatch) {
       console.error('[Synapse] No JSON found in response');
+      console.error('[Synapse] Response content:', content.substring(0, 500));
       return [];
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch (parseError) {
+      // Try to fix common JSON issues
+      console.error('[Synapse] Initial JSON parse failed, attempting recovery...');
+      let fixedJson = jsonMatch[0];
+
+      // Fix trailing commas
+      fixedJson = fixedJson.replace(/,(\s*[}\]])/g, '$1');
+
+      try {
+        parsed = JSON.parse(fixedJson);
+        console.log('[Synapse] JSON recovery successful!');
+      } catch (secondError) {
+        console.error('[Synapse] JSON recovery failed');
+        console.error('[Synapse] Malformed JSON (first 1000 chars):', jsonMatch[0].substring(0, 1000));
+        return [];
+      }
+    }
+
     const synapses = parsed.synapses || [];
 
     // Convert to SynapseInsight format

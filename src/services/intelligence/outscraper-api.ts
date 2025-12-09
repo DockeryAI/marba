@@ -172,6 +172,7 @@ class OutScraperAPIService {
     region?: string
   }): Promise<BusinessListing[]> {
     console.log('[OutScraper] Fetching business listings:', params.query)
+    console.log('[OutScraper] API Key present:', !!OUTSCRAPER_API_KEY)
 
     const endpoint = '/maps/search-v3'
     const apiParams = {
@@ -179,14 +180,28 @@ class OutScraperAPIService {
       limit: params.limit || 20,
       language: params.language || 'en',
       region: params.region || 'US',
+      async: false, // Force synchronous mode - get results immediately, don't queue
       fields: 'place_id,name,full_address,phone,site,category,rating,reviews,price_level,working_hours,photos_count,verified,claimed,latitude,longitude'
     }
+
+    console.log('[OutScraper] Request params:', apiParams)
 
     try {
       const response = await this.makeRequest<any>(endpoint, apiParams)
 
+      console.log('[OutScraper] Raw response:', response)
+
+      // Check if request is pending (async mode)
+      if (response.status === 'Pending') {
+        console.warn('[OutScraper] Request is async/pending. Results not immediately available.')
+        console.warn('[OutScraper] OutScraper queued the request. Would need to poll:', response.results_location)
+        console.warn('[OutScraper] Using synchronous mode would be better for real-time results.')
+        return [] // Return empty for now
+      }
+
       // OutScraper returns array of arrays (batch results)
       const results = response.data?.[0] || []
+      console.log('[OutScraper] Extracted results array:', results)
 
       const listings: BusinessListing[] = results.map((item: any) => ({
         place_id: item.place_id || item.google_id || '',
@@ -208,6 +223,7 @@ class OutScraperAPIService {
       return listings
     } catch (error) {
       console.error('[OutScraper] getBusinessListings failed:', error)
+      console.error('[OutScraper] Error details:', error instanceof Error ? error.message : error)
       throw error
     }
   }
@@ -215,15 +231,24 @@ class OutScraperAPIService {
   /**
    * 2. Scrape Google reviews for a business
    * API Docs: https://outscraper.com/google-reviews-scraper-api/
+   *
+   * INTELLIGENT FALLBACK:
+   * 1. Try dedicated reviews endpoint (cached data)
+   * 2. If empty, try Maps Search endpoint (includes reviews with business data)
+   * 3. Return whatever real data we find
    */
   async scrapeGoogleReviews(params: {
     place_id: string
+    business_name?: string // Used for Maps Search fallback
+    industry?: string // Used to make Maps Search more specific
+    location?: string // Used to make Maps Search more specific
     limit?: number
     sort?: 'newest' | 'highest' | 'lowest'
     cutoff_date?: string
   }): Promise<GoogleReview[]> {
-    console.log('[OutScraper] Scraping reviews for:', params.place_id)
+    console.log('[OutScraper] Scraping reviews for:', params.business_name || params.place_id)
 
+    // ATTEMPT 1: Try dedicated reviews endpoint (fastest, cached)
     const endpoint = '/maps/reviews-v3'
     const apiParams = {
       query: params.place_id,
@@ -254,12 +279,133 @@ class OutScraperAPIService {
         } : undefined,
       }))
 
-      console.log('[OutScraper] Found', reviews.length, 'reviews')
-      return reviews
+      if (reviews.length > 0) {
+        console.log('[OutScraper] ✅ Found', reviews.length, 'reviews from dedicated endpoint')
+        return reviews
+      }
+
+      // ATTEMPT 2: Reviews endpoint returned 0, try Maps Search (includes reviews)
+      console.log('[OutScraper] No reviews in cache, trying Maps Search endpoint...')
+
+      // Use place_id directly for guaranteed exact match
+      return await this.getReviewsFromMapsSearch(
+        params.place_id, // searchQuery param (unused but kept for compatibility)
+        params.place_id,
+        params.limit || 50
+      )
+
     } catch (error) {
-      console.error('[OutScraper] scrapeGoogleReviews failed:', error)
-      throw error
+      console.error('[OutScraper] Reviews endpoint failed:', error)
+      // Fallback to Maps Search endpoint
+      console.log('[OutScraper] Falling back to Maps Search endpoint...')
+      try {
+        // Use place_id directly for guaranteed exact match
+        return await this.getReviewsFromMapsSearch(
+          params.place_id, // searchQuery param (unused but kept for compatibility)
+          params.place_id,
+          params.limit || 50
+        )
+      } catch (fallbackError) {
+        console.error('[OutScraper] Maps Search fallback also failed:', fallbackError)
+        // Return empty array - caller will handle
+        return []
+      }
     }
+  }
+
+  /**
+   * Get reviews from Maps Search endpoint (includes reviews with business data)
+   * This is more reliable than dedicated reviews endpoint for uncached businesses
+   * Uses place_id directly for guaranteed exact match
+   *
+   * @param searchQuery - UNUSED (kept for backwards compatibility)
+   * @param place_id - Place ID to fetch reviews for (guaranteed exact match)
+   * @param limit - Number of reviews to fetch
+   */
+  private async getReviewsFromMapsSearch(
+    searchQuery: string,
+    place_id: string,
+    limit: number
+  ): Promise<GoogleReview[]> {
+    const endpoint = '/maps/search-v3'
+    const apiParams = {
+      query: place_id, // Use place_id directly for guaranteed exact match!
+      limit: 1,
+      reviewsLimit: limit,
+      language: 'en',
+      async: false, // CRITICAL: Force synchronous response with actual data!
+    }
+
+    console.log('[OutScraper] Maps Search using place_id:', place_id)
+    console.log('[OutScraper] API params:', apiParams)
+
+    const response = await this.makeRequest<any>(endpoint, apiParams)
+
+    console.log('[OutScraper] Full API response structure:')
+    console.log('[OutScraper] - response.data exists:', !!response.data)
+    console.log('[OutScraper] - response.data[0] exists:', !!response.data?.[0])
+    console.log('[OutScraper] - response.data[0] length:', response.data?.[0]?.length)
+
+    const results = response.data?.[0] || []
+    const business = results[0]
+
+    if (!business) {
+      console.warn('[OutScraper] No business found for place_id:', place_id)
+      return []
+    }
+
+    console.log('[OutScraper] ✅ Found business:', business.name)
+    console.log('[OutScraper] Business object keys:', Object.keys(business))
+    console.log('[OutScraper] business.reviews value:', business.reviews)
+    console.log('[OutScraper] business.reviews type:', typeof business.reviews)
+    console.log('[OutScraper] business.reviews_data exists:', 'reviews_data' in business)
+    console.log('[OutScraper] business.reviews_data value:', business.reviews_data)
+
+    // OutScraper Maps Search response structure - need to determine correct property
+    // Possible properties: reviews_data, google_reviews, review, etc.
+    let reviewsData = business.reviews_data || business.google_reviews || []
+
+    // Defensive: Ensure reviewsData is an array
+    if (!Array.isArray(reviewsData)) {
+      console.warn('[OutScraper] Standard properties not arrays, checking alternates...')
+      console.warn('[OutScraper] Available keys:', Object.keys(business).join(', '))
+
+      // Look for any property that might contain reviews array
+      for (const key of Object.keys(business)) {
+        if (Array.isArray(business[key]) && business[key].length > 0) {
+          // Check if first element looks like a review object
+          const firstItem = business[key][0]
+          if (firstItem && (firstItem.review_text || firstItem.text || firstItem.rating || firstItem.review_rating)) {
+            console.log('[OutScraper] ✅ Found reviews in property:', key)
+            reviewsData = business[key]
+            break
+          }
+        }
+      }
+
+      if (!Array.isArray(reviewsData) || reviewsData.length === 0) {
+        console.warn('[OutScraper] No valid reviews array found in business object')
+        return []
+      }
+    }
+
+    const reviews: GoogleReview[] = reviewsData.map((review: any) => ({
+      author_name: review.author_title || review.author_name || 'Anonymous',
+      author_photo: review.author_image || review.author_photo,
+      rating: parseInt(review.review_rating) || parseInt(review.rating) || 0,
+      text: review.review_text || review.text || '',
+      time: review.review_datetime_utc || review.time || new Date().toISOString(),
+      language: review.review_language || review.language,
+      likes: parseInt(review.review_likes) || 0,
+      author_reviews_count: parseInt(review.reviews_count) || 0,
+      response: review.owner_answer ? {
+        text: review.owner_answer,
+        time: review.owner_answer_timestamp || '',
+      } : undefined,
+    }))
+
+    console.log('[OutScraper] ✅ Found', reviews.length, 'reviews from Maps Search endpoint')
+    return reviews
   }
 
   /**

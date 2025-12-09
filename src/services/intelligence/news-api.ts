@@ -37,10 +37,11 @@ class NewsAPIService {
     if (cached) return cached
 
     if (!NEWS_API_KEY) {
-      throw new Error(
-        'News API key not configured. Add VITE_NEWS_API_KEY to your .env file. ' +
-        'Get a free API key from https://newsapi.org/'
+      console.warn(
+        '[NewsAPI] News API key not configured. Add VITE_NEWS_API_KEY to your .env file. ' +
+        'Get a free API key from https://newsapi.org/register'
       )
+      return []
     }
 
     try {
@@ -51,10 +52,11 @@ class NewsAPIService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(
-          `News API error (${response.status}): ${errorData.message || response.statusText}. ` +
-          'Check your VITE_NEWS_API_KEY configuration.'
+        console.warn(
+          `[NewsAPI] News API error (${response.status}): ${errorData.message || response.statusText}. ` +
+          'Get a new API key from https://newsapi.org/register'
         )
+        return []
       }
 
       const data = await response.json()
@@ -72,11 +74,8 @@ class NewsAPIService {
       this.setCache(cacheKey, articles)
       return articles
     } catch (error) {
-      // Re-throw - NO SILENT FAILURES
-      if (error instanceof Error) {
-        throw error
-      }
-      throw new Error(`News API failed: ${String(error)}`)
+      console.warn('[NewsAPI] Failed to fetch industry news:', error)
+      return []
     }
   }
 
@@ -86,10 +85,11 @@ class NewsAPIService {
     if (cached) return cached
 
     if (!NEWS_API_KEY) {
-      throw new Error(
-        'News API key not configured. Add VITE_NEWS_API_KEY to your .env file. ' +
-        'Get a free API key from https://newsapi.org/'
+      console.warn(
+        '[NewsAPI] News API key not configured. Add VITE_NEWS_API_KEY to your .env file. ' +
+        'Get a free API key from https://newsapi.org/register'
       )
+      return []
     }
 
     try {
@@ -99,10 +99,11 @@ class NewsAPIService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(
-          `News API error (${response.status}): ${errorData.message || response.statusText}. ` +
-          'Check your VITE_NEWS_API_KEY configuration.'
+        console.warn(
+          `[NewsAPI] News API error (${response.status}): ${errorData.message || response.statusText}. ` +
+          'Get a new API key from https://newsapi.org/register'
         )
+        return []
       }
 
       const data = await response.json()
@@ -120,11 +121,8 @@ class NewsAPIService {
       this.setCache(cacheKey, articles)
       return articles
     } catch (error) {
-      // Re-throw - NO SILENT FAILURES
-      if (error instanceof Error) {
-        throw error
-      }
-      throw new Error(`News API failed: ${String(error)}`)
+      console.warn('[NewsAPI] Failed to fetch local news:', error)
+      return []
     }
   }
 

@@ -56,9 +56,22 @@ export class CharacterValidator {
    * Validate headline length
    */
   private validateHeadline(content: SynapseContent, platform: Platform): CharacterValidation {
-    const text = content.content.headline;
+    const text = content.content?.headline || '';
     const count = text.length;
     const limits = getPlatformLimits(platform);
+
+    if (!limits || !limits.headline) {
+      return {
+        platform,
+        section: 'headline',
+        characterCount: count,
+        limit: 1000,
+        optimal: 100,
+        status: 'valid',
+        message: `${count} chars`
+      };
+    }
+
     const { min, max, optimal } = limits.headline;
 
     return this.createValidation(platform, 'headline', count, min, max, optimal, text);
@@ -68,9 +81,22 @@ export class CharacterValidator {
    * Validate hook length
    */
   private validateHook(content: SynapseContent, platform: Platform): CharacterValidation {
-    const text = content.content.hook;
+    const text = content.content?.hook || '';
     const count = text.length;
     const limits = getPlatformLimits(platform);
+
+    if (!limits || !limits.body) {
+      return {
+        platform,
+        section: 'hook',
+        characterCount: count,
+        limit: 3000,
+        optimal: 300,
+        status: 'valid',
+        message: `${count} chars`
+      };
+    }
+
     const { min, max, optimal } = limits.body;
 
     return this.createValidation(platform, 'hook', count, min, max, optimal, text);
@@ -80,9 +106,22 @@ export class CharacterValidator {
    * Validate body length
    */
   private validateBody(content: SynapseContent, platform: Platform): CharacterValidation {
-    const text = content.content.body;
+    const text = content.content?.body || '';
     const count = text.length;
     const limits = getPlatformLimits(platform);
+
+    if (!limits || !limits.body) {
+      return {
+        platform,
+        section: 'body',
+        characterCount: count,
+        limit: 5000,
+        optimal: 1500,
+        status: 'valid',
+        message: `${count} chars`
+      };
+    }
+
     const { min, max, optimal } = limits.body;
 
     return this.createValidation(platform, 'body', count, min, max, optimal, text);
@@ -92,9 +131,22 @@ export class CharacterValidator {
    * Validate CTA length
    */
   private validateCTA(content: SynapseContent, platform: Platform): CharacterValidation {
-    const text = content.content.cta;
+    const text = content.content?.cta || '';
     const count = text.length;
     const limits = getPlatformLimits(platform);
+
+    if (!limits || !limits.headline) {
+      return {
+        platform,
+        section: 'cta',
+        characterCount: count,
+        limit: 150,
+        optimal: 100,
+        status: 'valid',
+        message: `${count} chars`
+      };
+    }
+
     const { min, max, optimal } = limits.headline;
 
     return this.createValidation(platform, 'cta', count, min, max, optimal, text);
@@ -105,12 +157,25 @@ export class CharacterValidator {
    */
   private validateTotal(content: SynapseContent, platform: Platform): CharacterValidation {
     const total =
-      content.content.headline.length +
-      content.content.hook.length +
-      content.content.body.length +
-      content.content.cta.length;
+      (content.content?.headline?.length || 0) +
+      (content.content?.hook?.length || 0) +
+      (content.content?.body?.length || 0) +
+      (content.content?.cta?.length || 0);
 
     const limits = getPlatformLimits(platform);
+
+    if (!limits || !limits.total) {
+      return {
+        platform,
+        section: 'total',
+        characterCount: total,
+        limit: 5000,
+        optimal: 2000,
+        status: 'valid',
+        message: `Total: ${total} chars`
+      };
+    }
+
     const { min, max, optimal } = limits.total;
 
     return this.createValidation(

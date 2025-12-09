@@ -1,10 +1,13 @@
 /**
- * YouTube Data API Integration
+ * YouTube Intelligence Service
  * Analyzes trending videos and content for industry insights
+ * Now proxied through Supabase Edge Function using Apify scraper
  */
 
-const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY
-const CACHE_TTL = 60 * 60 * 1000 // 1 hour
+import { supabase } from '@/lib/supabase'
+
+// Cache TTL: 1 hour - balance between freshness and API cost
+const CACHE_TTL_MS = 60 * 60 * 1000
 
 interface YouTubeVideo {
   id: string
@@ -25,208 +28,254 @@ interface TrendAnalysis {
   engagement_patterns: {
     avgViewCount: number
     avgEngagementRate: number
-    peakPostingTimes: string[]
   }
   content_angles: string[]
   relevance_score: number
 }
 
-class YouTubeAPIService {
-  private cache: Map<string, { data: any; timestamp: number }> = new Map()
+interface EdgeFunctionResponse {
+  success: boolean
+  videos?: YouTubeVideo[]
+  error?: string
+  count?: number
+}
 
-  private getCached(key: string): any | null {
+interface CacheEntry<T> {
+  data: T
+  timestamp: number
+}
+
+class YouTubeAPIService {
+  private cache = new Map<string, CacheEntry<unknown>>()
+
+  private getCached<T>(key: string): T | null {
     const cached = this.cache.get(key)
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      return cached.data
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      return cached.data as T
     }
     this.cache.delete(key)
     return null
   }
 
-  private setCache(key: string, data: any): void {
+  private setCache<T>(key: string, data: T): void {
     this.cache.set(key, { data, timestamp: Date.now() })
+  }
+
+  /**
+   * Clear all cached data (for testing)
+   */
+  clearCache(): void {
+    this.cache.clear()
+  }
+
+  /**
+   * Parse and validate edge function response
+   */
+  private parseResponse(data: unknown, error: unknown): YouTubeVideo[] {
+    // Handle Supabase invoke error
+    if (error) {
+      const errorMsg = typeof error === 'object' && error !== null && 'message' in error
+        ? String((error as { message: string }).message)
+        : 'Unknown edge function error'
+      throw new Error(errorMsg)
+    }
+
+    // Handle null/undefined response
+    if (!data) {
+      throw new Error('No response from edge function')
+    }
+
+    // Type check response
+    const response = data as EdgeFunctionResponse
+
+    // Check for application-level error
+    if (!response.success) {
+      throw new Error(response.error || 'Edge function returned unsuccessful response')
+    }
+
+    // Return videos array (default to empty if missing)
+    return Array.isArray(response.videos) ? response.videos : []
   }
 
   /**
    * Get trending videos for a specific category and region
    */
   async getTrendingVideos(category?: string, region: string = 'US'): Promise<YouTubeVideo[]> {
-    const cacheKey = `trending_${category}_${region}`
-    const cached = this.getCached(cacheKey)
+    const cacheKey = `trending_${category ?? 'all'}_${region}`
+    const cached = this.getCached<YouTubeVideo[]>(cacheKey)
     if (cached) return cached
 
-    if (!YOUTUBE_API_KEY) {
-      throw new Error(
-        'YouTube API key not configured. Add VITE_YOUTUBE_API_KEY to your .env file. ' +
-        'Get a free API key from https://console.cloud.google.com/apis/library/youtube.googleapis.com'
-      )
-    }
+    console.log('[YouTube API] Fetching trending videos via edge function')
 
-    try {
-      const categoryParam = category ? `&videoCategoryId=${category}` : ''
-      const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=${region}${categoryParam}&maxResults=50&key=${YOUTUBE_API_KEY}`
+    const { data, error } = await supabase.functions.invoke('youtube-intelligence', {
+      body: {
+        action: 'trending',
+        category,
+        region,
+      },
+    })
 
-      const response = await fetch(url)
+    const videos = this.parseResponse(data, error)
+    console.log(`[YouTube API] Received ${videos.length} trending videos`)
 
-      if (!response.ok) {
-        throw new Error(`YouTube API error: ${response.statusText}`)
-      }
-
-      const data = await response.json()
-
-      const videos: YouTubeVideo[] = data.items.map((item: any) => ({
-        id: item.id,
-        title: item.snippet.title,
-        description: item.snippet.description,
-        channelTitle: item.snippet.channelTitle,
-        publishedAt: item.snippet.publishedAt,
-        viewCount: parseInt(item.statistics.viewCount || '0'),
-        likeCount: parseInt(item.statistics.likeCount || '0'),
-        commentCount: parseInt(item.statistics.commentCount || '0'),
-        tags: item.snippet.tags || [],
-        categoryId: item.snippet.categoryId
-      }))
-
-      this.setCache(cacheKey, videos)
-      return videos
-    } catch (error) {
-      console.error('[YouTube API] Error fetching trending videos:', error)
-      throw error
-    }
+    this.setCache(cacheKey, videos)
+    return videos
   }
 
   /**
    * Search videos by keywords
    */
   async searchVideos(keywords: string[], maxResults: number = 20): Promise<YouTubeVideo[]> {
+    if (!keywords || keywords.length === 0) {
+      return []
+    }
+
     const query = keywords.join(' ')
     const cacheKey = `search_${query}_${maxResults}`
-    const cached = this.getCached(cacheKey)
+    const cached = this.getCached<YouTubeVideo[]>(cacheKey)
     if (cached) return cached
 
-    if (!YOUTUBE_API_KEY) {
-      throw new Error(
-        'YouTube API key not configured. Add VITE_YOUTUBE_API_KEY to your .env file. ' +
-        'Get a free API key from https://console.cloud.google.com/apis/library/youtube.googleapis.com'
-      )
-    }
+    console.log('[YouTube API] Searching videos via edge function:', keywords)
 
-    try {
-      // First, search for video IDs
-      const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=${maxResults}&key=${YOUTUBE_API_KEY}`
+    const { data, error } = await supabase.functions.invoke('youtube-intelligence', {
+      body: {
+        action: 'search',
+        keywords,
+        maxResults,
+      },
+    })
 
-      const searchResponse = await fetch(searchUrl)
+    const videos = this.parseResponse(data, error)
+    console.log(`[YouTube API] Received ${videos.length} search results`)
 
-      if (!searchResponse.ok) {
-        throw new Error(`YouTube search error: ${searchResponse.statusText}`)
-      }
-
-      const searchData = await searchResponse.json()
-      const videoIds = searchData.items.map((item: any) => item.id.videoId).join(',')
-
-      // Then, get video details including statistics
-      const videosUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoIds}&key=${YOUTUBE_API_KEY}`
-
-      const videosResponse = await fetch(videosUrl)
-      const videosData = await videosResponse.json()
-
-      const videos: YouTubeVideo[] = videosData.items.map((item: any) => ({
-        id: item.id,
-        title: item.snippet.title,
-        description: item.snippet.description,
-        channelTitle: item.snippet.channelTitle,
-        publishedAt: item.snippet.publishedAt,
-        viewCount: parseInt(item.statistics.viewCount || '0'),
-        likeCount: parseInt(item.statistics.likeCount || '0'),
-        commentCount: parseInt(item.statistics.commentCount || '0'),
-        tags: item.snippet.tags || [],
-        categoryId: item.snippet.categoryId
-      }))
-
-      this.setCache(cacheKey, videos)
-      return videos
-    } catch (error) {
-      console.error('[YouTube API] Error searching videos:', error)
-      throw error
-    }
+    this.setCache(cacheKey, videos)
+    return videos
   }
 
   /**
    * Analyze video trends for an industry
+   * Note: This performs client-side analysis of video metadata
    */
   async analyzeVideoTrends(industry: string, keywords: string[]): Promise<TrendAnalysis> {
     const cacheKey = `trends_${industry}_${keywords.join('_')}`
-    const cached = this.getCached(cacheKey)
+    const cached = this.getCached<TrendAnalysis>(cacheKey)
     if (cached) return cached
 
-    try {
-      const videos = await this.searchVideos(keywords, 50)
+    const videos = await this.searchVideos(keywords, 50)
 
-      // Extract trending topics from titles and tags
-      const allTags = videos.flatMap(v => v.tags)
-      const tagFrequency = allTags.reduce((acc, tag) => {
-        acc[tag] = (acc[tag] || 0) + 1
-        return acc
-      }, {} as Record<string, number>)
-
-      const trendingTopics = Object.entries(tagFrequency)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10)
-        .map(([tag]) => tag)
-
-      // Analyze formats based on titles
-      const formats: Record<string, number> = {}
-      videos.forEach(v => {
-        if (v.title.toLowerCase().includes('tutorial')) formats['Tutorial'] = (formats['Tutorial'] || 0) + 1
-        if (v.title.toLowerCase().includes('review')) formats['Review'] = (formats['Review'] || 0) + 1
-        if (v.title.toLowerCase().includes('how to')) formats['How-To'] = (formats['How-To'] || 0) + 1
-        if (v.title.toLowerCase().includes('tips')) formats['Tips'] = (formats['Tips'] || 0) + 1
-        if (v.title.toLowerCase().includes('vs')) formats['Comparison'] = (formats['Comparison'] || 0) + 1
-      })
-
-      const popularFormats = Object.entries(formats)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([format]) => format)
-
-      // Calculate engagement metrics
-      const avgViewCount = videos.reduce((sum, v) => sum + v.viewCount, 0) / videos.length
-      const avgEngagementRate = videos.reduce((sum, v) => {
-        const engagement = (v.likeCount + v.commentCount) / (v.viewCount || 1)
-        return sum + engagement
-      }, 0) / videos.length
-
-      // Extract content angles
-      const contentAngles = [
-        ...new Set(videos.slice(0, 10).map(v => {
-          const title = v.title.toLowerCase()
-          if (title.includes('beginner')) return 'Beginner-friendly content'
-          if (title.includes('advanced')) return 'Advanced techniques'
-          if (title.includes('mistake')) return 'Common mistakes to avoid'
-          if (title.includes('secret')) return 'Insider secrets'
-          if (title.includes('best')) return 'Best practices'
-          return 'Educational content'
-        }))
-      ]
-
-      const analysis: TrendAnalysis = {
-        trending_topics: trendingTopics,
-        popular_formats: popularFormats,
+    // Handle empty results
+    if (videos.length === 0) {
+      const emptyAnalysis: TrendAnalysis = {
+        trending_topics: [],
+        popular_formats: [],
         engagement_patterns: {
-          avgViewCount: Math.round(avgViewCount),
-          avgEngagementRate: parseFloat((avgEngagementRate * 100).toFixed(2)),
-          peakPostingTimes: ['10 AM EST', '2 PM EST', '6 PM EST'] // Would need posting time analysis
+          avgViewCount: 0,
+          avgEngagementRate: 0,
         },
-        content_angles: contentAngles,
-        relevance_score: Math.min(100, Math.round((videos.length / 50) * 100))
+        content_angles: [],
+        relevance_score: 0,
       }
-
-      this.setCache(cacheKey, analysis)
-      return analysis
-    } catch (error) {
-      console.error('[YouTube API] Error analyzing trends:', error)
-      throw error
+      this.setCache(cacheKey, emptyAnalysis)
+      return emptyAnalysis
     }
+
+    // Extract trending topics from tags (frequency analysis)
+    const tagFrequency = new Map<string, number>()
+    for (const video of videos) {
+      for (const tag of video.tags) {
+        tagFrequency.set(tag, (tagFrequency.get(tag) || 0) + 1)
+      }
+    }
+
+    const trendingTopics = Array.from(tagFrequency.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([tag]) => tag)
+
+    // Detect content formats from titles
+    const formatPatterns: Array<{ pattern: RegExp; name: string }> = [
+      { pattern: /tutorial/i, name: 'Tutorial' },
+      { pattern: /review/i, name: 'Review' },
+      { pattern: /how\s+to/i, name: 'How-To' },
+      { pattern: /tips/i, name: 'Tips' },
+      { pattern: /\bvs\.?\b/i, name: 'Comparison' },
+    ]
+
+    const formatCounts = new Map<string, number>()
+    for (const video of videos) {
+      for (const { pattern, name } of formatPatterns) {
+        if (pattern.test(video.title)) {
+          formatCounts.set(name, (formatCounts.get(name) || 0) + 1)
+        }
+      }
+    }
+
+    const popularFormats = Array.from(formatCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([format]) => format)
+
+    // Calculate engagement metrics
+    let totalViews = 0
+    let totalEngagementRate = 0
+
+    for (const video of videos) {
+      totalViews += video.viewCount
+      // Engagement rate = (likes + comments) / views
+      // Use max(1, viewCount) to avoid division by zero
+      const engagementRate = (video.likeCount + video.commentCount) / Math.max(1, video.viewCount)
+      totalEngagementRate += engagementRate
+    }
+
+    const avgViewCount = Math.round(totalViews / videos.length)
+    const avgEngagementRate = parseFloat(((totalEngagementRate / videos.length) * 100).toFixed(2))
+
+    // Extract content angles from title keywords
+    const anglePatterns: Array<{ pattern: RegExp; angle: string }> = [
+      { pattern: /beginner/i, angle: 'Beginner-friendly content' },
+      { pattern: /advanced/i, angle: 'Advanced techniques' },
+      { pattern: /mistake/i, angle: 'Common mistakes to avoid' },
+      { pattern: /secret/i, angle: 'Insider secrets' },
+      { pattern: /best/i, angle: 'Best practices' },
+    ]
+
+    const detectedAngles = new Set<string>()
+    for (const video of videos.slice(0, 10)) {
+      let matched = false
+      for (const { pattern, angle } of anglePatterns) {
+        if (pattern.test(video.title)) {
+          detectedAngles.add(angle)
+          matched = true
+        }
+      }
+      if (!matched) {
+        detectedAngles.add('Educational content')
+      }
+    }
+
+    // Relevance score based on result quality, not just count
+    // Score higher if we got meaningful results with engagement
+    const hasEngagement = avgEngagementRate > 0
+    const hasTopics = trendingTopics.length > 0
+    const resultRatio = videos.length / 50
+
+    const relevance_score = Math.min(100, Math.round(
+      (resultRatio * 50) + (hasEngagement ? 25 : 0) + (hasTopics ? 25 : 0)
+    ))
+
+    const analysis: TrendAnalysis = {
+      trending_topics: trendingTopics,
+      popular_formats: popularFormats,
+      engagement_patterns: {
+        avgViewCount,
+        avgEngagementRate,
+      },
+      content_angles: Array.from(detectedAngles),
+      relevance_score,
+    }
+
+    this.setCache(cacheKey, analysis)
+    return analysis
   }
 }
 

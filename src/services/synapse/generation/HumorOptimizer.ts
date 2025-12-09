@@ -21,7 +21,11 @@ import type {
   EDGINESS_RANGES
 } from '@/types/synapseContent.types';
 
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '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';
+const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
+
+if (!OPENROUTER_API_KEY) {
+  throw new Error('VITE_OPENROUTER_API_KEY is not set in .env file');
+}
 
 export class HumorOptimizer {
   /**
