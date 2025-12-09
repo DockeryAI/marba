@@ -160,15 +160,20 @@ Provide a comprehensive assessment in JSON format:
     const response = await this.makeRequest(systemPrompt, userPrompt)
     const parsed = this.parseJSONResponse(response)
 
-    // Calculate overall score if not provided
-    if (!parsed.overall_score) {
-      parsed.overall_score = Math.round(
-        (parsed.clarity_score +
-          parsed.specificity_score +
-          parsed.differentiation_score +
-          parsed.impact_score) /
-          4
+    // Calculate overall score if not provided, with validation
+    if (!parsed.overall_score || typeof parsed.overall_score !== 'number') {
+      const scores = [
+        parsed.clarity_score,
+        parsed.specificity_score,
+        parsed.differentiation_score,
+        parsed.impact_score,
+      ]
+      const validScores = scores.filter(
+        (s): s is number => typeof s === 'number' && !isNaN(s)
       )
+      parsed.overall_score = validScores.length > 0
+        ? Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length)
+        : 50 // Default to 50 if no valid scores
     }
 
     return {
@@ -320,7 +325,7 @@ Extract and enhance the core message. Return JSON:
   }
 
   /**
-   * Parse JSON response from AI
+   * Parse JSON response from AI with fallback defaults
    */
   private parseJSONResponse(content: string): any {
     try {
@@ -330,17 +335,38 @@ Extract and enhance the core message. Return JSON:
       // Try to extract JSON from markdown code blocks
       const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/)
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[1])
+        try {
+          return JSON.parse(jsonMatch[1])
+        } catch {
+          console.warn('[RhodesAI] Failed to parse JSON from code block')
+        }
       }
 
       // Try to extract JSON from anywhere in the text
       const jsonObjectMatch = content.match(/\{[\s\S]*\}/)
       if (jsonObjectMatch) {
-        return JSON.parse(jsonObjectMatch[0])
+        try {
+          return JSON.parse(jsonObjectMatch[0])
+        } catch {
+          console.warn('[RhodesAI] Failed to parse extracted JSON object')
+        }
       }
 
-      // If all fails, return wrapped content
-      return { text: content }
+      // If all fails, return structured fallback
+      console.warn('[RhodesAI] Using fallback response structure')
+      return {
+        enhanced: content,
+        suggestions: [],
+        alternatives: [],
+        overall_score: 50,
+        clarity_score: 50,
+        specificity_score: 50,
+        differentiation_score: 50,
+        impact_score: 50,
+        is_valid: true,
+        errors: [],
+        warnings: ['Response format was unexpected'],
+      }
     }
   }
 }

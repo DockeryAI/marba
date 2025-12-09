@@ -2,7 +2,7 @@
  * Perplexity API Service for UVP Wizard
  *
  * Provides real-time industry insights, market research, and competitive intelligence
- * using Perplexity's Sonar models with web search capabilities.
+ * using Claude via Supabase edge function.
  * Routes through Supabase edge function to hide API keys.
  *
  * This service helps generate UVP suggestions based on:
@@ -24,8 +24,6 @@ import {
  * Perplexity API configuration
  */
 interface PerplexityConfig {
-  model: 'sonar-pro' | 'sonar' | 'sonar-medium' | 'sonar-small'
-  temperature: number
   maxTokens: number
 }
 
@@ -33,9 +31,18 @@ interface PerplexityConfig {
  * Default configuration
  */
 const DEFAULT_CONFIG: PerplexityConfig = {
-  model: 'sonar-pro', // Best for deep research
-  temperature: 0.7,
   maxTokens: 2000,
+}
+
+/**
+ * Generate a unique ID using crypto.randomUUID or fallback
+ */
+function generateUniqueId(prefix: string): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return `${prefix}-${crypto.randomUUID()}`
+  }
+  // Fallback for environments without crypto.randomUUID
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 }
 
 /**
@@ -63,9 +70,9 @@ export class PerplexityAPI {
 
     try {
       const prompt = this.buildPrompt(request)
-      const response = await this.makeRequest(prompt)
+      const content = await this.makeRequest(prompt)
 
-      return this.parseResponse(response)
+      return this.parseResponse(content)
     } catch (error) {
       console.error('[PerplexityAPI] Failed to get industry insights:', error)
       throw error
@@ -87,8 +94,8 @@ export class PerplexityAPI {
 
     const response = await this.getIndustryInsights(request)
 
-    return response.insights.map((insight, index) => ({
-      id: `problem-${Date.now()}-${index}`,
+    return response.insights.map((insight) => ({
+      id: generateUniqueId('problem'),
       content: insight,
       type: 'problem' as SuggestionType,
       source: 'ai-generated',
@@ -113,8 +120,8 @@ export class PerplexityAPI {
 
     const response = await this.getIndustryInsights(request)
 
-    return response.insights.map((insight, index) => ({
-      id: `solution-${Date.now()}-${index}`,
+    return response.insights.map((insight) => ({
+      id: generateUniqueId('solution'),
       content: insight,
       type: 'solution' as SuggestionType,
       source: 'ai-generated',
@@ -139,8 +146,8 @@ export class PerplexityAPI {
 
     const response = await this.getIndustryInsights(request)
 
-    return response.insights.map((insight, index) => ({
-      id: `benefit-${Date.now()}-${index}`,
+    return response.insights.map((insight) => ({
+      id: generateUniqueId('benefit'),
       content: insight,
       type: 'benefit' as SuggestionType,
       source: 'ai-generated',
@@ -169,8 +176,8 @@ export class PerplexityAPI {
 
     const response = await this.getIndustryInsights(request)
 
-    return response.insights.map((insight, index) => ({
-      id: `differentiator-${Date.now()}-${index}`,
+    return response.insights.map((insight) => ({
+      id: generateUniqueId('differentiator'),
       content: insight,
       type: 'differentiator' as SuggestionType,
       source: 'ai-generated',
@@ -197,8 +204,8 @@ export class PerplexityAPI {
 
     const response = await this.getIndustryInsights(request)
 
-    return response.insights.map((insight, index) => ({
-      id: `customer-${Date.now()}-${index}`,
+    return response.insights.map((insight) => ({
+      id: generateUniqueId('customer'),
       content: insight,
       type: 'customer-segment' as SuggestionType,
       source: 'ai-generated',
@@ -226,7 +233,7 @@ export class PerplexityAPI {
   }
 
   /**
-   * Build the prompt for Perplexity
+   * Build the prompt for the AI
    */
   private buildPrompt(request: PerplexityRequest): string {
     let prompt = request.query
@@ -259,8 +266,8 @@ export class PerplexityAPI {
   /**
    * Make API request via openai-proxy edge function
    */
-  private async makeRequest(prompt: string): Promise<any> {
-    const systemPrompt = 'You are a marketing intelligence AI with real-time web access. Provide current, accurate insights about industries, markets, and customer needs. Always respond with valid JSON arrays.'
+  private async makeRequest(prompt: string): Promise<string> {
+    const systemPrompt = 'You are a marketing intelligence AI. Provide current, accurate insights about industries, markets, and customer needs. Always respond with a valid JSON array of strings, nothing else.'
 
     const { data, error } = await supabase.functions.invoke('openai-proxy', {
       body: {
@@ -281,59 +288,50 @@ export class PerplexityAPI {
       throw new Error(`Perplexity API error: ${data?.error || 'Unknown error'}`)
     }
 
-    // Return in format expected by parseResponse
-    return {
-      choices: [{
-        message: { content: data.content },
-        finish_reason: 'stop',
-      }],
-    }
+    return data.content
   }
 
   /**
    * Parse API response into PerplexityResponse
    */
-  private parseResponse(data: any): PerplexityResponse {
-    const content = data.choices[0].message.content
+  private parseResponse(content: string): PerplexityResponse {
+    let insights: string[] = []
 
     // Try to parse as JSON array
-    let insights: string[] = []
     try {
       const parsed = JSON.parse(content)
       insights = Array.isArray(parsed) ? parsed : [content]
     } catch {
-      // If not JSON, split by newlines and filter
-      insights = content
-        .split('\n')
-        .filter((line: string) => line.trim().length > 0)
-        .map((line: string) => line.replace(/^[\d.-]+\s*/, '').trim())
-        .filter((line: string) => line.length > 10)
+      console.warn('[PerplexityAPI] Failed to parse JSON, using fallback parsing')
+
+      // Try to extract JSON array from content
+      const jsonArrayMatch = content.match(/\[[\s\S]*\]/)
+      if (jsonArrayMatch) {
+        try {
+          insights = JSON.parse(jsonArrayMatch[0])
+        } catch {
+          // Continue to line-based fallback
+        }
+      }
+
+      // If still no insights, split by newlines and filter
+      if (insights.length === 0) {
+        insights = content
+          .split('\n')
+          .filter((line: string) => line.trim().length > 0)
+          .map((line: string) => line.replace(/^[\d.\-•\*]+\s*/, '').trim())
+          .filter((line: string) => line.length > 10)
+      }
     }
 
-    // Calculate confidence based on response quality
-    const confidence = this.calculateConfidence(data)
+    // Fixed confidence value (edge function doesn't return finish_reason)
+    const confidence = 0.85
 
     return {
       insights,
       sources: [],
       confidence,
     }
-  }
-
-  /**
-   * Calculate confidence score
-   */
-  private calculateConfidence(data: any): number {
-    // Base confidence on finish reason and token usage
-    if (data.choices[0].finish_reason === 'stop') {
-      return 0.9
-    }
-
-    if (data.choices[0].finish_reason === 'length') {
-      return 0.7
-    }
-
-    return 0.5
   }
 }
 
